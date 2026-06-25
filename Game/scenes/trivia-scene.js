@@ -32,7 +32,7 @@ export class TriviaScene extends Phaser.Scene {
     // Look up question by index in database
     const qData = TRIVIA_QUESTIONS && TRIVIA_QUESTIONS[questionIndex] ? TRIVIA_QUESTIONS[questionIndex] : null;
 
-    this.dialogueText = config.dialogueText || (qData ? `שאלה ${questionIndex + 1} מתוך ${TRIVIA_QUESTIONS.length}. ענה נכונה כדי להמשיך:` : 'שאלת טריוויה:');
+    this.dialogueText = config.dialogueText || 'ענה נכונה כדי להמשיך:';
     this.questionText = config.questionText || (qData ? qData[0] : 'שאלת ברירת מחדל?');
     this.options = config.options || (qData ? qData[1] : ['א', 'ב', 'ג', 'ד']);
     this.correctIndex = config.correctIndex !== undefined ? config.correctIndex : (qData ? qData[2] : 0);
