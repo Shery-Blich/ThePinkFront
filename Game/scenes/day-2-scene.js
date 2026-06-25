@@ -3,6 +3,7 @@ import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -107,6 +108,7 @@ export class Day2Scene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.finishZone, this._reachCashier, null, this);
 
     this._setupSounds();
+    startSceneMusic(this, 'bg-middle');
     this._setupInput(width);
     this._createHUD();
   }

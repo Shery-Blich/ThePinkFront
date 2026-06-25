@@ -5,6 +5,7 @@ import { NPC } from '../entities/npc.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -54,6 +55,8 @@ export class Day1Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    startSceneMusic(this, 'bg-sessions');
 
     // --- Scale from screen height ---
     this.s = Character.computeScale(height);

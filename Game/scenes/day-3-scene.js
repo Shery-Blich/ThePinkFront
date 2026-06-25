@@ -5,6 +5,7 @@ import { NPC } from '../entities/npc.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -67,6 +68,8 @@ export class Day3Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    startSceneMusic(this, 'bg-sessions');
 
     // --- Reset states for scene restart ---
     this.warningTiles = [];
