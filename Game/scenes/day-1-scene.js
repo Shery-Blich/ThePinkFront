@@ -51,6 +51,9 @@ export class Day1Scene extends Phaser.Scene {
     /** @type {Phaser.GameObjects.Particles.ParticleEmitter} */
     this.explosionParticles = null;
 
+    // Supermarket graphics placeholder
+    this.supermarket = null;
+    this.superLabel = null;
   }
 
   create() {
@@ -403,19 +406,99 @@ export class Day1Scene extends Phaser.Scene {
     });
   }
 
+  _buildSupermarket(x) {
+    const s = this.s;
+    const w = 64 * s;
+    const h = 80 * s;
+    const doorW = 16 * s;
+    const doorH = 28 * s;
+
+    this.supermarket = this.add.graphics();
+    // White block placeholder
+    this.supermarket.fillStyle(0xffffff, 1);
+    this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
+    // Dark rectangle hole door
+    this.supermarket.fillStyle(0x110e1a, 1);
+    this.supermarket.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
+    
+    // Add text label "SUPER"
+    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'SUPER', {
+      fontFamily: 'Impact, sans-serif',
+      fontSize: `${12 * s}px`,
+      color: '#ff2a5f',
+      align: 'center'
+    }).setOrigin(0.5);
+
+    this.supermarket.setDepth(2.5);
+    this.superLabel.setDepth(2.6);
+  }
+
   triggerSceneOver() {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
     this.sound.play('sfx-levelup', { volume: 0.6 });
 
-    if (this.player) this.player.disable();
+    if (this.player) {
+      this.player.disable();
+      this.player.setFlipX(false); // Face right when walking to the store
+    }
     if (this.droneManager) this.droneManager.stop();
 
-    // Trigger dialogue overlay using externalized dialogue text (Model)
-    const dialog = new DialogSystem(this, DAY_1_VICTORY_DIALOG, () => {
-      this.showVictoryScreen();
+    const s = this.s;
+
+    // 1. Spawn the supermarket outside of player view (right side)
+    const worldWidth = 120 * 12 * s; // WORLD_CHARS_WIDE (120) * charW (12 * s)
+    const cameraRightEdge = this.cameras.main.scrollX + this.cameras.main.width;
+    // Spawn 80px (scaled) past the right edge of the screen, clamped to world bounds
+    const superX = Math.min(cameraRightEdge + 80 * s, worldWidth - 50 * s);
+    this._buildSupermarket(superX);
+
+    // 2. Camera will follow player to the storefront
+    this.cameras.main.startFollow(this.player, true, 0.05, 0);
+
+    // 3. Player character will walk to the store's front
+    const frontX = superX;
+    const frontY = this.roadTop + 15 * s;
+
+    this._updateHUD('Going to the supermarket...');
+
+    this.tweens.add({
+      targets: this.player,
+      x: frontX,
+      y: frontY,
+      duration: 2000,
+      ease: 'Linear',
+      onComplete: () => {
+        // Stop following once player reaches the storefront
+        this.cameras.main.stopFollow();
+
+        // 4. Player character will enter to the store and disappear with fade
+        const doorY = this.roadTop - 6 * s;
+
+        this.tweens.add({
+          targets: this.player,
+          y: doorY,
+          alpha: 0,
+          duration: 1000,
+          ease: 'Quad.easeIn',
+          onComplete: () => {
+            this.player.setVisible(false);
+            this.player.setAlpha(1); // Reset alpha back to 1
+
+            // 5. The final dialog will start to trigger the end scene as usual
+            this.time.delayedCall(300, () => {
+              this._updateHUD('Great time for shopping!');
+              const dialog = new DialogSystem(this, [
+                { speaker: 'Player', text: 'great time for shopping!' }
+              ], () => {
+                this.showVictoryScreen();
+              });
+              dialog.start();
+            });
+          }
+        });
+      }
     });
-    dialog.start();
   }
 
   showVictoryScreen() {
