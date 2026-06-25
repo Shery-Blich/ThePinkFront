@@ -57,6 +57,9 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
     /** @type {Phaser.Time.TimerEvent | null} */
     this.typingTimer = null;
 
+    /** @type {boolean} True once an answer has been confirmed, blocks further input */
+    this.isAnswered = false;
+
     // --- Dynamic Layout Coordinates ---
     /** @type {number} */
     this.panelWidth = 0;
@@ -237,7 +240,7 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
 
       // Background Box
       const optBg = this.scene.add.graphics();
-      this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, false);
+      this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, 'inactive');
       this.container.add(optBg);
       this.optionBoxes.push(optBg);
 
@@ -273,10 +276,12 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       zone.setInteractive({ useHandCursor: true });
       
       zone.on('pointerover', () => {
+        if (this.isAnswered) return;
         this.selectOption(i);
       });
       
       zone.on('pointerdown', () => {
+        if (this.isAnswered) return;
         this.confirmAnswer(i);
       });
 
@@ -312,15 +317,29 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    * @param {number} w 
    * @param {number} h 
    * @param {number} scale 
-   * @param {boolean} active 
+   * @param {string} [state='inactive'] - 'active', 'inactive', 'correct', 'incorrect'
    * @private
    */
-  drawOptionBox(gfx, x, y, w, h, scale, active) {
+  drawOptionBox(gfx, x, y, w, h, scale, state = 'inactive') {
     gfx.clear();
     gfx.fillStyle(0x0a0f1d, 0.95);
-    // Active box gets bright pink border, inactive gets grey border
-    const color = active ? 0xff2a5f : 0x475569;
-    const thickness = active ? 1.5 * scale : 1 * scale;
+    
+    let color;
+    let thickness = 1 * scale;
+
+    if (state === 'correct') {
+      color = 0x10b981; // Green for correct answer
+      thickness = 1.8 * scale;
+    } else if (state === 'incorrect') {
+      color = 0xef4444; // Red for incorrect answer choice
+      thickness = 1.8 * scale;
+    } else if (state === 'active') {
+      color = 0xffffff; // White outline for highlighted option (no red outlines)
+      thickness = 1.5 * scale;
+    } else {
+      color = 0x475569; // Slate grey for inactive option
+    }
+
     gfx.lineStyle(thickness, color, 1);
     gfx.fillRoundedRect(x, y, w, h, 2 * scale);
     gfx.strokeRoundedRect(x, y, w, h, 2 * scale);
@@ -356,7 +375,7 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    * @private
    */
   handleKeyDown(event) {
-    if (!this.keys) return;
+    if (!this.keys || this.isAnswered) return;
 
     switch (event.keyCode) {
       case Phaser.Input.Keyboard.KeyCodes.UP:
@@ -416,6 +435,7 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    * @private
    */
   selectOption(index) {
+    if (this.isAnswered) return;
     if (this.selectedIndex === index) return;
     this.selectedIndex = index;
     this.updateSelectionVisuals();
@@ -426,6 +446,8 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    * @private
    */
   updateSelectionVisuals() {
+    if (this.isAnswered) return;
+
     const scale = this.scene.s || Character.computeScale(this.scene.scale.height);
     const spacing = 6 * scale;
 
@@ -442,7 +464,7 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       const isActive = i === this.selectedIndex;
 
       if (optBg) {
-        this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, isActive);
+        this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, isActive ? 'active' : 'inactive');
       }
       
       if (optText) {
@@ -464,11 +486,23 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
   }
 
   /**
-   * Finalizes selection and evaluates correctness.
+   * Finalizes selection, locks input, shows green/red correct/incorrect outlines, and exits after 1 second.
    * @param {number} index 
    * @private
    */
   confirmAnswer(index) {
+    if (this.isAnswered) return;
+    this.isAnswered = true;
+
+    // De-allocate controls during feedback delay
+    if (this.scene.input.keyboard) {
+      this.scene.input.keyboard.off('keydown', this.handleKeyDown, this);
+    }
+    if (this.typingTimer) {
+      this.typingTimer.remove();
+      this.typingTimer = null;
+    }
+
     const isCorrect = index === this.data.correctIndex;
     
     this.emit('answer-selected', {
@@ -477,11 +511,47 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       correctIndex: this.data.correctIndex
     });
 
-    this.destroy();
-
-    if (this.onComplete) {
-      this.onComplete(isCorrect);
+    // Hide selection indicator arrow during feedback phase
+    if (this.arrowIndicator) {
+      this.arrowIndicator.setVisible(false);
     }
+
+    // Render green/red correctness feedback borders
+    const scale = this.scene.s || Character.computeScale(this.scene.scale.height);
+    const spacing = 6 * scale;
+
+    for (let i = 0; i < 4; i++) {
+      const row = Math.floor(i / 2);
+      const col = (i % 2 === 0) ? 1 : 0;
+      const optionX = this.leftX + col * (this.colWidth + spacing);
+      const optionY = this.optionStartY + row * (this.optionHeight + 4 * scale);
+
+      const optBg = this.optionBoxes[i];
+      const optText = this.optionTexts[i];
+
+      if (i === index) {
+        // Redraw chosen answer: correct gets green, incorrect gets red
+        const state = isCorrect ? 'correct' : 'incorrect';
+        this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, state);
+        if (optText) optText.setColor(isCorrect ? '#10b981' : '#ef4444');
+      } else if (i === this.data.correctIndex) {
+        // Redraw correct answer always in green
+        this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, 'correct');
+        if (optText) optText.setColor('#10b981');
+      } else {
+        // Dim other option boxes
+        this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, 'inactive');
+        if (optText) optText.setColor('#475569');
+      }
+    }
+
+    // Wait exactly 1 second before clean exit and executing scene callback
+    this.scene.time.delayedCall(1000, () => {
+      this.destroy();
+      if (this.onComplete) {
+        this.onComplete(isCorrect);
+      }
+    });
   }
 
   /**
