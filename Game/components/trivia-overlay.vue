@@ -260,9 +260,6 @@ export default {
   border: 2.4px solid #94a3b8;
   border-radius: 6px;
   padding: 12px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
   text-align: right;
   direction: rtl;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
@@ -276,6 +273,7 @@ export default {
   line-height: 1.4;
   word-break: break-word;
   white-space: pre-wrap;
+  width: 100%;
 }
 
 .typewriter-cursor {
