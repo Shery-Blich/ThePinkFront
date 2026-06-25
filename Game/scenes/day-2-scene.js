@@ -21,19 +21,22 @@ export class Day2Scene extends Phaser.Scene {
     this.isSceneOver = false;
     this._debugText = null;
     this._errorMessages = [];
-    this._baseRunSpeed = 120;
-    this._speedAdjust = 140;
-    this._minRunSpeed = 80;
+    this._baseRunSpeed = 160; 
+    this._speedAdjust = 0;
+    this._minRunSpeed = 0;
     this._jumpVelocity = -420;
     this._cursors = null;
     this._levelWidth = 0;
     this.joystick = null;
     this.s = 1;
     this._autoScrollSpeed = 80; // px/sec
+
+    this._collectedCount = 0;
+    this._canDoubleJump = false;   
+    this._hasDoubleJumped = false; 
   }
 
   create() {
-    // Reset scene state on first load and restart
     this.score = 200.0;
     this.isGameOver = false;
     this.isSceneOver = false;
@@ -43,9 +46,11 @@ export class Day2Scene extends Phaser.Scene {
     this._debugText = null;
     this.joystick = null;
 
-    // ensure input / camera / movement state is clean for restarts
     this._cursors = null;
     this._moveDirection = 0;
+    this._collectedCount = 0; 
+    this._canDoubleJump = false;
+    this._hasDoubleJumped = false;
     if (this.cameras && this.cameras.main) {
       this.cameras.main.scrollX = 0;
     }
@@ -83,8 +88,9 @@ export class Day2Scene extends Phaser.Scene {
 
     this._createPlayer(width, height);
 
+    // Initialize joystick
     this.joystick = new JoystickMove(this, this.player, {
-      speed: 140,
+      speed: this._baseRunSpeed,
       leftOffset: 60,
       bottomOffset: 60,
       horizontalOnly: true,
@@ -96,9 +102,6 @@ export class Day2Scene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.productGroup, this.collectProduct, null, this);
     this.physics.add.overlap(this.player, this.finishZone, this._reachCashier, null, this);
 
-    // remove follow so camera can auto-scroll independently
-    // this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-
     this._setupInput(width);
     this._createHUD();
   }
@@ -108,20 +111,65 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
 
+    const cam = this.cameras && this.cameras.main;
+    if (cam && this.player && typeof this.player.x === 'number') {
+      const leftEdge = cam.scrollX;
+      const loseMargin = 8;
+      if (this.player.x < leftEdge + loseMargin) {
+        this.triggerGameOver();
+        return;
+      }
+    }
+
     if (this.score <= 0) {
       this.triggerGameOver();
       return;
     }
 
-    if (this._cursors && this.player && this.player.body) {
+    // Reset double-jump on landing
+    if (this.player && this.player.body) {
+      const body = this.player.body;
+      const onGround = !!(
+        body.blocked && body.blocked.down ||
+        body.touching && body.touching.down ||
+        (typeof body.onFloor === 'function' && body.onFloor())
+      );
+      if (onGround) {
+        this._canDoubleJump = false;
+        this._hasDoubleJumped = false;
+      }
+    }
+
+    // --- MOVEMENT DISPATCHER ---
+    let joystickActive = false;
+
+    // 1. Update Joystick State
+    if (this.joystick && this.player && this.player.body) {
+      this.joystick.update();
+      
+      // Check if joystick is being dragged
+      if (this.joystick.isMoving) {
+        joystickActive = true;
+      }
+    }
+
+    // 2. Keyboard Fallback (Only executes if joystick is idle)
+    if (!joystickActive && this._cursors && this.player && this.player.body) {
+      if (this._cursors.left.isDown) {
+        this.player.body.setVelocityX(-this._baseRunSpeed);
+      } else if (this._cursors.right.isDown) {
+        this.player.body.setVelocityX(this._baseRunSpeed);
+      } else {
+        this.player.body.setVelocityX(0);
+      }
+    }
+
+    // Handle Keyboard Jumps
+    if (this._cursors) {
       if (Phaser.Input.Keyboard.JustDown(this._cursors.up) ||
           Phaser.Input.Keyboard.JustDown(this._cursors.space)) {
         this._doJump();
       }
-    }
-
-    if (this.joystick) {
-      this.joystick.update();
     }
 
     this._scrollCamera(delta);
@@ -134,12 +182,7 @@ export class Day2Scene extends Phaser.Scene {
       }
     }
 
-    if (this._debugText) {
-      this._debugText.setText([
-        `Budget: ${this._formatPrice(this.score)}`,
-        'Use joystick to move, tap to jump',
-      ]);
-    }
+    this._updateHUD();
   }
 
   _scrollCamera(delta) {
@@ -157,7 +200,7 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _createPlayer(width, height) {
-    const startX = 100;
+    const startX = 150; // Shifted slightly right so the player doesn't instantly die on spawn
     const startY = height - BLOCK_HEIGHT - 80;
 
     try {
@@ -171,7 +214,6 @@ export class Day2Scene extends Phaser.Scene {
     if (this._playerEntity && this._playerEntity.body) {
       this.player = this._playerEntity;
       this.player.body.setCollideWorldBounds(true);
-      // ensure body is active on (re)start
       if (this.player.body) this.player.body.moves = true;
     } else {
       this.player = this.physics.add.sprite(startX, startY, 'player');
@@ -187,11 +229,12 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _setupInput(width) {
-    this.input.on('pointerup', (pointer) => {
-      if (this.isGameOver) {
+    this.input.on('pointerdown', (pointer) => {
+      if (this.isGameOver || this.isSceneOver) {
         return;
       }
 
+      // If they are tapping the screen to jump, make sure it's not on top of the joystick
       if (this._isPointerOnJoystick(pointer)) {
         return;
       }
@@ -205,39 +248,53 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _isPointerOnJoystick(pointer) {
-    if (!this.joystick) {
+    if (!this.joystick || !this.joystick.config) {
       return false;
     }
+    const baseX = this.joystick.baseX || 60;
+    const baseY = this.joystick.baseY || (this.scale.height - 60);
+    const radius = this.joystick.config.maxRadius || 50;
 
-    const dx = pointer.x - this.joystick.baseX;
-    const dy = pointer.y - this.joystick.baseY;
-    return Math.hypot(dx, dy) <= this.joystick.config.maxRadius;
-  }
-
-  _applyMoveVelocity() {
-    if (!this.player || !this.player.body) {
-      return;
-    }
-
-    const extra = this._moveDirection * this._speedAdjust;
-    const velocityX = Math.max(this._minRunSpeed, this._baseRunSpeed + extra);
-    this.player.body.setVelocityX(velocityX);
+    const dx = pointer.x - baseX;
+    const dy = pointer.y - baseY;
+    return Math.hypot(dx, dy) <= radius;
   }
 
   _stopMovement() {
-    this._moveDirection = 0;
+    if (this.player && this.player.body) {
+      this.player.body.setVelocityX(0);
+    }
   }
 
   _doJump() {
-    if (!this.player || !this.player.body) {
+    if (!this.player || !this.player.body) return;
+    const body = this.player.body;
+    const onGround = !!(
+      body.blocked && body.blocked.down ||
+      body.touching && body.touching.down ||
+      (typeof body.onFloor === 'function' && body.onFloor())
+    );
+
+    if (onGround) {
+      if (typeof body.setVelocityY === 'function') {
+        body.setVelocityY(this._jumpVelocity);
+      } else {
+        body.velocity && (body.velocity.y = this._jumpVelocity);
+      }
+      this._canDoubleJump = true;
+      this._hasDoubleJumped = false;
       return;
     }
 
-    const body = this.player.body;
-    const grounded = (body.blocked && body.blocked.down) ||
-                     (body.touching && body.touching.down);
-    if (grounded) {
-      body.setVelocityY(this._jumpVelocity);
+    if (this._canDoubleJump && !this._hasDoubleJumped) {
+      if (typeof body.setVelocityY === 'function') {
+        body.setVelocityY(this._jumpVelocity);
+      } else {
+        body.velocity && (body.velocity.y = this._jumpVelocity);
+      }
+      this._hasDoubleJumped = true;
+      this._canDoubleJump = false;
+      return;
     }
   }
 
@@ -295,7 +352,6 @@ export class Day2Scene extends Phaser.Scene {
       const product = new Product(this, pos.x, pos.y);
       this.productGroup.add(product);
       
-      // Forces the static body's size and position to match the custom Product object
       if (product.body) {
         product.body.updateFromGameObject();
       }
@@ -318,6 +374,28 @@ export class Day2Scene extends Phaser.Scene {
     label.setScrollFactor(0);
   }
 
+  _createHUD() {
+    this._debugText = this.add.text(16, 16, '', {
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      color: '#ffffff',
+      backgroundColor: '#00000099',
+      padding: { x: 10, y: 5 }
+    });
+    this._debugText.setScrollFactor(0);
+    this._debugText.setDepth(2000);
+    this._updateHUD();
+  }
+
+  _updateHUD() {
+    if (this._debugText) {
+      this._debugText.setText([
+        `Budget: ${this._formatPrice(this.score)}`,
+        'Use joystick/arrows to move, tap/space to jump',
+      ]);
+    }
+  }
+
   _reachCashier() {
     if (this.isGameOver || this.isSceneOver) {
       return;
@@ -331,86 +409,67 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
 
-    // remove price label if present
+    if (this._collectedCount >= PRODUCT_COUNT) {
+      return;
+    }
+    this._collectedCount += 1;
+
+    const price = typeof actualProduct.getPrice === 'function'
+      ? actualProduct.getPrice()
+      : (typeof actualProduct.price === 'number' ? actualProduct.price : 0);
+
+    this.score = Math.max(0, this.score - price);
+
     if (actualProduct.priceLabel) {
       actualProduct.priceLabel.destroy();
     }
 
-    const price = typeof actualProduct.price === 'number' ? actualProduct.price : 0;
-    // deduct price from the budget (but do not end game just because a product was touched)
-    this.score = Math.max(0, this.score - price);
-    this._updateHUD();
-
-    // remove product from the world and its physics body
-    try {
-      // if the product is part of the static group, remove it from the group first
-      if (this.productGroup && this.productGroup.remove) {
-        this.productGroup.remove(actualProduct, true, true);
-      } else if (actualProduct.disableBody) {
-        actualProduct.disableBody(true, true);
-      } else if (actualProduct.destroy) {
-        actualProduct.destroy();
+    if (actualProduct.disableBody) {
+      actualProduct.disableBody(true, true);
+    } else {
+      actualProduct.setVisible(false);
+      if (actualProduct.body) {
+        actualProduct.body.enable = false;
       }
-    } catch (e) {
-      // fallback: ensure it's destroyed
-      if (actualProduct.destroy) actualProduct.destroy();
     }
 
-    // only trigger game over if budget fully depleted
+    if (this.productGroup && this.productGroup.remove) {
+      this.productGroup.remove(actualProduct, true, true);
+    }
+
     if (this.score <= 0) {
       this.triggerGameOver();
     }
   }
 
   _formatPrice(value) {
-    return `\$${value.toFixed(2)}`;
-  }
-
-  _createHUD() {
-    const { width } = this.scale;
-
-    this.hud = this.add.container(0, 0);
-    this.hud.setScrollFactor(0);
-
-    const background = this.add.graphics();
-    background.fillStyle(0x000000, 0.5);
-    background.fillRect(0, 0, width, 50);
-    this.hud.add(background);
-
-    this._debugText = this.add.text(10, 10, '', {
-      fontFamily: 'Arial',
-      fontSize: '16px',
-      color: '#ffffff',
-    });
-    this.hud.add(this._debugText);
-
-    this._updateHUD();
-  }
-
-  _updateHUD() {
-    if (this._debugText) {
-      this._debugText.setText([
-        `Budget: ${this._formatPrice(this.score)}`,
-        'Use joystick to move, tap to jump',
-      ]);
-    }
+    return `${value.toFixed(2)}€`;
   }
 
   triggerGameOver() {
-    if (this.isGameOver || this.isSceneOver) return;
+    if (this.isGameOver || this.isSceneOver) {
+      return;
+    }
     this.isGameOver = true;
     this.joystick?.disable();
+    this.physics.pause();
 
     if (this.player && this.player.body) {
       this.player.body.setVelocity(0, 0);
       this.player.body.moves = false;
     }
 
-    const restartLevel = () => {
-      this.scene.restart();
-    };
-    this.input.once('pointerdown', restartLevel);
+    // Falling / grey out animation
+    this.tweens.add({
+      targets: this.player,
+      angle: 90,
+      tint: 0x333333,
+      y: this.player.y + 50,
+      duration: 600,
+      ease: 'Bounce.easeOut'
+    });
 
+    // Screen darken overlay
     const overlay = this.add.graphics();
     overlay.fillStyle(0x000000, 0.75);
     overlay.fillRect(0, 0, this.scale.width, this.scale.height);
@@ -445,29 +504,27 @@ export class Day2Scene extends Phaser.Scene {
     this.tweens.add({
       targets: [overlay, title, subtitle],
       alpha: 1,
-      duration: 800
+      duration: 800,
+      onComplete: () => {
+        this.input.once('pointerdown', () => {
+          this.scene.restart();
+        });
+      }
     });
   }
 
   triggerSceneOver() {
-    if (this.isSceneOver || this.isGameOver) return;
+    if (this.isSceneOver || this.isGameOver) {
+      return;
+    }
     this.isSceneOver = true;
     this.joystick?.disable();
-
-    if (this.player && this.player.body) {
-      this.player.body.setVelocity(0, 0);
-      this.player.body.moves = false;
-    }
+    this.physics.pause();
 
     this.showVictoryScreen();
   }
 
   showVictoryScreen() {
-    const restartLevel = () => {
-      this.scene.restart();
-    };
-    this.input.once('pointerdown', restartLevel);
-
     const overlay = this.add.graphics();
     overlay.fillStyle(0x0f0c1b, 0.85);
     overlay.fillRect(0, 0, this.scale.width, this.scale.height);
@@ -502,7 +559,12 @@ export class Day2Scene extends Phaser.Scene {
     this.tweens.add({
       targets: [overlay, title, subtitle],
       alpha: 1,
-      duration: 800
+      duration: 800,
+      onComplete: () => {
+        this.input.once('pointerdown', () => {
+          this.scene.restart();
+        });
+      }
     });
   }
 }
