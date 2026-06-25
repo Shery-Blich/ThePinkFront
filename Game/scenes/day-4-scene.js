@@ -15,6 +15,9 @@ import Phaser from "phaser";
  * Music: procedural Web Audio, Hijaaz modal scale on D.
  */
 export class Day4Scene extends Phaser.Scene {
+  // Skip the orchestrator's camera fade when handing off to Day5Scene
+  static outTransitionDuration = 0;
+
   constructor() {
     super({ key: "Day4Scene" });
     this._scrollLayers = [];
