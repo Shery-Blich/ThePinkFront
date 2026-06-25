@@ -1,14 +1,14 @@
 import { Character } from './character.js';
-import { TapToMove } from '../systems/tap-to-move.js';
+import { JoystickMove } from '../systems/joystick-move.js';
 
 /**
  * Player — The player-controlled character.
  *
  * Extends Character with:
- * - Dynamic physics body (moves via TapToMove or other input)
+ * - Dynamic physics body (moves via JoystickMove or other input)
  * - World bounds collision
  * - Can be reused across any scene
- * - Handles its own movement system, sizing, and rushing speed logic
+ * - Handles its own movement system, sizing, and scaling logic
  *
  * @example
  *   const player = new Player(this, 100, 300);
@@ -38,84 +38,23 @@ export class Player extends Character {
       this._setupCollisionBody();
     }
 
-    // --- Rushing Speed Logic Configuration ---
+    // --- Movement configuration ---
     const charW = 12 * s;
     /** @type {number} Base walking speed */
-    this.baseSpeed = charW * 3.5;
-    /** @type {number} Current speed (with optional rush boosts) */
+    this.baseSpeed = charW * 4.5; // Slightly faster base speed for joystick responsiveness
+    /** @type {number} Current speed */
     this.currentSpeed = this.baseSpeed;
-    /** @type {number} Reasonable max speed (2x base speed) */
-    this.maxSpeed = this.baseSpeed * 2.0;
-    /** @type {number} Speed boost added on each consecutive fast tap */
-    this.rushBoost = this.baseSpeed * 0.3;
-    /** @type {number} Timestamp of the last tap in milliseconds */
-    this.lastTapTime = 0;
-    /** @type {number} Time window (ms) to detect fast clicks */
-    this.tapTimeWindow = 500;
-    /** @type {{x: number, y: number} | null} Location of the last tap */
-    this.lastTapPosition = null;
 
     // --- Movement system ---
-    /** @type {TapToMove} */
-    this.movement = new TapToMove(scene, this, {
-      speed: this.currentSpeed,
-      showTapMarker: true,
-      tapMarkerColor: 0xffcc00,
-      tapMarkerRadius: Math.max(4, s * 3),
-      tapMarkerDuration: 350,
+    /** @type {JoystickMove} */
+    this.movement = new JoystickMove(scene, this, {
+      speed: this.baseSpeed,
     });
 
     // Forward movement events so external systems (like Day1Scene HUD) can listen directly on the player
     this.movement.on('move-start', (payload) => this.emit('move-start', payload));
     this.movement.on('move-end', (payload) => this.emit('move-end', payload));
     this.movement.on('move-blocked', (payload) => this.emit('move-blocked', payload));
-    
-    // Listen for tap inputs to calculate rushing speed adjustments
-    this.movement.on('tap', (pos) => this._handleTap(pos));
-
-    // Reset speed when player reaches target or stops moving
-    this.movement.on('move-end', () => this.resetSpeed());
-  }
-
-  /**
-   * Internal click/tap handler. If clicks are rapid and near the last click, speed up.
-   * @param {{x: number, y: number}} pos — Tap position in world coordinates
-   * @private
-   */
-  _handleTap(pos) {
-    const now = this.scene.time.now;
-    const timeDiff = now - this.lastTapTime;
-
-    let isNearLastTap = true;
-    if (this.lastTapPosition && pos) {
-      const dist = Phaser.Math.Distance.Between(
-        this.lastTapPosition.x,
-        this.lastTapPosition.y,
-        pos.x,
-        pos.y
-      );
-      // Check if within 120 pixels of the last tap (adjusted for scale)
-      const maxDistance = 120 * this.s;
-      isNearLastTap = dist < maxDistance;
-    }
-
-    if (timeDiff < this.tapTimeWindow && isNearLastTap) {
-      // Rushing! Apply boost up to max speed
-      this.currentSpeed = Math.min(this.maxSpeed, this.currentSpeed + this.rushBoost);
-    } else {
-      // Normal tap or far away: reset to base speed
-      this.currentSpeed = this.baseSpeed;
-    }
-
-    this.lastTapTime = now;
-    if (pos) {
-      this.lastTapPosition = { x: pos.x, y: pos.y };
-    }
-
-    // Apply the speed directly to the movement config
-    if (this.movement) {
-      this.movement.config.speed = this.currentSpeed;
-    }
   }
 
   /**

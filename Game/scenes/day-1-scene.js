@@ -9,7 +9,7 @@ import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
  *
- * Uses the reusable Player, NPC, and TapToMove classes.
+ * Uses the reusable Player, NPC, and JoystickMove classes.
  * Everything positioned relative to screen height.
  */
 
@@ -91,7 +91,7 @@ export class Day1Scene extends Phaser.Scene {
     this.npcList = npcs;
 
     // --- Player ---
-    const startX = charW * 3;
+    const startX = this.scale.width / 2;
     const startY = roadCenterY + charH * 0.3;
     this.player = new Player(this, startX, startY, this.s);
     this.player.setWorldBounds(0, this.roadTop, worldWidth, roadHeight);
@@ -118,7 +118,7 @@ export class Day1Scene extends Phaser.Scene {
     this._createHUD();
 
     this.player.on('move-start', () => this._updateHUD('Walking...'));
-    this.player.on('move-end', () => this._updateHUD('Tap to move →'));
+    this.player.on('move-end', () => this._updateHUD('Drag joystick to move →'));
     this.player.on('move-blocked', () => this._updateHUD('Blocked!'));
 
     // --- Particles ---
@@ -167,7 +167,7 @@ export class Day1Scene extends Phaser.Scene {
     this._updateHUD('Incoming transmission...');
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
       this.player.enable();
-      this._updateHUD('Tap to move →');
+      this._updateHUD('Drag joystick to move →');
     });
     introDialog.start();
 
@@ -296,7 +296,7 @@ export class Day1Scene extends Phaser.Scene {
   /** @private */
   _createHUD() {
     const fontSize = Math.max(12, Math.round(this.scale.height * 0.025));
-    this._hudText = this.add.text(10, 10, 'Tap to move →', {
+    this._hudText = this.add.text(10, 10, 'Drag joystick to move →', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ffffff',
