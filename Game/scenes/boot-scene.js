@@ -21,7 +21,7 @@ export class BootScene extends Phaser.Scene {
     this._generateDroneTexture();
     this._generateParticleTexture();
 
-    this.scene.start('Day1Scene');
+    this.scene.start('Day2Scene');
   }
 
   // ---------------------------------------------------------------------------
