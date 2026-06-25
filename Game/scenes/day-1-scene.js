@@ -101,6 +101,13 @@ export class Day1Scene extends Phaser.Scene {
     this.npcGroup = group;
     this.npcList = npcs;
 
+    this.npcList.forEach((npc, index) => {
+      const textureKey = index % 2 === 0 ? 'yuval' : 'shiri';
+      if (this.textures.exists(textureKey) && typeof npc.setTexture === 'function') {
+        npc.setTexture(textureKey);
+      }
+    });
+
     // --- Player ---
     const startX = this.scale.width / 2;
     const startY = roadCenterY + charH * 0.3;

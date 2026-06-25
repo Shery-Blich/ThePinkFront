@@ -12,7 +12,6 @@ import Phaser from 'phaser';
  * @abstract — Don't instantiate directly, use Player or NPC.
  */
 export class Character extends Phaser.Physics.Arcade.Sprite {
-
   /**
    * @param {Phaser.Scene} scene — The scene to add this character to
    * @param {number} x — World X position
@@ -31,13 +30,9 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     /** @type {number} The pixel art scale factor */
     this.spriteScale = scale;
 
-    // --- Common setup ---
-    this.setScale(scale);
-    this.setOrigin(0.5, 1); // Feet at position
+    this._applyCharacterScale(scale);
+    this.setOrigin(0.5, 1);
 
-    // --- Bottom-half collision body ---
-    // Texture is 12×20. Collision covers bottom 10px only,
-    // so characters can walk "behind" the top half (depth illusion).
     this._setupCollisionBody();
   }
 
@@ -72,5 +67,30 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     // 12×20 texture → body covers bottom 10px (feet area)
     this.body.setSize(10, 10);
     this.body.setOffset(1, 10);
+  }
+
+  setTexture(key, frame) {
+    const result = super.setTexture(key, frame);
+
+    if (typeof this.spriteScale === 'number') {
+      this._applyCharacterScale(this.spriteScale);
+      if (this.body) {
+        this.body.updateFromGameObject();
+        this._setupCollisionBody();
+      }
+    }
+
+    return result;
+  }
+
+  _applyCharacterScale(scale) {
+    const desiredHeight = 20 * scale;
+    const textureHeight = this.frame?.realHeight || this.frame?.height || this.height;
+
+    if (textureHeight > 0) {
+      this.setScale(desiredHeight / textureHeight);
+    } else {
+      this.setScale(scale);
+    }
   }
 }

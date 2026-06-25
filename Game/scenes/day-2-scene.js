@@ -379,26 +379,28 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _buildCashier(width, height) {
-    const x = this._levelWidth - 100;
-    const y = height - 20;
-    this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981);
-    this.physics.add.existing(this.finishZone, true);
+      const x = this._levelWidth - 100;
+      const y = height - 20;
 
-    if (this.textures.exists('kupaee')) {
-      this.add.image(x, y - 40, 'kupaee')
-        .setOrigin(0.5, 1)
-        .setDisplaySize(56, 56);
+      // keep the finish sensor but make it transparent
+      this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981, 0);
+      this.physics.add.existing(this.finishZone, true);
+
+      if (this.textures.exists('kupaee')) {
+        this.add.image(x, y - 40, 'kupaee')
+          .setOrigin(0.5, 1)
+          .setScale(0.5);
+      }
+
+      const label = this.add.text(x, y - 100, 'Cashier', {
+        fontFamily: 'Arial',
+        fontSize: '16px',
+        color: '#ffffff',
+        backgroundColor: '#00000099',
+        padding: { x: 8, y: 4 },
+      }).setOrigin(0.5, 1);
+      label.setScrollFactor(0);
     }
-
-    const label = this.add.text(x, y - 100, 'Cashier', {
-      fontFamily: 'Arial',
-      fontSize: '16px',
-      color: '#ffffff',
-      backgroundColor: '#00000099',
-      padding: { x: 8, y: 4 },
-    }).setOrigin(0.5, 1);
-    label.setScrollFactor(0);
-  }
 
   _createHUD() {
     this._debugText = this.add.text(16, 16, '', {
@@ -444,46 +446,46 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   collectProduct(player, product) {
-    const actualProduct = product && product.gameObject ? product.gameObject : product;
-    if (!actualProduct) {
-      return;
-    }
-
-    if (this._collectedCount >= PRODUCT_COUNT) {
-      return;
-    }
-
-    // Block collection if budget is already at 0
-    if (this.score <= 0) {
-      return;
-    }
-
-    const price = typeof actualProduct.getPrice === 'function'
-      ? actualProduct.getPrice()
-      : (typeof actualProduct.price === 'number' ? actualProduct.price : 0);
-
-    this.score = Math.max(0, this.score - price);
-
-    if (actualProduct.priceLabel) {
-      actualProduct.priceLabel.destroy();
-    }
-
-    if (actualProduct.disableBody) {
-      actualProduct.disableBody(true, true);
-    } else {
-      actualProduct.setVisible(false);
-      if (actualProduct.body) {
-        actualProduct.body.enable = false;
+      const actualProduct = product && product.gameObject ? product.gameObject : product;
+      if (!actualProduct) {
+        return;
       }
-    }
 
-    if (this.productGroup && this.productGroup.remove) {
-      this.productGroup.remove(actualProduct, true, true);
-    }
+      if (this._collectedCount >= PRODUCT_COUNT) {
+        return;
+      }
 
-    this._collectedCount += 1;
-    this._playSound('collect');
-  }
+      // Block collection if budget is already at 0
+      if (this.score <= 0) {
+        return;
+      }
+
+      const price = typeof actualProduct.getPrice === 'function'
+        ? actualProduct.getPrice()
+        : (typeof actualProduct.price === 'number' ? actualProduct.price : 0);
+
+      this.score = Math.max(0, this.score - price);
+
+      if (actualProduct.priceLabel) {
+        actualProduct.priceLabel.destroy();
+      }
+
+      if (actualProduct.disableBody) {
+        actualProduct.disableBody(true, true);
+      } else {
+        actualProduct.setVisible(false);
+        if (actualProduct.body) {
+          actualProduct.body.enable = false;
+        }
+      }
+
+      if (this.productGroup && this.productGroup.remove) {
+        this.productGroup.remove(actualProduct, true, true);
+      }
+
+      this._collectedCount += 1;
+      this._playSound('collect');
+    }
 
   _formatPrice(value) {
     return `₪${value.toFixed(2)}`;

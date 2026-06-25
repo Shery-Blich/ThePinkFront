@@ -15,7 +15,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('player', 'assets/Shlomi.png');
     this.load.image('bg', 'assets/Kiryat shmona.png');
     this.load.image('supermarket', 'assets/supermarket.png');
-    this.load.svg('kupaee', 'assets/kupaee.svg');
+    this.load.image('kupaee', 'assets/Characters/kupaee.png');
+    this.load.image('yuval', 'assets/Characters/Yuval.png');
+    this.load.image('shiri', 'assets/Characters/Shiri.png');
   }
 
   create() {
@@ -30,6 +32,9 @@ export class BootScene extends Phaser.Scene {
     this._generateJerusalemBuildings();
     this._generateAsphaltTextures();
 
+    const yuval = this.add.image(50, 100, 'yuval').setScale(0.5);
+    const shiri = this.add.image(50, 100, 'shiri').setScale(0.5);
+
     if (window.gameStarted) {
       this.events.emit('complete');
     } else {
@@ -37,6 +42,15 @@ export class BootScene extends Phaser.Scene {
         this.events.emit('complete');
       });
     }
+
+    this.npcList.forEach((npc, index) => {
+      const textureKey = index % 2 === 0 ? 'yuval' : 'shiri';
+      if (this.textures.exists(textureKey) && typeof npc.setTexture === 'function') {
+        npc.setTexture(textureKey);
+        npc.setScale(this.s * 0.35); // smaller than default
+        npc.body.setSize(npc.displayWidth, npc.displayHeight, true);
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -341,7 +355,7 @@ export class BootScene extends Phaser.Scene {
     for (let i = 0; i < 5; i++) {
       const wx = winStartX + i * (winW + winGap);
       gfxOpen.fillStyle(0x1f2937, 1);
-      gfxOpen.fillRect(wx - 1, winY - 1, winW + 2, winH + 2);
+      gfx.fillRect(wx - 1, winY - 1, winW + 2, winH + 2);
       gfxOpen.fillStyle(0x93c5fd, 1);
       gfxOpen.fillRect(wx, winY, winW, winH);
       gfxOpen.fillStyle(0xffffff, 0.4);
