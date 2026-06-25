@@ -12,6 +12,7 @@ export class Day5Scene extends Phaser.Scene {
     this._cats = [];
     this._score = 0;
     this._lives = 3;
+    this._lastColors = [];
     this._TARGET = 10;
     this._gameActive = false;
     this._sceneEnded = false;
@@ -70,20 +71,26 @@ export class Day5Scene extends Phaser.Scene {
   // ─── Texture generation ───────────────────────────────────────
 
   _genTextures(width, height) {
-    if (!this.textures.exists("bus_hills"))          this._genHillTile(width, height);
-    if (!this.textures.exists("bus_ground"))         this._genGroundTile();
-    if (!this.textures.exists("bus_road_tile"))      this._genRoadTile(height);
+    if (!this.textures.exists("bus_hills")) this._genHillTile(width, height);
+    if (!this.textures.exists("bus_ground")) this._genGroundTile();
+    if (!this.textures.exists("bus_road_tile")) this._genRoadTile(height);
     for (const v of ["orange", "black", "white", "pink"]) {
-      if (!this.textures.exists(`day5_cat_${v}`)) this._genCatTexture(height, v);
+      if (!this.textures.exists(`day5_cat_${v}`))
+        this._genCatTexture(height, v);
     }
   }
 
   _genCatTexture(height, variant) {
     const palette = {
-      orange: { body: 0xe07830, stripe: 0xb05a18, leg: 0xd06820, ear: 0xff9999 },
-      black:  { body: 0x282828, stripe: 0x111111, leg: 0x1e1e1e, ear: 0xcc7777 },
-      white:  { body: 0xf2f2f2, stripe: 0xcccccc, leg: 0xe0e0e0, ear: 0xffbbbb },
-      pink:   { body: 0xff88cc, stripe: 0xdd55aa, leg: 0xee77bb, ear: 0xff99dd },
+      orange: {
+        body: 0xe07830,
+        stripe: 0xb05a18,
+        leg: 0xd06820,
+        ear: 0xff9999,
+      },
+      black: { body: 0x282828, stripe: 0x111111, leg: 0x1e1e1e, ear: 0xcc7777 },
+      white: { body: 0xf2f2f2, stripe: 0xcccccc, leg: 0xe0e0e0, ear: 0xffbbbb },
+      pink: { body: 0xff88cc, stripe: 0xdd55aa, leg: 0xee77bb, ear: 0xff99dd },
     };
     const c = palette[variant] ?? palette.orange;
     const s = this._s(height);
@@ -98,56 +105,167 @@ export class Day5Scene extends Phaser.Scene {
 
     // Ears
     g.fillStyle(c.body, 1);
-    g.fillTriangle(Math.round(w*0.18), Math.round(h*0.18), Math.round(w*0.32), Math.round(h*0.04), Math.round(w*0.44), Math.round(h*0.18));
-    g.fillTriangle(Math.round(w*0.56), Math.round(h*0.18), Math.round(w*0.68), Math.round(h*0.04), Math.round(w*0.82), Math.round(h*0.18));
+    g.fillTriangle(
+      Math.round(w * 0.18),
+      Math.round(h * 0.18),
+      Math.round(w * 0.32),
+      Math.round(h * 0.04),
+      Math.round(w * 0.44),
+      Math.round(h * 0.18),
+    );
+    g.fillTriangle(
+      Math.round(w * 0.56),
+      Math.round(h * 0.18),
+      Math.round(w * 0.68),
+      Math.round(h * 0.04),
+      Math.round(w * 0.82),
+      Math.round(h * 0.18),
+    );
     g.fillStyle(c.ear, 0.7);
-    g.fillTriangle(Math.round(w*0.22), Math.round(h*0.17), Math.round(w*0.32), Math.round(h*0.08), Math.round(w*0.42), Math.round(h*0.17));
-    g.fillTriangle(Math.round(w*0.58), Math.round(h*0.17), Math.round(w*0.68), Math.round(h*0.08), Math.round(w*0.78), Math.round(h*0.17));
+    g.fillTriangle(
+      Math.round(w * 0.22),
+      Math.round(h * 0.17),
+      Math.round(w * 0.32),
+      Math.round(h * 0.08),
+      Math.round(w * 0.42),
+      Math.round(h * 0.17),
+    );
+    g.fillTriangle(
+      Math.round(w * 0.58),
+      Math.round(h * 0.17),
+      Math.round(w * 0.68),
+      Math.round(h * 0.08),
+      Math.round(w * 0.78),
+      Math.round(h * 0.17),
+    );
 
     // Eyes
     g.fillStyle(0x1a1a2e, 1);
-    g.fillEllipse(Math.round(w*0.35), Math.round(h*0.26), Math.round(w*0.12), Math.round(h*0.10));
-    g.fillEllipse(Math.round(w*0.65), Math.round(h*0.26), Math.round(w*0.12), Math.round(h*0.10));
+    g.fillEllipse(
+      Math.round(w * 0.35),
+      Math.round(h * 0.26),
+      Math.round(w * 0.12),
+      Math.round(h * 0.1),
+    );
+    g.fillEllipse(
+      Math.round(w * 0.65),
+      Math.round(h * 0.26),
+      Math.round(w * 0.12),
+      Math.round(h * 0.1),
+    );
     g.fillStyle(0x00dd77, 0.65);
-    g.fillEllipse(Math.round(w*0.35), Math.round(h*0.25), Math.round(w*0.07), Math.round(h*0.07));
-    g.fillEllipse(Math.round(w*0.65), Math.round(h*0.25), Math.round(w*0.07), Math.round(h*0.07));
+    g.fillEllipse(
+      Math.round(w * 0.35),
+      Math.round(h * 0.25),
+      Math.round(w * 0.07),
+      Math.round(h * 0.07),
+    );
+    g.fillEllipse(
+      Math.round(w * 0.65),
+      Math.round(h * 0.25),
+      Math.round(w * 0.07),
+      Math.round(h * 0.07),
+    );
 
     // Nose
     g.fillStyle(0xff6699, 1);
-    g.fillTriangle(Math.round(w*0.50), Math.round(h*0.34), Math.round(w*0.43), Math.round(h*0.37), Math.round(w*0.57), Math.round(h*0.37));
+    g.fillTriangle(
+      Math.round(w * 0.5),
+      Math.round(h * 0.34),
+      Math.round(w * 0.43),
+      Math.round(h * 0.37),
+      Math.round(w * 0.57),
+      Math.round(h * 0.37),
+    );
 
     // Stripes
     g.fillStyle(c.stripe, 0.5);
-    g.fillRect(Math.round(w*0.22), Math.round(h*0.52), Math.round(w*0.09), Math.round(h*0.20));
-    g.fillRect(Math.round(w*0.44), Math.round(h*0.50), Math.round(w*0.09), Math.round(h*0.22));
-    g.fillRect(Math.round(w*0.66), Math.round(h*0.52), Math.round(w*0.09), Math.round(h*0.20));
+    g.fillRect(
+      Math.round(w * 0.22),
+      Math.round(h * 0.52),
+      Math.round(w * 0.09),
+      Math.round(h * 0.2),
+    );
+    g.fillRect(
+      Math.round(w * 0.44),
+      Math.round(h * 0.5),
+      Math.round(w * 0.09),
+      Math.round(h * 0.22),
+    );
+    g.fillRect(
+      Math.round(w * 0.66),
+      Math.round(h * 0.52),
+      Math.round(w * 0.09),
+      Math.round(h * 0.2),
+    );
 
     // Tail
     g.fillStyle(c.body, 1);
-    g.fillEllipse(Math.round(w*0.88), Math.round(h*0.80), Math.round(w*0.22), Math.round(h*0.13));
-    g.fillEllipse(Math.round(w*0.96), Math.round(h*0.70), Math.round(w*0.14), Math.round(h*0.16));
+    g.fillEllipse(
+      Math.round(w * 0.88),
+      Math.round(h * 0.8),
+      Math.round(w * 0.22),
+      Math.round(h * 0.13),
+    );
+    g.fillEllipse(
+      Math.round(w * 0.96),
+      Math.round(h * 0.7),
+      Math.round(w * 0.14),
+      Math.round(h * 0.16),
+    );
 
     // Legs
     g.fillStyle(c.leg, 1);
-    g.fillRect(Math.round(w*0.22), Math.round(h*0.84), Math.round(w*0.16), Math.round(h*0.14));
-    g.fillRect(Math.round(w*0.60), Math.round(h*0.84), Math.round(w*0.16), Math.round(h*0.14));
+    g.fillRect(
+      Math.round(w * 0.22),
+      Math.round(h * 0.84),
+      Math.round(w * 0.16),
+      Math.round(h * 0.14),
+    );
+    g.fillRect(
+      Math.round(w * 0.6),
+      Math.round(h * 0.84),
+      Math.round(w * 0.16),
+      Math.round(h * 0.14),
+    );
 
     g.generateTexture(`day5_cat_${variant}`, w, h);
     g.destroy();
   }
 
   _genHillTile(width, height) {
-    const h = Math.round(height * 0.30);
+    const h = Math.round(height * 0.3);
     const g = this.add.graphics();
     g.fillStyle(0xd4a853, 1);
     g.fillRect(0, 0, 256, h);
     const layers = [
-      { c: 0xb8954a, shapes: [{ x: 0, y: 0.30, w: 90, hh: 0.70 }, { x: 60, y: 0.18, w: 110, hh: 0.82 }, { x: 155, y: 0.24, w: 100, hh: 0.76 }] },
-      { c: 0xc4a058, shapes: [{ x: 0, y: 0.45, w: 70, hh: 0.55 }, { x: 50, y: 0.35, w: 80, hh: 0.65 }, { x: 110, y: 0.40, w: 90, hh: 0.60 }, { x: 185, y: 0.38, w: 71, hh: 0.62 }] },
+      {
+        c: 0xb8954a,
+        shapes: [
+          { x: 0, y: 0.3, w: 90, hh: 0.7 },
+          { x: 60, y: 0.18, w: 110, hh: 0.82 },
+          { x: 155, y: 0.24, w: 100, hh: 0.76 },
+        ],
+      },
+      {
+        c: 0xc4a058,
+        shapes: [
+          { x: 0, y: 0.45, w: 70, hh: 0.55 },
+          { x: 50, y: 0.35, w: 80, hh: 0.65 },
+          { x: 110, y: 0.4, w: 90, hh: 0.6 },
+          { x: 185, y: 0.38, w: 71, hh: 0.62 },
+        ],
+      },
     ];
     for (const layer of layers) {
       g.fillStyle(layer.c, 1);
-      for (const sh of layer.shapes) g.fillRect(Math.round(sh.x), Math.round(sh.y * h), Math.round(sh.w), Math.round(sh.hh * h));
+      for (const sh of layer.shapes)
+        g.fillRect(
+          Math.round(sh.x),
+          Math.round(sh.y * h),
+          Math.round(sh.w),
+          Math.round(sh.hh * h),
+        );
     }
     g.generateTexture("bus_hills", 256, h);
     g.destroy();
@@ -155,19 +273,25 @@ export class Day5Scene extends Phaser.Scene {
 
   _genGroundTile() {
     const g = this.add.graphics();
-    g.fillStyle(0xd4a853, 1); g.fillRect(0, 0, 64, 16);
+    g.fillStyle(0xd4a853, 1);
+    g.fillRect(0, 0, 64, 16);
     g.fillStyle(0xc09040, 0.5);
-    g.fillRect(5, 4, 3, 2); g.fillRect(22, 9, 4, 2);
-    g.fillRect(40, 5, 3, 3); g.fillRect(54, 11, 4, 2);
+    g.fillRect(5, 4, 3, 2);
+    g.fillRect(22, 9, 4, 2);
+    g.fillRect(40, 5, 3, 3);
+    g.fillRect(54, 11, 4, 2);
     g.generateTexture("bus_ground", 64, 16);
     g.destroy();
   }
 
   _genRoadTile(height) {
-    const roadH = Math.round(height * 0.20);
+    const roadH = Math.round(height * 0.2);
     const g = this.add.graphics();
-    g.fillStyle(0x3a3a3a, 1); g.fillRect(0, 0, 64, roadH);
-    g.fillStyle(0x424242, 0.5); g.fillRect(8, 5, 4, 2); g.fillRect(35, 12, 5, 2);
+    g.fillStyle(0x3a3a3a, 1);
+    g.fillRect(0, 0, 64, roadH);
+    g.fillStyle(0x424242, 0.5);
+    g.fillRect(8, 5, 4, 2);
+    g.fillRect(35, 12, 5, 2);
     g.generateTexture("bus_road_tile", 64, roadH);
     g.destroy();
   }
@@ -182,39 +306,70 @@ export class Day5Scene extends Phaser.Scene {
 
     const sun = this.add.graphics();
     sun.fillStyle(0xfff0aa, 0.35);
-    sun.fillCircle(Math.round(width * 0.78), Math.round(height * 0.14), Math.round(height * 0.11));
+    sun.fillCircle(
+      Math.round(width * 0.78),
+      Math.round(height * 0.14),
+      Math.round(height * 0.11),
+    );
     sun.fillStyle(0xffe570, 1);
-    sun.fillCircle(Math.round(width * 0.78), Math.round(height * 0.14), Math.round(height * 0.065));
+    sun.fillCircle(
+      Math.round(width * 0.78),
+      Math.round(height * 0.14),
+      Math.round(height * 0.065),
+    );
     sun.setDepth(1).setScrollFactor(0);
 
-    const hillH = Math.round(height * 0.30);
+    const hillH = Math.round(height * 0.3);
     const hillY = Math.round(height * 0.36);
     const hillSprite = this.add.tileSprite(0, hillY, width, hillH, "bus_hills");
     hillSprite.setOrigin(0, 0).setDepth(2).setScrollFactor(0);
     this._scrollLayers.push({ sprite: hillSprite, rate: 0.09 });
 
-    const groundY = Math.round(height * 0.60);
-    const groundSprite = this.add.tileSprite(0, groundY, width, height - groundY, "bus_ground");
+    const groundY = Math.round(height * 0.6);
+    const groundSprite = this.add.tileSprite(
+      0,
+      groundY,
+      width,
+      height - groundY,
+      "bus_ground",
+    );
     groundSprite.setOrigin(0, 0).setDepth(3).setScrollFactor(0);
     this._scrollLayers.push({ sprite: groundSprite, rate: 0.6 });
 
-    const roadH = Math.round(height * 0.20);
+    const roadH = Math.round(height * 0.2);
     const roadY = Math.round(height * 0.63);
     this._roadY = roadY;
     this._roadH = roadH;
 
-    const roadSprite = this.add.tileSprite(0, roadY, width, roadH, "bus_road_tile");
+    const roadSprite = this.add.tileSprite(
+      0,
+      roadY,
+      width,
+      roadH,
+      "bus_road_tile",
+    );
     roadSprite.setOrigin(0, 0).setDepth(7).setScrollFactor(0);
     this._scrollLayers.push({ sprite: roadSprite, rate: 1.0 });
 
     const edges = this.add.graphics();
     edges.fillStyle(0xffffff, 0.85);
     edges.fillRect(0, roadY, width, Math.round(height * 0.005));
-    edges.fillRect(0, roadY + roadH - Math.round(height * 0.005), width, Math.round(height * 0.005));
+    edges.fillRect(
+      0,
+      roadY + roadH - Math.round(height * 0.005),
+      width,
+      Math.round(height * 0.005),
+    );
     edges.setDepth(7).setScrollFactor(0);
 
     if (this.textures.exists("road_line")) {
-      const dash = this.add.tileSprite(0, roadY + roadH / 2, width, Math.round(height * 0.008), "road_line");
+      const dash = this.add.tileSprite(
+        0,
+        roadY + roadH / 2,
+        width,
+        Math.round(height * 0.008),
+        "road_line",
+      );
       dash.setOrigin(0, 0.5).setDepth(7).setScrollFactor(0).setAlpha(0.65);
       this._scrollLayers.push({ sprite: dash, rate: 3.0 });
     }
@@ -224,13 +379,17 @@ export class Day5Scene extends Phaser.Scene {
 
   _buildMidPool(width, height, roadY, roadH) {
     let seed = 73;
-    const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
     for (let i = 0; i < 10; i++) {
       const x = (width / 10) * i + rand() * 60;
       const side = i % 2;
-      const y = side === 0
-        ? roadY - Math.round(height * 0.03) - rand() * height * 0.04
-        : roadY + roadH + Math.round(height * 0.01) + rand() * height * 0.03;
+      const y =
+        side === 0
+          ? roadY - Math.round(height * 0.03) - rand() * height * 0.04
+          : roadY + roadH + Math.round(height * 0.01) + rand() * height * 0.03;
       const type = Math.floor(rand() * 3);
       const obj = this._drawRoadsideObj(x, y, height, type);
       obj.setDepth(side === 0 ? 6 : 9).setScrollFactor(0);
@@ -241,12 +400,16 @@ export class Day5Scene extends Phaser.Scene {
   _drawRoadsideObj(x, y, height, type) {
     const g = this.add.graphics();
     const u = height * 0.025;
-    g.x = x; g.y = y;
+    g.x = x;
+    g.y = y;
     if (type === 0) {
-      g.fillStyle(0x6a8a30, 1); g.fillEllipse(0, 0, u * 2.6, u * 1.6);
-      g.fillStyle(0x4a6a22, 1); g.fillEllipse(u * 0.7, -u * 0.4, u * 1.8, u * 1.2);
+      g.fillStyle(0x6a8a30, 1);
+      g.fillEllipse(0, 0, u * 2.6, u * 1.6);
+      g.fillStyle(0x4a6a22, 1);
+      g.fillEllipse(u * 0.7, -u * 0.4, u * 1.8, u * 1.2);
     } else if (type === 1) {
-      g.fillStyle(0x9a8a70, 1); g.fillEllipse(0, 0, u * 2.8, u * 1.8);
+      g.fillStyle(0x9a8a70, 1);
+      g.fillEllipse(0, 0, u * 2.8, u * 1.8);
     } else {
       g.fillStyle(0x3a6a20, 1);
       g.fillTriangle(-u * 0.7, u * 0.1, u * 0.7, u * 0.1, 0, -u * 2.5);
@@ -300,7 +463,11 @@ export class Day5Scene extends Phaser.Scene {
 
     // Weave — vertical strips
     g.fillStyle(0x6b3a1f, 0.45);
-    for (let x = -bw / 2 + Math.round(3 * s); x < bw / 2 - 2; x += Math.round(6 * s)) {
+    for (
+      let x = -bw / 2 + Math.round(3 * s);
+      x < bw / 2 - 2;
+      x += Math.round(6 * s)
+    ) {
       g.fillRect(x, 2, Math.round(2 * s), bh - 4);
     }
     // Weave — horizontal strips
@@ -362,7 +529,10 @@ export class Day5Scene extends Phaser.Scene {
 
   _spawnCat(width, height) {
     const s = this._s(height);
-    const x = Phaser.Math.Between(Math.round(width * 0.05), Math.round(width * 0.95));
+    const x = Phaser.Math.Between(
+      Math.round(width * 0.05),
+      Math.round(width * 0.95),
+    );
     const variants = ["orange", "black", "white", "pink"];
     const key = `day5_cat_${variants[Phaser.Math.Between(0, variants.length - 1)]}`;
     const img = this.add.image(x, -Math.round(22 * s), key);
@@ -392,8 +562,8 @@ export class Day5Scene extends Phaser.Scene {
 
     // Basket opening is at basketGfx world position (local y=0)
     const bx = this._basketGfx.x;
-    const basketOpenY = this._basketGfx.y;           // top of basket (opening)
-    const basketBotY  = this._basketGfx.y + this._basketH;
+    const basketOpenY = this._basketGfx.y; // top of basket (opening)
+    const basketBotY = this._basketGfx.y + this._basketH;
 
     for (let i = this._cats.length - 1; i >= 0; i--) {
       const cat = this._cats[i];
@@ -437,6 +607,18 @@ export class Day5Scene extends Phaser.Scene {
     this._cats.splice(i, 1);
     this._score++;
     this._updateHUD();
+
+    const color = cat.img.texture.key.replace("day5_cat_", "");
+    this._lastColors.push(color);
+    if (this._lastColors.length > 3) this._lastColors.shift();
+    if (
+      this._lastColors.length === 3 &&
+      this._lastColors.every((c) => c === color)
+    ) {
+      this._showReprimand();
+      this._lastColors = [];
+    }
+
     if (this._score >= this._TARGET) {
       this.time.delayedCall(400, () => this._endScene());
     }
@@ -454,7 +636,12 @@ export class Day5Scene extends Phaser.Scene {
     flash.fillStyle(0xff2222, 0.28);
     flash.fillRect(0, 0, this.scale.width, this.scale.height);
     flash.setDepth(20000).setScrollFactor(0);
-    this.tweens.add({ targets: flash, alpha: 0, duration: 280, onComplete: () => flash.destroy() });
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 280,
+      onComplete: () => flash.destroy(),
+    });
 
     if (this._lives <= 0) this._triggerGameOver();
   }
@@ -472,21 +659,31 @@ export class Day5Scene extends Phaser.Scene {
       strokeThickness: 3,
     });
 
-    this._scoreText = this.add.text(14, 10, `חתולים: 0 / ${this._TARGET}`, style("#ffffff"));
+    this._scoreText = this.add.text(
+      14,
+      10,
+      `חתולים: 0 / ${this._TARGET}`,
+      style("#ffffff"),
+    );
     this._scoreText.setDepth(1000).setScrollFactor(0);
 
     this._livesText = this.add.text(width - 14, 10, "♥ ♥ ♥", style("#ff4466"));
     this._livesText.setOrigin(1, 0).setDepth(1000).setScrollFactor(0);
 
     // Speed-boost indicator — bottom centre, above the joystick
-    this._speedText = this.add.text(width / 2, height - Math.round(height * 0.06), "", {
-      fontFamily: "system-ui, sans-serif",
-      fontSize: `${Math.max(10, Math.round(height * 0.034))}px`,
-      fontWeight: "bold",
-      color: "#ffdd00",
-      stroke: "#000000",
-      strokeThickness: 3,
-    });
+    this._speedText = this.add.text(
+      width / 2,
+      height - Math.round(height * 0.06),
+      "",
+      {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: `${Math.max(10, Math.round(height * 0.034))}px`,
+        fontWeight: "bold",
+        color: "#ffdd00",
+        stroke: "#000000",
+        strokeThickness: 3,
+      },
+    );
     this._speedText.setOrigin(0.5, 1).setDepth(1000).setScrollFactor(0);
   }
 
@@ -503,9 +700,8 @@ export class Day5Scene extends Phaser.Scene {
     const onTap = () => {
       if (!this._gameActive) return;
       const now = this.time.now;
-      this._tapCombo = now - this._lastTapTime < 400
-        ? Math.min(this._tapCombo + 1, 5)
-        : 1;
+      this._tapCombo =
+        now - this._lastTapTime < 400 ? Math.min(this._tapCombo + 1, 5) : 1;
       this._lastTapTime = now;
       this._applyTapCombo();
 
@@ -530,9 +726,9 @@ export class Day5Scene extends Phaser.Scene {
     const mult = 1 + (this._tapCombo / 5) * 5;
     this._player.movement.config.speed = Math.round(this._baseSpeed * mult);
 
-    if (this._tapCombo >= 4)      this._player.setTint(0xff8800);
+    if (this._tapCombo >= 4) this._player.setTint(0xff8800);
     else if (this._tapCombo >= 2) this._player.setTint(0xffdd44);
-    else                           this._player.clearTint();
+    else this._player.clearTint();
 
     if (this._speedText) {
       if (this._tapCombo > 0) {
@@ -550,7 +746,10 @@ export class Day5Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._gameActive = false;
     if (this._player) this._player.disable();
-    for (const cat of this._cats) { this.tweens.killTweensOf(cat.img); cat.img.destroy(); }
+    for (const cat of this._cats) {
+      this.tweens.killTweensOf(cat.img);
+      cat.img.destroy();
+    }
     this._cats = [];
 
     const { width, height } = this.scale;
@@ -559,20 +758,30 @@ export class Day5Scene extends Phaser.Scene {
     overlay.fillRect(0, 0, width, height);
     overlay.setDepth(10000).setScrollFactor(0).setAlpha(0);
 
-    const title = this.add.text(width / 2, height / 2 - height * 0.08, "GAME OVER", {
-      fontFamily: "Impact, sans-serif",
-      fontSize: `${Math.round(height * 0.12)}px`,
-      color: "#ff2a5f",
-      stroke: "#000000",
-      strokeThickness: 6,
-    });
+    const title = this.add.text(
+      width / 2,
+      height / 2 - height * 0.08,
+      "GAME OVER",
+      {
+        fontFamily: "Impact, sans-serif",
+        fontSize: `${Math.round(height * 0.12)}px`,
+        color: "#ff2a5f",
+        stroke: "#000000",
+        strokeThickness: 6,
+      },
+    );
     title.setOrigin(0.5).setDepth(10001).setScrollFactor(0).setAlpha(0);
 
-    const sub = this.add.text(width / 2, height / 2 + height * 0.06, "טפו לנסות שוב", {
-      fontFamily: "monospace",
-      fontSize: `${Math.round(height * 0.042)}px`,
-      color: "#ffffff",
-    });
+    const sub = this.add.text(
+      width / 2,
+      height / 2 + height * 0.06,
+      "טפו לנסות שוב",
+      {
+        fontFamily: "monospace",
+        fontSize: `${Math.round(height * 0.042)}px`,
+        color: "#ffffff",
+      },
+    );
     sub.setOrigin(0.5).setDepth(10001).setScrollFactor(0).setAlpha(0);
 
     this.tweens.add({
@@ -580,7 +789,13 @@ export class Day5Scene extends Phaser.Scene {
       alpha: 1,
       duration: 700,
       onComplete: () => {
-        this.tweens.add({ targets: sub, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
+        this.tweens.add({
+          targets: sub,
+          alpha: 0.3,
+          duration: 600,
+          yoyo: true,
+          repeat: -1,
+        });
         this.input.once("pointerdown", () => this.scene.restart());
       },
     });
@@ -593,10 +808,41 @@ export class Day5Scene extends Phaser.Scene {
     this._sceneEnded = true;
     this._gameActive = false;
     if (this._player) this._player.disable();
-    for (const cat of this._cats) { this.tweens.killTweensOf(cat.img); cat.img.destroy(); }
+    for (const cat of this._cats) {
+      this.tweens.killTweensOf(cat.img);
+      cat.img.destroy();
+    }
     this._cats = [];
     this.cameras.main.fade(700, 0, 0, 0);
-    this.cameras.main.once("camerafadeoutcomplete", () => this.events.emit("complete"));
+    this.cameras.main.once("camerafadeoutcomplete", () =>
+      this.events.emit("complete"),
+    );
+  }
+
+  _showReprimand() {
+    const { width, height } = this.scale;
+    const txt = this.add.text(
+      width / 2,
+      height / 2,
+      "אי אפשר שכולם יראו אותו הדבר \nהחוק דורש ייצוג הולם!",
+      {
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontSize: `${Math.round(height * 0.055)}px`,
+        fontWeight: "900",
+        color: "#ff2a5f",
+        stroke: "#000000",
+        strokeThickness: Math.round(height * 0.01),
+        align: "center",
+      },
+    );
+    txt.setOrigin(0.5).setDepth(5000).setScrollFactor(0);
+    this.tweens.add({
+      targets: txt,
+      alpha: 0,
+      delay: 2200,
+      duration: 400,
+      onComplete: () => txt.destroy(),
+    });
   }
 
   _s(height) {
