@@ -10,7 +10,7 @@
         <!-- Dialogue box with dynamic height -->
         <div class="solberg-dialogue-box">
           <div class="dialogue-text">
-            {{ typedText }}<span v-if="isTyping" class="typewriter-cursor">|</span>
+            {{ questionText }}
           </div>
         </div>
 
@@ -61,9 +61,6 @@ export default {
       // State trackers
       selectedIndex: 0,
       isAnswered: false,
-      isTyping: false,
-      typedText: '',
-      typingInterval: null,
       feedbackActive: false
     };
   },
@@ -74,7 +71,6 @@ export default {
   unmounted() {
     window.removeEventListener('show-trivia', this.handleShowTrivia);
     window.removeEventListener('keydown', this.handleKeyDown);
-    this.clearTypingEffect();
   },
   methods: {
     handleShowTrivia(event) {
@@ -92,34 +88,9 @@ export default {
       this.isAnswered = false;
       this.feedbackActive = false;
       this.isActive = true;
-
-      // Start typewriter text animation
-      this.startTypewriterText();
     },
 
-    startTypewriterText() {
-      this.clearTypingEffect();
-      this.isTyping = true;
-      this.typedText = '';
-      let charIndex = 0;
 
-      this.typingInterval = setInterval(() => {
-        if (charIndex >= this.questionText.length) {
-          this.clearTypingEffect();
-          this.isTyping = false;
-          return;
-        }
-        this.typedText += this.questionText.charAt(charIndex);
-        charIndex++;
-      }, 30); // 30ms character typing rate
-    },
-
-    clearTypingEffect() {
-      if (this.typingInterval) {
-        clearInterval(this.typingInterval);
-        this.typingInterval = null;
-      }
-    },
 
     getOptionLabel(index) {
       return ['A', 'B', 'C', 'D'][index];
@@ -147,9 +118,6 @@ export default {
       if (this.isAnswered) return;
       this.isAnswered = true;
       this.feedbackActive = true;
-      this.clearTypingEffect();
-      this.isTyping = false;
-      this.typedText = this.questionText; // complete typewriter instantly
 
       const isCorrect = index === this.correctIndex;
 
