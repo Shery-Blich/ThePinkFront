@@ -3,39 +3,40 @@
  */
 
 export const DAY_1_INTRO_DIALOG = [
-  { speaker: 'HQ', text: 'Alert! Enemy targeting drones detected in Kiryat Shmona road.' },
-  { speaker: 'Player', text: 'Understood. I need to dodge them to reach the assembly point.' },
-  { speaker: 'HQ', text: 'Keep moving and shift directions to throw off their targeting sensors. Good luck!' }
+  { speaker: 'מטה', text: 'זהירות! זוהו רחפני תקיפה של האויב בכביש בקריית שמונה.' },
+  { speaker: 'שלומית', text: 'אני צריכה לחמוק מהם כדי להגיע לנקודת ההתכנסות.' },
+  { speaker: 'מטה', text: 'המשיכי לזוז בשני הכיוונים כדי לבלבל את חיישני הכטב״ם. בהצלחה!' }
 ];
 
+// NOTE: currently unused — the live Day-1 ending shows the inline "great time for shopping!"
+// dialog in day-1-scene.js. Kept (translated) in case it's re-enabled.
 export const DAY_1_VICTORY_DIALOG = [
-  { speaker: 'Player', text: 'Phew! That was close. All 10 drones targeted, all 10 dodged!' },
-  { speaker: 'HQ', text: 'Incredible movement! You avoided them flawlessly.' },
-  { speaker: 'Player', text: 'I see Kiryat Shmona assembly point just ahead. Moving in.' },
-  { speaker: 'HQ', text: 'Excellent. The Pink Front is safe. Prepare for extraction.' }
+  { speaker: 'שלומית', text: 'אוף! זה היה קרוב. כל 10 הרחפנים כיוונו אליי — ומכולם חמקתי!' },
+  { speaker: 'מטה', text: 'תנועה מדהימה! התחמקת מהם בצורה מושלמת.' },
+  { speaker: 'שלומית', text: 'אני רואה את נקודת ההתכנסות בקריית שמונה ממש מקדימה. מתקדמת.' },
+  { speaker: 'מטה', text: 'מצוין. החזית הוורודה מאובטחת. התכונני לחילוץ.' }
 ];
 
 export const DAY_3_INTRO_DIALOG = [
-  { speaker: 'HQ', text: 'You have arrived in Jerusalem! Drones are patrolling the street!' },
-  { speaker: 'Player', text: 'I see them. And the ancient Jerusalem stones under my feet feel unstable!' },
-  { speaker: 'HQ', text: 'Watch out! If you stand in one place for too long, the stone road will crumble!' },
-  { speaker: 'Player', text: 'Got it. Keep moving, dodge drones, and do not fall through!' }
+  { speaker: 'מטה', text: 'הגענו לירושלים! רחפנים חגים מעלינו!' },
+  { speaker: 'שלומית', text: 'אני רואה אותם. ואבני ירושלים העתיקות מתחת לרגליי מרגישות לא יציבות!' },
+  { speaker: 'מטה', text: 'היזהרי! אם תעמדי במקום אחד יותר מדי זמן, כביש האבן יתמוטט!' },
+  { speaker: 'שלומית', text: 'הבנתי. להמשיך לזוז, לחמוק מרחפנים, ולא ליפול!' }
 ];
 
 export const DAY_3_VICTORY_DIALOG = [
-  { speaker: 'Player', text: 'I made it to the polling station!' },
-  { speaker: 'HQ', text: 'Incredible! You dodged the drones and survived the crumbling stones.' },
-  { speaker: 'Player', text: 'Address updated, vote cast. The Pink Front has won!' },
-  { speaker: 'HQ', text: 'Mission accomplished. Victory is ours!' }
+  { speaker: 'שלומית', text: 'הגעתי לקלפי!' },
+  { speaker: 'מטה', text: 'מדהים! חמקת מהרחפנים ושרדת את האבנים המתמוטטות.' },
+  { speaker: 'שלומית', text: 'הכתובת עודכנה, הקול נמסר. החזית הוורודה ניצחה!' },
+  { speaker: 'מטה', text: 'המשימה הושלמה. הניצחון שלנו!' }
 ];
 
 export const KOTEL_INTRO_DIALOG = [
-  { speaker: 'HQ', text: 'We reached the Western Wall! But wait, look over there...' },
-  { speaker: 'Player', text: 'Is that the President? He seems very distressed and is running around!' },
-  { speaker: 'HQ', text: 'Quick! Go chase him down and give him a hug. He really needs it!' }
+  { speaker: 'מטה', text: 'הגענו לכותל המערבי! אבל רגע, תראה שם...' },
+  { speaker: 'שלומי', text: 'זה הנשיא? הוא נראה ממש במצוקה ורץ במהירות!' },
+  { speaker: 'מטה', text: 'מהר! רדוף אחריו ותן לו חיבוק. הוא ממש זקוק לזה!' }
 ];
 
 export const KOTEL_VICTORY_DIALOG = [
-  { speaker: 'HQ', text: 'you catched the presdient for a hug, he needs it!' }
+  { speaker: 'מטה', text: 'תפסת את הנשיא לחיבוק — הוא היה זקוק לזה!' }
 ];
-

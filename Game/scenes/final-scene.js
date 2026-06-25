@@ -42,7 +42,7 @@ export class FinalScene extends Phaser.Scene {
 
     // --- Start Climax Dialogue ---
     const dialogueLines = [
-      { speaker: 'Player', text: 'Wow, I finally reached the voting booth!' }
+      { speaker: 'שלומי', text: 'וואו, סוף סוף הגעתי לתא ההצבעה!' }
     ];
 
     const dialog = new DialogSystem(this, dialogueLines, () => {
@@ -73,7 +73,7 @@ export class FinalScene extends Phaser.Scene {
     booth.fillRect(cx - 28 * this.s, cy - 23 * this.s, 56 * this.s, 2 * this.s);
 
     // Box label
-    const voteLabel = this.add.text(cx, cy + 15 * this.s, 'VOTE', {
+    const voteLabel = this.add.text(cx, cy + 15 * this.s, 'הצביעו', {
       fontFamily: 'monospace',
       fontSize: `${18 * this.s}px`,
       fontWeight: '900',

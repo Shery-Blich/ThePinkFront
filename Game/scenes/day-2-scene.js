@@ -371,7 +371,7 @@ export class Day2Scene extends Phaser.Scene {
     this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981);
     this.physics.add.existing(this.finishZone, true);
 
-    const label = this.add.text(x, y - 100, 'Cashier', {
+    const label = this.add.text(x, y - 100, 'קופה', {
       fontFamily: 'Arial',
       fontSize: '16px',
       color: '#ffffff',
@@ -397,8 +397,8 @@ export class Day2Scene extends Phaser.Scene {
   _updateHUD() {
     if (this._debugText) {
       this._debugText.setText([
-        `Budget: ${this._formatPrice(this.score)}`,
-        'Use joystick/arrows to move, tap/space to jump',
+        `תקציב: ${this._formatPrice(this.score)}`,
+        'זוז עם הג׳ויסטיק/חיצים, הקש/רווח כדי לקפוץ',
       ]);
     }
   }
@@ -509,7 +509,7 @@ export class Day2Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'TAP ANYWHERE TO TRY AGAIN', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'הקישו בכל מקום כדי לנסות שוב', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.045)}px`,
       color: '#ffffff',
@@ -553,7 +553,7 @@ export class Day2Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'SCENE CLEAR', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'השלב הושלם', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${Math.round(this.scale.height * 0.1)}px`,
       color: '#00ffcc',
@@ -566,7 +566,7 @@ export class Day2Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',

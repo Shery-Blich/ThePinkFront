@@ -124,9 +124,9 @@ export class Day1Scene extends Phaser.Scene {
     // --- HUD ---
     this._createHUD();
 
-    this.player.on('move-start', () => this._updateHUD('Walking...'));
-    this.player.on('move-end', () => this._updateHUD('Drag joystick to move →'));
-    this.player.on('move-blocked', () => this._updateHUD('Blocked!'));
+    this.player.on('move-start', () => this._updateHUD('הולכת...'));
+    this.player.on('move-end', () => this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←'));
+    this.player.on('move-blocked', () => this._updateHUD('חסום!'));
 
     // --- Particles ---
     this.explosionParticles = this.add.particles(0, 0, 'particle', {
@@ -171,10 +171,10 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     // --- Play Intro Cutscene Dialogue ---
-    this._updateHUD('Incoming transmission...');
+    this._updateHUD('שידור נכנס');
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
       this.player.enable();
-      this._updateHUD('Drag joystick to move →');
+      this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←');
     });
     introDialog.start();
 
@@ -306,7 +306,7 @@ export class Day1Scene extends Phaser.Scene {
   /** @private */
   _createHUD() {
     const fontSize = Math.max(12, Math.round(this.scale.height * 0.025));
-    this._hudText = this.add.text(10, 10, 'Drag joystick to move →', {
+    this._hudText = this.add.text(10, 10, 'גררי את הג׳ויסטיק כדי לזוז ←', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ffffff',
@@ -316,7 +316,7 @@ export class Day1Scene extends Phaser.Scene {
     this._hudText.setScrollFactor(0);
     this._hudText.setDepth(1000);
 
-    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'Drones Dodged: 0/10', {
+    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'רחפנים שחמקת מהם: 0/10', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ff2a5f',
@@ -336,7 +336,7 @@ export class Day1Scene extends Phaser.Scene {
 
   _updateDroneHUD(count) {
     if (this._droneHudText) {
-      this._droneHudText.setText(`Drones Dodged: ${count}/10`);
+      this._droneHudText.setText(`רחפנים שחמקת מהם: ${count}/10`);
     }
   }
 
@@ -383,7 +383,7 @@ export class Day1Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'TAP ANYWHERE TO TRY AGAIN', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'הקישו בכל מקום כדי לנסות שוב', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.045)}px`,
       color: '#ffffff',
@@ -422,7 +422,7 @@ export class Day1Scene extends Phaser.Scene {
     this.supermarket.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
     
     // Add text label "SUPER"
-    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'SUPER', {
+    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'סופר', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${12 * s}px`,
       color: '#ff2a5f',
@@ -460,7 +460,7 @@ export class Day1Scene extends Phaser.Scene {
     const frontX = superX;
     const frontY = this.roadTop + 15 * s;
 
-    this._updateHUD('Going to the supermarket...');
+    this._updateHUD('הולכת לסופרמרקט...');
 
     this.tweens.add({
       targets: this.player,
@@ -487,9 +487,9 @@ export class Day1Scene extends Phaser.Scene {
 
             // 5. The final dialog will start to trigger the end scene as usual
             this.time.delayedCall(300, () => {
-              this._updateHUD('Great time for shopping!');
+              this._updateHUD('זמן מצוין לקניות!');
               const dialog = new DialogSystem(this, [
-                { speaker: 'Player', text: 'great time for shopping!' }
+                { speaker: 'שלומית', text: 'זמן מצוין לקניות!' }
               ], () => {
                 this.showVictoryScreen();
               });
@@ -509,7 +509,7 @@ export class Day1Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'SCENE CLEAR', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'השלב הושלם', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${Math.round(this.scale.height * 0.1)}px`,
       color: '#00ffcc',
@@ -522,7 +522,7 @@ export class Day1Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',
