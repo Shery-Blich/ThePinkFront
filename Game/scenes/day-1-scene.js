@@ -3,6 +3,9 @@ import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { NPC } from '../entities/npc.js';
 import { TapToMove } from '../systems/tap-to-move.js';
+import { DialogSystem } from '../systems/dialog-system.js';
+import { DroneManager } from '../systems/drone-manager.js';
+import { DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -38,6 +41,18 @@ export class Day1Scene extends Phaser.Scene {
 
     /** @type {number} */
     this.roadBottom = 0;
+
+    /** @type {boolean} */
+    this.isGameOver = false;
+
+    /** @type {boolean} */
+    this.isSceneOver = false;
+
+    /** @type {DroneManager} */
+    this.droneManager = null;
+
+    /** @type {Phaser.GameObjects.Particles.ParticleEmitter} */
+    this.explosionParticles = null;
   }
 
   create() {
@@ -116,6 +131,49 @@ export class Day1Scene extends Phaser.Scene {
     this.movement.on('move-start', () => this._updateHUD('Walking...'));
     this.movement.on('move-end', () => this._updateHUD('Tap to move →'));
     this.movement.on('move-blocked', () => this._updateHUD('Blocked!'));
+
+    // --- Particles ---
+    this.explosionParticles = this.add.particles(0, 0, 'particle', {
+      speed: { min: 40 * this.s, max: 130 * this.s },
+      scale: { start: 3, end: 0 },
+      lifespan: 500,
+      tint: [0xff0000, 0xff5500, 0xffaa00, 0xffffff],
+      emitting: false
+    });
+    this.explosionParticles.setDepth(2500);
+
+    // --- Drone Spawning & Coordination (Controller/Model) ---
+    this.droneManager = new DroneManager(this, this.player, {
+      particles: this.explosionParticles,
+      roadTop: this.roadTop,
+      roadBottom: this.roadBottom,
+      worldWidth: worldWidth,
+      scale: this.s
+    });
+
+    // Listen to MVC controller notifications
+    this.droneManager.on('drone-exploded', (count) => {
+      this._updateDroneHUD(count);
+    });
+
+    this.droneManager.on('player-hit', () => {
+      this.triggerGameOver();
+    });
+
+    this.droneManager.on('all-drones-dodged', () => {
+      this.triggerSceneOver();
+    });
+
+    this.movement.once('move-start', () => {
+      this.isGameOver = false;
+      this.isSceneOver = false;
+      this.droneManager.start();
+    });
+
+    // Cleanup on shutdown
+    this.events.once('shutdown', () => {
+      if (this.droneManager) this.droneManager.destroy();
+    });
   }
 
   update(time, delta) {
@@ -251,6 +309,16 @@ export class Day1Scene extends Phaser.Scene {
     });
     this._hudText.setScrollFactor(0);
     this._hudText.setDepth(1000);
+
+    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'Drones Dodged: 0/10', {
+      fontFamily: 'monospace',
+      fontSize: `${fontSize}px`,
+      color: '#ff2a5f',
+      backgroundColor: '#000000aa',
+      padding: { x: 6, y: 4 },
+    });
+    this._droneHudText.setScrollFactor(0);
+    this._droneHudText.setDepth(1000);
   }
 
   /** @private */
@@ -258,5 +326,134 @@ export class Day1Scene extends Phaser.Scene {
     if (this._hudText) {
       this._hudText.setText(message);
     }
+  }
+
+  _updateDroneHUD(count) {
+    if (this._droneHudText) {
+      this._droneHudText.setText(`Drones Dodged: ${count}/10`);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scene Game States (GameOver, SceneOver, Victory UI)
+  // ---------------------------------------------------------------------------
+
+  triggerGameOver() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+
+    if (this.movement) this.movement.disable();
+    if (this.droneManager) this.droneManager.stop();
+
+    // Falling / grey out animation
+    this.tweens.add({
+      targets: this.player,
+      angle: 90,
+      tint: 0x333333,
+      y: this.player.y + 5 * this.s,
+      duration: 600,
+      ease: 'Bounce.easeOut'
+    });
+
+    // Screen darken overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.75);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    overlay.setScrollFactor(0);
+    overlay.setDepth(10000);
+    overlay.setAlpha(0);
+
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 40, 'GAME OVER', {
+      fontFamily: 'Impact, sans-serif',
+      fontSize: `${Math.round(this.scale.height * 0.12)}px`,
+      color: '#ff2a5f',
+      stroke: '#000000',
+      strokeThickness: 6,
+      align: 'center'
+    });
+    title.setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(10001);
+    title.setAlpha(0);
+
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'TAP ANYWHERE TO TRY AGAIN', {
+      fontFamily: 'monospace',
+      fontSize: `${Math.round(this.scale.height * 0.045)}px`,
+      color: '#ffffff',
+      align: 'center'
+    });
+    subtitle.setOrigin(0.5);
+    subtitle.setScrollFactor(0);
+    subtitle.setDepth(10001);
+    subtitle.setAlpha(0);
+
+    this.tweens.add({
+      targets: [overlay, title, subtitle],
+      alpha: 1,
+      duration: 800,
+      onComplete: () => {
+        this.input.once('pointerdown', () => {
+          this.scene.restart();
+        });
+      }
+    });
+  }
+
+  triggerSceneOver() {
+    if (this.isSceneOver) return;
+    this.isSceneOver = true;
+
+    if (this.movement) this.movement.disable();
+    if (this.droneManager) this.droneManager.stop();
+
+    // Trigger dialogue overlay using externalized dialogue text (Model)
+    const dialog = new DialogSystem(this, DAY_1_VICTORY_DIALOG, () => {
+      this.showVictoryScreen();
+    });
+    dialog.start();
+  }
+
+  showVictoryScreen() {
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x0f0c1b, 0.85);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    overlay.setScrollFactor(0);
+    overlay.setDepth(10000);
+    overlay.setAlpha(0);
+
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'SCENE CLEAR', {
+      fontFamily: 'Impact, sans-serif',
+      fontSize: `${Math.round(this.scale.height * 0.1)}px`,
+      color: '#00ffcc',
+      stroke: '#000000',
+      strokeThickness: 6,
+      align: 'center'
+    });
+    title.setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(10001);
+    title.setAlpha(0);
+
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO REPLAY', {
+      fontFamily: 'monospace',
+      fontSize: `${Math.round(this.scale.height * 0.04)}px`,
+      color: '#ffffff',
+      align: 'center'
+    });
+    subtitle.setOrigin(0.5);
+    subtitle.setScrollFactor(0);
+    subtitle.setDepth(10001);
+    subtitle.setAlpha(0);
+
+    this.tweens.add({
+      targets: [overlay, title, subtitle],
+      alpha: 1,
+      duration: 800,
+      onComplete: () => {
+        this.input.once('pointerdown', () => {
+          this.scene.restart();
+        });
+      }
+    });
   }
 }
