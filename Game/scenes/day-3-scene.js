@@ -123,7 +123,7 @@ export class Day3Scene extends Phaser.Scene {
 
     // --- HUD ---
     this._createHUD();
-    this._updateHUD('Incoming transmission...');
+    this._updateHUD('שידור נכנס');
 
     // --- Particles ---
     this.explosionParticles = this.add.particles(0, 0, 'particle', {
@@ -186,7 +186,7 @@ export class Day3Scene extends Phaser.Scene {
     this.supermarket.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
     
     // Add text label "SUPER"
-    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'SUPER', {
+    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'סופר', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${12 * s}px`,
       color: '#ff2a5f',
@@ -200,7 +200,7 @@ export class Day3Scene extends Phaser.Scene {
   _startIntroDialogue(roadCenterY, worldWidth, charH) {
     const introDialog = new DialogSystem(this, DAY_3_INTRO_DIALOG, () => {
       // Dialogue ends -> Player character leaves the supermarket door
-      this._updateHUD('Leaving supermarket...');
+      this._updateHUD('יוצאת מהסופרמרקט...');
       const s = this.s;
 
       // Spawn player at the supermarket door
@@ -223,14 +223,14 @@ export class Day3Scene extends Phaser.Scene {
           this.cameras.main.startFollow(this.player, true, 0.1, 0);
 
           // Wait exactly 1 second before starting game (drones & crumbling)
-          this._updateHUD('Get ready...');
+          this._updateHUD('תתכונני...');
           this.time.delayedCall(1000, () => {
             this.player.enable();
             this.isGameOver = false;
             this.isSceneOver = false;
             this.gameplayStarted = true;
             this.droneManager.start();
-            this._updateHUD('Drag joystick to move →');
+            this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←');
           });
         }
       });
@@ -439,7 +439,7 @@ export class Day3Scene extends Phaser.Scene {
   /** @private */
   _createHUD() {
     const fontSize = Math.max(12, Math.round(this.scale.height * 0.025));
-    this._hudText = this.add.text(10, 10, 'Incoming transmission...', {
+    this._hudText = this.add.text(10, 10, 'שידור נכנס', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ffffff',
@@ -449,7 +449,7 @@ export class Day3Scene extends Phaser.Scene {
     this._hudText.setScrollFactor(0);
     this._hudText.setDepth(1000);
 
-    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'Drones Dodged: 0/10', {
+    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'רחפנים שחמקת מהם: 0/10', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ff2a5f',
@@ -469,7 +469,7 @@ export class Day3Scene extends Phaser.Scene {
 
   _updateDroneHUD(count) {
     if (this._droneHudText) {
-      this._droneHudText.setText(`Drones Dodged: ${count}/10`);
+      this._droneHudText.setText(`רחפנים שחמקת מהם: ${count}/10`);
     }
   }
 
@@ -509,7 +509,7 @@ export class Day3Scene extends Phaser.Scene {
     };
 
     if (reason === 'FELL_THROUGH') {
-      gameOverMsg = 'FELL INTO THE PIT';
+      gameOverMsg = 'נפלת לבור';
       deathTweenOptions = {
         targets: this.player,
         scale: 0.1,
@@ -545,7 +545,7 @@ export class Day3Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'TAP ANYWHERE TO TRY AGAIN', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'הקישו בכל מקום כדי לנסות שוב', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.045)}px`,
       color: '#ffffff',
@@ -578,7 +578,7 @@ export class Day3Scene extends Phaser.Scene {
     if (this.droneManager) this.droneManager.stop();
     this.gameplayStarted = false; // Halt crumbling update checks
 
-    this._updateHUD('Extraction bus arriving...');
+    this._updateHUD('אוטובוס החילוץ מגיע...');
 
     // 2. Spawn the Egged Bus offscreen and drive it to stop in front of the player
     const s = this.s;
@@ -653,7 +653,7 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   runVictoryDialogue() {
-    this._updateHUD('Mission success!');
+    this._updateHUD('המשימה הצליחה!');
     const dialog = new DialogSystem(this, DAY_3_VICTORY_DIALOG, () => {
       this.showVictoryScreen();
     });
@@ -668,7 +668,7 @@ export class Day3Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'Kiryat Shmona Cleared on the way to jerusalem!', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'צלחת את קריית שמונה - עכשיו לירושלים!', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${Math.round(this.scale.height * 0.06)}px`, // Scaled down to prevent clipping/wrapping
       color: '#00ffcc',
@@ -681,7 +681,7 @@ export class Day3Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',

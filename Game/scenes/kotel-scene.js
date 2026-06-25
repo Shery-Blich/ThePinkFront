@@ -102,7 +102,7 @@ export class KotelScene extends Phaser.Scene {
     this.president.setTint(0xa0c0ff);
 
     // Floating text label above the President
-    this.presidentLabel = this.add.text(this.president.x, this.president.y - 24 * this.s, 'President 🇮🇱', {
+    this.presidentLabel = this.add.text(this.president.x, this.president.y - 24 * this.s, 'הנשיא 🇮🇱', {
       fontFamily: 'monospace',
       fontSize: `${Math.max(10, Math.round(10 * this.s))}px`,
       fontWeight: 'bold',
@@ -129,16 +129,16 @@ export class KotelScene extends Phaser.Scene {
     this._createHUD();
 
     // Setup player movement listeners for HUD feedback
-    this.player.on('move-start', () => this._updateHUD('Chasing the President...'));
-    this.player.on('move-end', () => this._updateHUD('Find the President!'));
-    this.player.on('move-blocked', () => this._updateHUD('Blocked by wall!'));
+    this.player.on('move-start', () => this._updateHUD('רודף אחרי הנשיא...'));
+    this.player.on('move-end', () => this._updateHUD('מצא את הנשיא!'));
+    this.player.on('move-blocked', () => this._updateHUD('חסום על ידי הקיר!'));
 
     // --- Start Intro Dialogue ---
-    this._updateHUD('Incoming transmission...');
+    this._updateHUD('שידור נכנס');
     const introDialog = new DialogSystem(this, KOTEL_INTRO_DIALOG, () => {
       this.player.enable();
       this.gameplayStarted = true;
-      this._updateHUD('Chase the President! Drag joystick/arrows to move.');
+      this._updateHUD('רדוף אחרי הנשיא! השתמש במקשים או בג׳ויסטיק כדי לזוז!');
     });
     introDialog.start();
   }
@@ -271,7 +271,7 @@ export class KotelScene extends Phaser.Scene {
       const len = Math.hypot(dx, dy) || 1;
       this.fleeDirX = dx / len;
       this.fleeDirY = dy / len;
-      this._updateHUD('The President is panicking!');
+      this._updateHUD('הנשיא בפאניקה!');
     }
 
     switch (this.presidentState) {
@@ -291,7 +291,7 @@ export class KotelScene extends Phaser.Scene {
           this.presidentState = 'STUNNED';
           this.stateTimer = 0;
           this.president.body.setVelocity(0, 0);
-          this._updateHUD('President trapped at the wall!');
+          this._updateHUD('הנשיא נלכד ליד הקיר!');
         } else if (this.stateTimer > 1500) {
           // Fled long enough, return to WANDER
           this.presidentState = 'WANDER';
@@ -307,7 +307,7 @@ export class KotelScene extends Phaser.Scene {
           this.presidentState = 'WANDER';
           this.stateTimer = 0;
           this.nextDecisionTime = 0;
-          this._updateHUD('Catch the President!');
+          this._updateHUD('תפוס את הנשיא!');
         }
         break;
 
@@ -354,7 +354,7 @@ export class KotelScene extends Phaser.Scene {
     // 2. Play catch effects (little camera shake and flash)
     this.cameras.main.shake(150, 0.005);
     this.cameras.main.flash(300, 255, 255, 255);
-    this._updateHUD('Caught!');
+    this._updateHUD('נתפס!');
 
     // Show dialogue
     this.time.delayedCall(400, () => {
@@ -372,7 +372,7 @@ export class KotelScene extends Phaser.Scene {
   /** @private */
   _createHUD() {
     const fontSize = Math.max(12, Math.round(this.scale.height * 0.026));
-    this._hudText = this.add.text(10, 10, 'Find the President...', {
+    this._hudText = this.add.text(10, 10, 'מצא את הנשיא...', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ffffff',
@@ -400,7 +400,7 @@ export class KotelScene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'KOTEL ARRIVAL CLEAR', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'ההגעה לכותל הושלמה', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${Math.round(this.scale.height * 0.08)}px`,
       color: '#00ffcc',
@@ -413,7 +413,7 @@ export class KotelScene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',
