@@ -39,6 +39,8 @@ export class Day2Scene extends Phaser.Scene {
       ambient: [],
     };
     this._ambientSoundEvent = null;
+    this.backgroundImage = null;
+    this._backgroundScrollX = 0;
   }
 
   create() {
@@ -65,15 +67,18 @@ export class Day2Scene extends Phaser.Scene {
     const worldWidth = WORLD_CHARS_WIDE * charWidth;
     this._levelWidth = Math.max(worldWidth, width * 2.5, 2200);
 
-    if (!this.physics) {
-      const message = 'Arcade physics unavailable';
-      console.error(message);
-      this.add.text(16, 16, message, {
-        fontFamily: 'Arial',
-        fontSize: '16px',
-        color: '#ff0000',
-      });
-      return;
+    if (this.textures.exists('supermarket')) {
+      const bgSource = this.textures.get('supermarket').getSourceImage();
+      const texW = bgSource.width;
+      const texH = bgSource.height;
+      const scale = Math.max(width / texW, height / texH);
+
+      this.backgroundImage = this.add.image(0, 0, 'supermarket')
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(0)
+        .setScale(scale);
+      this._backgroundScrollX = 0;
     }
 
     this.cameras.main.setBackgroundColor(0x74b9ff);
@@ -114,6 +119,16 @@ export class Day2Scene extends Phaser.Scene {
   update(time, delta) {
     if (this.isGameOver || this.isSceneOver) {
       return;
+    }
+
+    if (this.backgroundImage) {
+      const scrollSpeed = 10; // px per second
+      this._backgroundScrollX += (scrollSpeed * delta) / 1000;
+      const maxOffset = Math.max(0, this.backgroundImage.displayWidth - this.scale.width);
+      if (this._backgroundScrollX > maxOffset) {
+        this._backgroundScrollX = 0;
+      }
+      this.backgroundImage.x = -this._backgroundScrollX;
     }
 
     const cam = this.cameras && this.cameras.main;

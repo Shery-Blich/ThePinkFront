@@ -13,6 +13,8 @@ export class BootScene extends Phaser.Scene {
 
   preload() {
     this.load.image('player', 'assets/Shlomi.png');
+    this.load.image('bg', 'assets/Kiryat shmona.png');
+    this.load.image('supermarket', 'assets/supermarket.png');
   }
 
   create() {
