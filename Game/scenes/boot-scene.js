@@ -24,10 +24,12 @@ export class BootScene extends Phaser.Scene {
     this._generateParticleTexture();
 
     if (window.gameStarted) {
-      this.scene.start('Day1Scene');
+      //this.scene.start('Day1Scene');
+      this.scene.start('Day2Scene');
     } else {
       window.addEventListener('start-game', () => {
-        this.scene.start('Day1Scene');
+        //this.scene.start('Day1Scene');
+        this.scene.start('Day2Scene');
       });
     }
   }
