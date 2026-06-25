@@ -12,13 +12,10 @@
   },
   "license": "ISC",
   "author": "",
-  "type": "module",
-  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install"
   },
   "dependencies": {
     "phaser": "^3.88.2"
