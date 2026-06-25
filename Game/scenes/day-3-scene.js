@@ -46,7 +46,7 @@ export class Day3Scene extends Phaser.Scene {
     /** @type {Phaser.GameObjects.Particles.ParticleEmitter} */
     this.explosionParticles = null;
 
-    // --- Jerusalem Stone Grid details ---
+    // --- Road Grid details ---
     /** @type {Array<Array<Object>>} 2D array of tiles */
     this.roadTiles = [];
     this.tileW = 0;
@@ -57,8 +57,11 @@ export class Day3Scene extends Phaser.Scene {
     // Track active crumbling tiles
     this.warningTiles = [];
 
-    // Bus intro references
+    // Bus references
     this.bus = null;
+
+    // Supermarket graphics placeholder
+    this.supermarket = null;
   }
 
   create() {
@@ -88,17 +91,21 @@ export class Day3Scene extends Phaser.Scene {
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
+    // Reuse original skyline style (modern skyscraper graphics)
     this._buildSkyline(worldWidth, this.roadTop);
     
-    // Draw crumbling stone road
+    // Draw crumbling asphalt road (uses asphalt_intact/asphalt_cracked)
     this._buildCrumblingRoad(worldWidth, roadHeight);
 
-    // --- NPCs (Removed for this scene) ---
+    // --- Supermarket building placeholder ---
+    this._buildSupermarket();
+
+    // --- NPCs (None spawned for this scene) ---
     this.npcGroup = this.physics.add.staticGroup();
     this.npcList = [];
 
     // --- Player ---
-    // Player starts invisible and disabled
+    // Player starts invisible and disabled inside the supermarket door
     const startX = this.scale.width / 2;
     const startY = roadCenterY + charH * 0.3;
     this.player = new Player(this, startX, startY, this.s);
@@ -108,7 +115,6 @@ export class Day3Scene extends Phaser.Scene {
 
     // --- Camera ---
     this.cameras.main.setBounds(0, 0, worldWidth, height);
-    // Align camera view to start at coordinate 0 initially
     this.cameras.main.scrollX = 0;
 
     // --- HUD ---
@@ -145,7 +151,7 @@ export class Day3Scene extends Phaser.Scene {
     this.droneManager.on('all-drones-dodged', () => {
       this.time.delayedCall(1000, () => {
         if (!this.isGameOver) {
-          this.triggerSceneOver();
+          this.triggerSceneOver(roadCenterY, worldWidth);
         }
       });
     });
@@ -159,80 +165,68 @@ export class Day3Scene extends Phaser.Scene {
     this._startIntroDialogue(roadCenterY, worldWidth, charH);
   }
 
+  _buildSupermarket() {
+    const s = this.s;
+    const x = this.scale.width / 2;
+    const w = 64 * s;
+    const h = 80 * s;
+    const doorW = 16 * s;
+    const doorH = 28 * s;
+
+    this.supermarket = this.add.graphics();
+    // White block placeholder
+    this.supermarket.fillStyle(0xffffff, 1);
+    this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
+    // Dark rectangle hole door
+    this.supermarket.fillStyle(0x110e1a, 1);
+    this.supermarket.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
+    
+    // Add text label "SUPER"
+    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'SUPER', {
+      fontFamily: 'Impact, sans-serif',
+      fontSize: `${12 * s}px`,
+      color: '#ff2a5f',
+      align: 'center'
+    }).setOrigin(0.5);
+
+    this.supermarket.setDepth(2.5);
+    this.superLabel.setDepth(2.6);
+  }
+
   _startIntroDialogue(roadCenterY, worldWidth, charH) {
     const introDialog = new DialogSystem(this, DAY_3_INTRO_DIALOG, () => {
-      // Phase 2 & 3: Spawn Egged Bus offscreen and drive it to the center
-      this._updateHUD('Bus arriving... 🚌');
+      // Dialogue ends -> Player character leaves the supermarket door
+      this._updateHUD('Leaving supermarket...');
       const s = this.s;
 
-      this.bus = this.add.image(-150 * s, roadCenterY, 'egged_bus');
-      this.bus.setScale(s);
-      this.bus.setDepth(roadCenterY);
+      // Spawn player at the supermarket door
+      const doorX = this.scale.width / 2;
+      const doorY = this.roadTop - 6 * s; // Inside door frame height
 
-      // Camera follows the bus as it drives in
-      this.cameras.main.startFollow(this.bus, true, 0.1, 0);
+      this.player.setPosition(doorX, doorY);
+      this.player.setVisible(true);
+      this.player.setDepth(this.player.y);
+
+      // Player walks down onto the road
+      const targetPlayerY = roadCenterY + charH * 0.3;
 
       this.tweens.add({
-        targets: this.bus,
-        x: this.scale.width / 2,
-        duration: 3000,
-        ease: 'Quad.easeOut',
+        targets: this.player,
+        y: targetPlayerY,
+        duration: 1000,
         onComplete: () => {
-          // Bus arrived! Stop camera follow.
-          this.cameras.main.stopFollow();
+          // Camera starts tracking player
+          this.cameras.main.startFollow(this.player, true, 0.1, 0);
 
-          // Phase 4: Player character exits the bus
-          this.time.delayedCall(600, () => {
-            // Bus doors are near the front right side (x + 24 * s).
-            // Place player feet initially at bus floor height (inside window/door view)
-            const doorX = this.bus.x + 24 * s;
-            const doorY = this.bus.y + 6 * s;
-
-            this.player.setPosition(doorX, doorY);
-            this.player.setVisible(true);
-            // Ensure player is rendered in front of the bus as they step out
-            this.player.setDepth(this.bus.depth + 10);
-
-            // Player walks down onto the road, ending completely below the bus chassis
-            const targetPlayerX = this.scale.width / 2 + 10 * s;
-            const targetPlayerY = roadCenterY + 25 * s; // Places feet safely on the street below the bus
-
-            this.tweens.add({
-              targets: this.player,
-              x: targetPlayerX,
-              y: targetPlayerY,
-              duration: 1200,
-              onComplete: () => {
-                // Restore standard depth sorting
-                this.player.depthSort();
-
-                // Camera starts tracking player
-                this.cameras.main.startFollow(this.player, true, 0.1, 0);
-
-                // Bus drives away to the right
-                this.tweens.add({
-                  targets: this.bus,
-                  x: worldWidth + 200 * s,
-                  duration: 4000,
-                  ease: 'Quad.easeIn',
-                  onComplete: () => {
-                    if (this.bus) this.bus.destroy();
-                  }
-                });
-
-                // Wait exactly 1 second after player is on the road before starting action
-                this._updateHUD('Get ready...');
-                this.time.delayedCall(1000, () => {
-                  // Phase 5: Game starts!
-                  this.player.enable();
-                  this.isGameOver = false;
-                  this.isSceneOver = false;
-                  this.gameplayStarted = true;
-                  this.droneManager.start();
-                  this._updateHUD('Drag joystick to move →');
-                });
-              }
-            });
+          // Wait exactly 1 second before starting game (drones & crumbling)
+          this._updateHUD('Get ready...');
+          this.time.delayedCall(1000, () => {
+            this.player.enable();
+            this.isGameOver = false;
+            this.isSceneOver = false;
+            this.gameplayStarted = true;
+            this.droneManager.start();
+            this._updateHUD('Drag joystick to move →');
           });
         }
       });
@@ -252,12 +246,12 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------------------
-  // Jerusalem Skyline
+  // Kiryat Shmona style Skyline (reused from Day 1)
   // ---------------------------------------------------------------------------
 
   /** @private */
   _buildSkyline(worldWidth, groundY) {
-    const bldKeys = ['jlm_bld_a', 'jlm_bld_b', 'jlm_bld_c', 'jlm_bld_d'];
+    const bldKeys = ['bld_a', 'bld_b', 'bld_c', 'bld_d', 'bld_e'];
     const s = this.s;
 
     let seed = 42;
@@ -276,7 +270,7 @@ export class Day3Scene extends Phaser.Scene {
       const b = this.add.image(x, groundY, key);
       b.setOrigin(0, 1);
       b.setScale(bScale);
-      b.setTint(0x4a3a2d); // Dark warm tint for distance stones
+      b.setTint(0x444460);
       b.setAlpha(0.5);
       b.setDepth(1);
 
@@ -299,7 +293,7 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------------------
-  // Jerusalem Stone Road
+  // Crumbling Asphalt Road
   // ---------------------------------------------------------------------------
 
   /** @private */
@@ -317,14 +311,14 @@ export class Day3Scene extends Phaser.Scene {
     pitBacking.fillRect(0, this.roadTop, worldWidth, roadHeight);
     pitBacking.setDepth(2);
 
-    // Build the grid of stones
+    // Build the grid of asphalt tiles
     for (let col = 0; col < this.colsCount; col++) {
       this.roadTiles[col] = [];
       for (let row = 0; row < this.rowsCount; row++) {
         const tx = col * this.tileW;
         const ty = this.roadTop + row * this.tileH;
 
-        const tileSprite = this.add.sprite(tx, ty, 'stone_intact');
+        const tileSprite = this.add.sprite(tx, ty, 'asphalt_intact');
         tileSprite.setOrigin(0, 0);
         tileSprite.setDisplaySize(this.tileW, this.tileH);
         tileSprite.setDepth(3);
@@ -377,7 +371,7 @@ export class Day3Scene extends Phaser.Scene {
       // If player touches a normal tile -> trigger the warning self-destruct sequence instantly
       if (tile.state === 'NORMAL') {
         tile.state = 'WARNING';
-        tile.sprite.setTexture('stone_cracked');
+        tile.sprite.setTexture('asphalt_cracked');
         tile.timeOnTile = 0;
 
         // Shaking animation starts immediately
@@ -400,10 +394,10 @@ export class Day3Scene extends Phaser.Scene {
       const tile = this.warningTiles[i];
       tile.timeOnTile += delta;
 
-      // Once 2 seconds have passed since the player touched the stone
+      // Once 2 seconds have passed since the player touched the asphalt tile
       if (tile.timeOnTile >= 2000) {
         tile.state = 'CRUMBLED';
-        tile.sprite.setTexture('stone_broken');
+        tile.sprite.setTexture('stone_broken'); // Reuse the dark hole texture from BootScene
 
         // Stop the rumbling/shaking tween
         if (tile.shakeTween) {
@@ -567,13 +561,91 @@ export class Day3Scene extends Phaser.Scene {
     });
   }
 
-  triggerSceneOver() {
+  triggerSceneOver(roadCenterY, worldWidth) {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
 
+    // 1. Player loses controls
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
+    this.gameplayStarted = false; // Halt crumbling update checks
 
+    this._updateHUD('Extraction bus arriving...');
+
+    // 2. Spawn the Egged Bus offscreen and drive it to stop in front of the player
+    const s = this.s;
+    this.bus = this.add.image(-150 * s, roadCenterY, 'egged_bus'); // Starts closed
+    this.bus.setScale(s);
+    this.bus.setDepth(roadCenterY);
+
+    // Stop camera tracking the player and track the arriving bus instead
+    this.cameras.main.startFollow(this.bus, true, 0.1, 0);
+
+    // We position the bus so its passenger door (x + 24 * s) aligns directly with the player's X coordinate
+    const targetBusX = this.player.x - 24 * s;
+
+    this.tweens.add({
+      targets: this.bus,
+      x: targetBusX,
+      duration: 3000,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        this.cameras.main.stopFollow();
+
+        // Open the bus doors!
+        this.bus.setTexture('egged_bus_open');
+
+        // Wait a short delay for doors to fully open, then walk the player in
+        this.time.delayedCall(300, () => {
+          this.player.setDepth(this.bus.depth + 10); // Render in front of bus door
+
+          const doorX = this.bus.x + 24 * s;
+          const doorY = this.bus.y + 6 * s; // Door floor level height
+
+          // 3. Player walks up into the bus door (reverse of the exit animation)
+          this.tweens.add({
+            targets: this.player,
+            x: doorX,
+            y: doorY,
+            duration: 1200,
+            onComplete: () => {
+              // Player entered the bus! Make invisible
+              this.player.setVisible(false);
+
+              // Wait 300ms, then close the doors
+              this.time.delayedCall(300, () => {
+                // Close the doors!
+                this.bus.setTexture('egged_bus');
+
+                // Wait 600ms (doors fully closed), then the bus departs
+                this.time.delayedCall(600, () => {
+                  // Camera tracks the departing bus
+                  this.cameras.main.startFollow(this.bus, true, 0.1, 0);
+
+                  this.tweens.add({
+                    targets: this.bus,
+                    x: worldWidth + 200 * s,
+                    duration: 4000,
+                    ease: 'Quad.easeIn',
+                    onComplete: () => {
+                      this.cameras.main.stopFollow();
+                      if (this.bus) this.bus.destroy();
+
+                      // 4. Run the victory dialogue
+                      this.runVictoryDialogue();
+                    }
+                  });
+                });
+              });
+            }
+          });
+        });
+      }
+    });
+  }
+
+  runVictoryDialogue() {
+    this._updateHUD('Mission success!');
     const dialog = new DialogSystem(this, DAY_3_VICTORY_DIALOG, () => {
       this.showVictoryScreen();
     });
@@ -588,12 +660,12 @@ export class Day3Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'JERUSALEM CLEAR', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'Kiryat Shmona Cleared on the way to jerusalem!', {
       fontFamily: 'Impact, sans-serif',
-      fontSize: `${Math.round(this.scale.height * 0.1)}px`,
+      fontSize: `${Math.round(this.scale.height * 0.06)}px`, // Scaled down to prevent clipping/wrapping
       color: '#00ffcc',
       stroke: '#000000',
-      strokeThickness: 6,
+      strokeThickness: 5,
       align: 'center'
     });
     title.setOrigin(0.5);

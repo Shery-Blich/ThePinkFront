@@ -25,12 +25,13 @@ export class BootScene extends Phaser.Scene {
     this._generateJerusalemStoneTextures();
     this._generateEggedBusTexture();
     this._generateJerusalemBuildings();
+    this._generateAsphaltTextures();
 
     if (window.gameStarted) {
-      this.scene.start('Day1Scene');
+      this.scene.start('Day3Scene');
     } else {
       window.addEventListener('start-game', () => {
-        this.scene.start('Day1Scene');
+        this.scene.start('Day3Scene');
       });
     }
   }
@@ -265,29 +266,28 @@ export class BootScene extends Phaser.Scene {
 
   /** Egged Bus: Green/White Israeli Egged bus */
   _generateEggedBusTexture() {
-    const gfx = this.add.graphics();
     const w = 96;
     const h = 36;
-
-    // Background body - Egged Green
-    gfx.fillStyle(0x009b48, 1);
-    gfx.fillRect(0, 6, w, h - 12);
-
-    // Roof - White/light grey
-    gfx.fillStyle(0xf3f4f6, 1);
-    gfx.fillRect(2, 2, w - 4, 4);
-
-    // Bumpers
-    gfx.fillStyle(0x374151, 1);
-    gfx.fillRect(0, h - 8, 6, 4);
-    gfx.fillRect(w - 6, h - 8, 6, 4);
-
-    // Windows
+    const doorX = 72;
+    const doorW = 10;
+    const doorH = 22;
     const winW = 12;
     const winH = 10;
     const winY = 8;
     const winGap = 4;
     const winStartX = 8;
+    const whY = h - 6;
+
+    // --- 1. CLOSED BUS ---
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0x009b48, 1);
+    gfx.fillRect(0, 6, w, h - 12);
+    gfx.fillStyle(0xf3f4f6, 1);
+    gfx.fillRect(2, 2, w - 4, 4);
+    gfx.fillStyle(0x374151, 1);
+    gfx.fillRect(0, h - 8, 6, 4);
+    gfx.fillRect(w - 6, h - 8, 6, 4);
+
     for (let i = 0; i < 5; i++) {
       const wx = winStartX + i * (winW + winGap);
       gfx.fillStyle(0x1f2937, 1);
@@ -298,10 +298,7 @@ export class BootScene extends Phaser.Scene {
       gfx.fillRect(wx + 2, winY + 2, 2, winH - 4);
     }
 
-    // Bus door (near the front, folding type)
-    const doorX = 72;
-    const doorW = 10;
-    const doorH = 22;
+    // Bus door closed
     gfx.fillStyle(0x111827, 1);
     gfx.fillRect(doorX - 1, 8, doorW + 2, doorH + 1);
     gfx.fillStyle(0xd1d5db, 1);
@@ -309,7 +306,7 @@ export class BootScene extends Phaser.Scene {
     gfx.fillStyle(0x111827, 1);
     gfx.fillRect(doorX + doorW/2 - 1, 9, 2, doorH);
 
-    // Egged logo red/white placeholder
+    // Logo
     gfx.fillStyle(0xef4444, 1);
     gfx.fillRect(32, 22, 10, 6);
     gfx.fillStyle(0xffffff, 1);
@@ -318,7 +315,6 @@ export class BootScene extends Phaser.Scene {
     gfx.fillRect(39, 24, 2, 2);
 
     // Wheels
-    const whY = h - 6;
     gfx.fillStyle(0x111827, 1);
     gfx.fillCircle(20, whY, 8);
     gfx.fillCircle(76, whY, 8);
@@ -328,6 +324,52 @@ export class BootScene extends Phaser.Scene {
 
     gfx.generateTexture('egged_bus', w, h);
     gfx.destroy();
+
+    // --- 2. OPEN BUS ---
+    const gfxOpen = this.add.graphics();
+    gfxOpen.fillStyle(0x009b48, 1);
+    gfxOpen.fillRect(0, 6, w, h - 12);
+    gfxOpen.fillStyle(0xf3f4f6, 1);
+    gfxOpen.fillRect(2, 2, w - 4, 4);
+    gfxOpen.fillStyle(0x374151, 1);
+    gfxOpen.fillRect(0, h - 8, 6, 4);
+    gfxOpen.fillRect(w - 6, h - 8, 6, 4);
+
+    for (let i = 0; i < 5; i++) {
+      const wx = winStartX + i * (winW + winGap);
+      gfxOpen.fillStyle(0x1f2937, 1);
+      gfxOpen.fillRect(wx - 1, winY - 1, winW + 2, winH + 2);
+      gfxOpen.fillStyle(0x93c5fd, 1);
+      gfxOpen.fillRect(wx, winY, winW, winH);
+      gfxOpen.fillStyle(0xffffff, 0.4);
+      gfxOpen.fillRect(wx + 2, winY + 2, 2, winH - 4);
+    }
+
+    // Bus door open
+    gfxOpen.fillStyle(0x111827, 1);
+    gfxOpen.fillRect(doorX - 1, 8, doorW + 2, doorH + 1);
+    gfxOpen.fillStyle(0xd1d5db, 1);
+    gfxOpen.fillRect(doorX, 9, 2, doorH);
+    gfxOpen.fillRect(doorX + doorW - 2, 9, 2, doorH);
+
+    // Logo
+    gfxOpen.fillStyle(0xef4444, 1);
+    gfxOpen.fillRect(32, 22, 10, 6);
+    gfxOpen.fillStyle(0xffffff, 1);
+    gfxOpen.fillRect(33, 24, 2, 2);
+    gfxOpen.fillRect(36, 24, 2, 2);
+    gfxOpen.fillRect(39, 24, 2, 2);
+
+    // Wheels
+    gfxOpen.fillStyle(0x111827, 1);
+    gfxOpen.fillCircle(20, whY, 8);
+    gfxOpen.fillCircle(76, whY, 8);
+    gfxOpen.fillStyle(0x9ca3af, 1);
+    gfxOpen.fillCircle(20, whY, 3);
+    gfxOpen.fillCircle(76, whY, 3);
+
+    gfxOpen.generateTexture('egged_bus_open', w, h);
+    gfxOpen.destroy();
   }
 
   /** Jerusalem buildings: domes and arches */
@@ -374,5 +416,41 @@ export class BootScene extends Phaser.Scene {
       gfx.generateTexture(b.key, b.w, b.h);
       gfx.destroy();
     }
+  }
+
+  /** Asphalt Road: Intact, Cracked, and Broken (hole) matching Kiryat Shmona */
+  _generateAsphaltTextures() {
+    // Intact asphalt: dark grey
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0x3a3a3a, 1);
+    gfx.fillRect(0, 0, 32, 16);
+    // Add some random texture dots
+    gfx.fillStyle(0x404040, 1);
+    gfx.fillRect(5, 4, 2, 1);
+    gfx.fillRect(20, 11, 2, 1);
+    gfx.fillRect(12, 8, 1, 1);
+    gfx.generateTexture('asphalt_intact', 32, 16);
+    gfx.destroy();
+
+    // Cracked asphalt: dark grey with light grey cracks
+    const crackedGfx = this.add.graphics();
+    crackedGfx.fillStyle(0x3a3a3a, 1);
+    crackedGfx.fillRect(0, 0, 32, 16);
+    crackedGfx.fillStyle(0x404040, 1);
+    crackedGfx.fillRect(5, 4, 2, 1);
+    crackedGfx.fillRect(20, 11, 2, 1);
+    crackedGfx.fillRect(12, 8, 1, 1);
+    // Cracks in light grey
+    crackedGfx.lineStyle(1, 0x666666, 1);
+    crackedGfx.beginPath();
+    crackedGfx.moveTo(4, 2);
+    crackedGfx.lineTo(12, 8);
+    crackedGfx.lineTo(10, 14);
+    crackedGfx.moveTo(28, 4);
+    crackedGfx.lineTo(20, 7);
+    crackedGfx.lineTo(22, 12);
+    crackedGfx.strokePath();
+    crackedGfx.generateTexture('asphalt_cracked', 32, 16);
+    crackedGfx.destroy();
   }
 }
