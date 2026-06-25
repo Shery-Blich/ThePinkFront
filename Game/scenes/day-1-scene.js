@@ -5,6 +5,7 @@ import { NPC } from '../entities/npc.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { TriviaOverlay } from '../systems/trivia-overlay.js';
+import { TRIVIA_QUESTIONS } from '../data/trivia-questions.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 /**
@@ -167,27 +168,38 @@ export class Day1Scene extends Phaser.Scene {
     // --- Play Intro Cutscene Dialogue ---
     this._updateHUD('Incoming transmission...');
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
-      // Trigger the Judge Solberg Trivia Overlay demo!
-      this._updateHUD('Judge Solberg Trivia...');
-      const trivia = new TriviaOverlay(this, {
-        dialogueText: "יוסף סולברג: ברוך הבא לקרית שמונה! לפני שתצביע, ענה נכונה:",
-        questionText: "מהי חובתו של כל אזרח מעל גיל 18 ביום הבחירות?",
-        options: [
-          "להישאר בבית",
-          "להצביע בקלפי",
-          "לטייל בגליל",
-          "לעבוד בחיפה"
-        ],
-        correctIndex: 1
-      }, (isCorrect) => {
-        if (isCorrect) {
-          this._updateHUD('Correct! +20 Points. Drag joystick to move →');
-        } else {
-          this._updateHUD('Incorrect! -5 Points. Drag joystick to move →');
+      // Trigger the Judge Solberg Trivia Overlay series!
+      const runTriviaQueue = (index) => {
+        if (index >= TRIVIA_QUESTIONS.length) {
+          this._updateHUD('All trivia completed! Drag joystick to move →');
+          this.player.enable();
+          return;
         }
-        this.player.enable();
-      });
-      trivia.start();
+
+        const qData = TRIVIA_QUESTIONS[index];
+        this._updateHUD(`Trivia Question ${index + 1}/${TRIVIA_QUESTIONS.length}...`);
+
+        const trivia = new TriviaOverlay(this, {
+          dialogueText: `יוסף סולברג: שאלה ${index + 1} מתוך ${TRIVIA_QUESTIONS.length}. ענה נכונה כדי להמשיך:`,
+          questionText: qData[0],
+          options: qData[1],
+          correctIndex: qData[2]
+        }, (isCorrect) => {
+          if (isCorrect) {
+            this._updateHUD('Correct! loading next question...');
+          } else {
+            this._updateHUD('Incorrect! loading next question...');
+          }
+          
+          // 1-second delay so player can see feedback before next question loads
+          this.time.delayedCall(1000, () => {
+            runTriviaQueue(index + 1);
+          });
+        });
+        trivia.start();
+      };
+
+      runTriviaQueue(0);
     });
     introDialog.start();
 
