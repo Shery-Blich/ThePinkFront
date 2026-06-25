@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { BootScene } from './scenes/BootScene.js';
-import { Day1Scene } from './scenes/Day1Scene.js';
+import { BootScene } from './scenes/boot-scene.js';
+import { Day1Scene } from './scenes/day-1-scene.js';
 
 /**
  * Phaser game configuration.

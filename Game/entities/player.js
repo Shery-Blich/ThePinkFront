@@ -1,4 +1,4 @@
-import { Character } from './Character.js';
+import { Character } from './character.js';
 
 /**
  * Player — The player-controlled character.

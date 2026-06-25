@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import { Character } from '../entities/Character.js';
-import { Player } from '../entities/Player.js';
-import { NPC } from '../entities/NPC.js';
-import { TapToMove } from '../systems/TapToMove.js';
+import { Character } from '../entities/character.js';
+import { Player } from '../entities/player.js';
+import { NPC } from '../entities/npc.js';
+import { TapToMove } from '../systems/tap-to-move.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists

@@ -1,4 +1,4 @@
-import { Character } from './Character.js';
+import { Character } from './character.js';
 
 /**
  * NPC — A non-player character with a static physics body.
