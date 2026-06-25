@@ -15,6 +15,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('player', 'assets/Shlomi.png');
     this.load.image('bg', 'assets/Kiryat shmona.png');
     this.load.image('supermarket', 'assets/supermarket.png');
+    this.load.svg('kupaee', 'assets/kupaee.svg');
   }
 
   create() {

@@ -384,6 +384,12 @@ export class Day2Scene extends Phaser.Scene {
     this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981);
     this.physics.add.existing(this.finishZone, true);
 
+    if (this.textures.exists('kupaee')) {
+      this.add.image(x, y - 40, 'kupaee')
+        .setOrigin(0.5, 1)
+        .setDisplaySize(56, 56);
+    }
+
     const label = this.add.text(x, y - 100, 'Cashier', {
       fontFamily: 'Arial',
       fontSize: '16px',
@@ -409,10 +415,17 @@ export class Day2Scene extends Phaser.Scene {
 
   _updateHUD() {
     if (this._debugText) {
-      this._debugText.setText([
+      const lines = [
         `Budget: ${this._formatPrice(this.score)}`,
-        'Use joystick/arrows to move, tap/space to jump',
-      ]);
+      ];
+
+      if (this.score <= 0) {
+        lines.push('התקציב נגמר! המשיכו לקופה');
+      }
+
+      lines.push('Use joystick/arrows to move, tap/space to jump');
+
+      this._debugText.setText(lines);
     }
   }
 
