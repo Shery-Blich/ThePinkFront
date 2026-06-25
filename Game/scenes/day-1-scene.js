@@ -49,6 +49,7 @@ export class Day1Scene extends Phaser.Scene {
 
     /** @type {Phaser.GameObjects.Particles.ParticleEmitter} */
     this.explosionParticles = null;
+
   }
 
   create() {
@@ -181,6 +182,9 @@ export class Day1Scene extends Phaser.Scene {
     if (this.player) {
       this.player.update();
     }
+
+
+
     for (const npc of this.npcList) {
       npc.depthSort();
     }

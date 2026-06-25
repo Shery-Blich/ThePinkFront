@@ -29,3 +29,13 @@ export const DAY_3_VICTORY_DIALOG = [
   { speaker: 'HQ', text: 'Mission accomplished. Victory is ours!' }
 ];
 
+export const KOTEL_INTRO_DIALOG = [
+  { speaker: 'HQ', text: 'We reached the Western Wall! But wait, look over there...' },
+  { speaker: 'Player', text: 'Is that the President? He seems very distressed and is running around!' },
+  { speaker: 'HQ', text: 'Quick! Go chase him down and give him a hug. He really needs it!' }
+];
+
+export const KOTEL_VICTORY_DIALOG = [
+  { speaker: 'HQ', text: 'you catched the presdient for a hug, he needs it!' }
+];
+
