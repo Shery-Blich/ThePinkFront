@@ -7,7 +7,6 @@ import { Character } from '../entities/character.js';
  * - Solberg portrait & dialogue card in the top-right.
  * - Question card and 4 answer choices arranged in a 2x2 grid at the bottom-right.
  * - Interactive pointer hover/click selection & 2D keyboard navigation.
- * - Red select arrow indicator showing current active answer.
  * - Native-like Hebrew RTL text layout.
  *
  * @example
@@ -79,8 +78,6 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
     this.container = null;
     /** @type {Phaser.GameObjects.Graphics[]} Option background boxes */
     this.optionBoxes = [];
-    /** @type {Phaser.GameObjects.Text | null} Select indicator arrow */
-    this.arrowIndicator = null;
     /** @type {Phaser.GameObjects.Text[]} Option text components */
     this.optionTexts = [];
 
@@ -288,23 +285,6 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       this.container.add(zone);
     }
 
-    // -------------------------------------------------------------------------
-    // 4. SELECTION INDICATOR ARROW
-    // -------------------------------------------------------------------------
-    // Red indicator arrow pointing to active option, placed inside the option box
-    this.arrowIndicator = this.scene.add.text(
-      0,
-      0,
-      '▶',
-      {
-        fontFamily: 'monospace',
-        fontSize: `${fontSize}px`,
-        color: '#ff2a5f',
-      }
-    );
-    this.arrowIndicator.setOrigin(0, 0.5);
-    this.container.add(this.arrowIndicator);
-
     // Update position and redraw borders for starting selection
     this.updateSelectionVisuals();
   }
@@ -322,25 +302,23 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    */
   drawOptionBox(gfx, x, y, w, h, scale, state = 'inactive') {
     gfx.clear();
-    gfx.fillStyle(0x0a0f1d, 0.95);
     
-    let color;
+    let bgColor = 0x0a0f1d;
+    let borderColor = 0x475569;
     let thickness = 1 * scale;
 
     if (state === 'correct') {
-      color = 0x10b981; // Green for correct answer
+      borderColor = 0x10b981; // Green for correct answer
       thickness = 1.8 * scale;
     } else if (state === 'incorrect') {
-      color = 0xef4444; // Red for incorrect answer choice
+      borderColor = 0xef4444; // Red for incorrect answer choice
       thickness = 1.8 * scale;
     } else if (state === 'active') {
-      color = 0xffffff; // White outline for highlighted option (no red outlines)
-      thickness = 1.5 * scale;
-    } else {
-      color = 0x475569; // Slate grey for inactive option
+      bgColor = 0x1e293b; // Slate fill to show highlight (no border outline change)
     }
 
-    gfx.lineStyle(thickness, color, 1);
+    gfx.fillStyle(bgColor, 0.95);
+    gfx.lineStyle(thickness, borderColor, 1);
     gfx.fillRoundedRect(x, y, w, h, 2 * scale);
     gfx.strokeRoundedRect(x, y, w, h, 2 * scale);
   }
@@ -471,18 +449,6 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
         optText.setColor('#ffffff');
       }
     }
-
-    // Move red arrow indicator inside the active option box
-    if (this.arrowIndicator) {
-      const row = Math.floor(this.selectedIndex / 2);
-      const col = (this.selectedIndex % 2 === 0) ? 1 : 0;
-
-      const activeOptionX = this.leftX + col * (this.colWidth + spacing);
-      const activeOptionY = this.optionStartY + row * (this.optionHeight + 4 * scale);
-      
-      this.arrowIndicator.setX(activeOptionX + 5 * scale);
-      this.arrowIndicator.setY(activeOptionY + this.optionHeight / 2);
-    }
   }
 
   /**
@@ -510,11 +476,6 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       isCorrect,
       correctIndex: this.data.correctIndex
     });
-
-    // Hide selection indicator arrow during feedback phase
-    if (this.arrowIndicator) {
-      this.arrowIndicator.setVisible(false);
-    }
 
     // Render green/red correctness feedback borders
     const scale = this.scene.s || Character.computeScale(this.scene.scale.height);
@@ -606,7 +567,6 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
 
     this.optionBoxes = [];
     this.optionTexts = [];
-    this.arrowIndicator = null;
 
     // Enable character movement back on scene exit
     if (this.scene.player) {
