@@ -121,11 +121,6 @@ export class Day2Scene extends Phaser.Scene {
       }
     }
 
-    if (this.score <= 0) {
-      this.triggerGameOver();
-      return;
-    }
-
     // Reset double-jump on landing
     if (this.player && this.player.body) {
       const body = this.player.body;
@@ -400,6 +395,13 @@ export class Day2Scene extends Phaser.Scene {
     if (this.isGameOver || this.isSceneOver) {
       return;
     }
+
+    // Player wins if budget is completely spent (= 0)
+    if (this.score > 0) {
+      this.triggerGameOver();
+      return;
+    }
+
     this.triggerSceneOver();
   }
 
@@ -412,7 +414,11 @@ export class Day2Scene extends Phaser.Scene {
     if (this._collectedCount >= PRODUCT_COUNT) {
       return;
     }
-    this._collectedCount += 1;
+
+    // Block collection if budget is already at 0
+    if (this.score <= 0) {
+      return;
+    }
 
     const price = typeof actualProduct.getPrice === 'function'
       ? actualProduct.getPrice()
@@ -437,9 +443,7 @@ export class Day2Scene extends Phaser.Scene {
       this.productGroup.remove(actualProduct, true, true);
     }
 
-    if (this.score <= 0) {
-      this.triggerGameOver();
-    }
+    this._collectedCount += 1;
   }
 
   _formatPrice(value) {
