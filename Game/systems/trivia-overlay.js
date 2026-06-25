@@ -12,7 +12,7 @@ import { Character } from '../entities/character.js';
  *
  * @example
  *   const trivia = new TriviaOverlay(this, {
- *     dialogueText: "יוסף סולברג: ברוך הבא לקרית שמונה! לפני שתצביע, ענה נכונה:",
+ *     dialogueText: "שאלה 1 מתוך 4. ענה נכונה כדי להמשיך:",
  *     questionText: "מהי חובתו של כל אזרח מעל גיל 18 ביום הבחירות?",
  *     options: [
  *       "להישאר בבית",
@@ -56,6 +56,20 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
 
     /** @type {Phaser.Time.TimerEvent | null} */
     this.typingTimer = null;
+
+    // --- Dynamic Layout Coordinates ---
+    /** @type {number} */
+    this.panelWidth = 0;
+    /** @type {number} */
+    this.rightAlignX = 0;
+    /** @type {number} */
+    this.questionHeight = 0;
+    /** @type {number} */
+    this.optionHeight = 0;
+    /** @type {number} */
+    this.optionStartY = 0;
+    /** @type {number} */
+    this.colWidth = 0;
 
     // --- UI Elements ---
     /** @type {Phaser.GameObjects.Container | null} Main container overlay */
@@ -114,9 +128,11 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
     const spacing = 6 * scale;
     const portraitSize = 44 * scale;
     
-    // Panel width takes 48% of screen width, aligned to the right
-    const panelWidth = Math.round(width * 0.48);
-    const rightAlignX = width - margin - panelWidth;
+    // Panel width takes 52% of screen width, aligned to the right (ensures answers fit nicely)
+    this.panelWidth = Math.round(width * 0.52);
+    this.rightAlignX = width - margin - this.panelWidth;
+    this.optionHeight = 24 * scale; // Generous height for Hebrew option boxes
+    this.colWidth = (this.panelWidth - spacing) / 2;
 
     // -------------------------------------------------------------------------
     // 1. SOLBERG DIALOGUE CARD & PORTRAIT (Top Right)
@@ -138,8 +154,8 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
     this.container.add(portraitImg);
 
     // Solberg Dialogue box (left of portrait)
-    const dialogBoxX = rightAlignX;
-    const dialogBoxWidth = panelWidth - portraitSize - spacing;
+    const dialogBoxX = this.rightAlignX;
+    const dialogBoxWidth = this.panelWidth - portraitSize - spacing;
     const dialogBoxHeight = portraitSize;
 
     const dialogBg = this.scene.add.graphics();
@@ -174,19 +190,10 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
     // 2. TRIVIA QUESTION CARD (Middle Right)
     // -------------------------------------------------------------------------
     const questionY = solbergY + portraitSize + spacing;
-    const questionHeight = 36 * scale; // Compact height
 
-    // Question Box
-    const questionBg = this.scene.add.graphics();
-    questionBg.fillStyle(0x0a0f1d, 0.95);
-    questionBg.lineStyle(1.2 * scale, 0x94a3b8, 1);
-    questionBg.fillRoundedRect(rightAlignX, questionY, panelWidth, questionHeight, 3 * scale);
-    questionBg.strokeRoundedRect(rightAlignX, questionY, panelWidth, questionHeight, 3 * scale);
-    this.container.add(questionBg);
-
-    // Question Text
+    // Create Question Text first to measure height dynamically
     const questionTextObj = this.scene.add.text(
-      rightAlignX + panelWidth - 8 * scale,
+      this.rightAlignX + this.panelWidth - 8 * scale,
       questionY + 6 * scale,
       this.data.questionText,
       {
@@ -196,21 +203,28 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
         color: '#ffffff',
         align: 'right',
         rtl: true,
-        wordWrap: { width: panelWidth - 16 * scale }
+        wordWrap: { width: this.panelWidth - 16 * scale }
       }
     );
     questionTextObj.setOrigin(1, 0);
+
+    // Dynamic height matching text size exactly with uniform padding
+    this.questionHeight = questionTextObj.height + 12 * scale;
+    this.optionStartY = questionY + this.questionHeight + spacing;
+
+    // Question Box
+    const questionBg = this.scene.add.graphics();
+    questionBg.fillStyle(0x0a0f1d, 0.95);
+    questionBg.lineStyle(1.2 * scale, 0x94a3b8, 1);
+    questionBg.fillRoundedRect(this.rightAlignX, questionY, this.panelWidth, this.questionHeight, 3 * scale);
+    questionBg.strokeRoundedRect(this.rightAlignX, questionY, this.panelWidth, this.questionHeight, 3 * scale);
+    this.container.add(questionBg);
     this.container.add(questionTextObj);
 
     // -------------------------------------------------------------------------
     // 3. MULTIPLE CHOICE OPTION GRID (Bottom Right - 2 rows x 2 columns)
     // -------------------------------------------------------------------------
     const optionLabels = ['A', 'B', 'C', 'D'];
-    const optionStartY = questionY + questionHeight + spacing;
-    
-    // Sized to fit 2 rows comfortably
-    const optionHeight = 18 * scale;
-    const colWidth = (panelWidth - spacing) / 2;
 
     for (let i = 0; i < 4; i++) {
       // Row is 0 for A/B, 1 for C/D
@@ -218,12 +232,12 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       // In Hebrew RTL: Option A & C on the right (col = 1), Option B & D on the left (col = 0)
       const col = (i % 2 === 0) ? 1 : 0;
 
-      const optionX = rightAlignX + col * (colWidth + spacing);
-      const optionY = optionStartY + row * (optionHeight + 4 * scale);
+      const optionX = this.rightAlignX + col * (this.colWidth + spacing);
+      const optionY = this.optionStartY + row * (this.optionHeight + 4 * scale);
 
       // Background Box
       const optBg = this.scene.add.graphics();
-      this.drawOptionBox(optBg, optionX, optionY, colWidth, optionHeight, scale, false);
+      this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, false);
       this.container.add(optBg);
       this.optionBoxes.push(optBg);
 
@@ -232,12 +246,12 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       const optionString = `${optionLabels[i]}: ${rawText}`;
 
       const optText = this.scene.add.text(
-        optionX + colWidth - 10 * scale,
-        optionY + optionHeight / 2,
+        optionX + this.colWidth - 10 * scale,
+        optionY + this.optionHeight / 2,
         optionString,
         {
           fontFamily: 'monospace',
-          fontSize: `${fontSize - 1}px`, // Slightly smaller option font to ensure single-line fit
+          fontSize: `${fontSize}px`, // Standard Hebrew font size
           color: '#ffffff',
           align: 'right',
           rtl: true
@@ -249,10 +263,10 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
 
       // Make option region interactive
       const zone = this.scene.add.zone(
-        optionX + colWidth / 2,
-        optionY + optionHeight / 2,
-        colWidth,
-        optionHeight
+        optionX + this.colWidth / 2,
+        optionY + this.optionHeight / 2,
+        this.colWidth,
+        this.optionHeight
       );
       zone.setInteractive({ useHandCursor: true });
       
@@ -277,7 +291,7 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       '▶',
       {
         fontFamily: 'monospace',
-        fontSize: `${fontSize - 1}px`,
+        fontSize: `${fontSize}px`,
         color: '#ff2a5f',
       }
     );
@@ -411,34 +425,22 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    */
   updateSelectionVisuals() {
     const scale = this.scene.s || Character.computeScale(this.scene.scale.height);
-    const { width, height } = this.scene.scale;
-    
-    const margin = 12 * scale;
     const spacing = 6 * scale;
-    const portraitSize = 44 * scale;
-    const questionHeight = 36 * scale;
-    
-    const panelWidth = Math.round(width * 0.48);
-    const rightAlignX = width - margin - panelWidth;
 
-    const optionStartY = margin + portraitSize + spacing + questionHeight + spacing;
-    const optionHeight = 18 * scale;
-    const colWidth = (panelWidth - spacing) / 2;
-
-    // Redraw options
+    // Redraw options using stored layout coordinates
     for (let i = 0; i < 4; i++) {
       const row = Math.floor(i / 2);
       const col = (i % 2 === 0) ? 1 : 0;
 
-      const optionX = rightAlignX + col * (colWidth + spacing);
-      const optionY = optionStartY + row * (optionHeight + 4 * scale);
+      const optionX = this.rightAlignX + col * (this.colWidth + spacing);
+      const optionY = this.optionStartY + row * (this.optionHeight + 4 * scale);
 
       const optBg = this.optionBoxes[i];
       const optText = this.optionTexts[i];
       const isActive = i === this.selectedIndex;
 
       if (optBg) {
-        this.drawOptionBox(optBg, optionX, optionY, colWidth, optionHeight, scale, isActive);
+        this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, isActive);
       }
       
       if (optText) {
@@ -451,11 +453,11 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       const row = Math.floor(this.selectedIndex / 2);
       const col = (this.selectedIndex % 2 === 0) ? 1 : 0;
 
-      const activeOptionX = rightAlignX + col * (colWidth + spacing);
-      const activeOptionY = optionStartY + row * (optionHeight + 4 * scale);
+      const activeOptionX = this.rightAlignX + col * (this.colWidth + spacing);
+      const activeOptionY = this.optionStartY + row * (this.optionHeight + 4 * scale);
       
       this.arrowIndicator.setX(activeOptionX + 5 * scale);
-      this.arrowIndicator.setY(activeOptionY + optionHeight / 2);
+      this.arrowIndicator.setY(activeOptionY + this.optionHeight / 2);
     }
   }
 

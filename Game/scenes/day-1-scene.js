@@ -180,7 +180,7 @@ export class Day1Scene extends Phaser.Scene {
         this._updateHUD(`Trivia Question ${index + 1}/${TRIVIA_QUESTIONS.length}...`);
 
         const trivia = new TriviaOverlay(this, {
-          dialogueText: `יוסף סולברג: שאלה ${index + 1} מתוך ${TRIVIA_QUESTIONS.length}. ענה נכונה כדי להמשיך:`,
+          dialogueText: `שאלה ${index + 1} מתוך ${TRIVIA_QUESTIONS.length}. ענה נכונה כדי להמשיך:`,
           questionText: qData[0],
           options: qData[1],
           correctIndex: qData[2]
