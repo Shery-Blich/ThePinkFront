@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { NPC } from '../entities/npc.js';
-import { TapToMove } from '../systems/tap-to-move.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
@@ -23,9 +22,6 @@ export class Day1Scene extends Phaser.Scene {
 
     /** @type {Player} */
     this.player = null;
-
-    /** @type {TapToMove} */
-    this.movement = null;
 
     /** @type {Phaser.Physics.Arcade.StaticGroup} */
     this.npcGroup = null;
@@ -105,7 +101,7 @@ export class Day1Scene extends Phaser.Scene {
       this.player,
       this.npcGroup,
       () => {
-        if (this.movement) this.movement.onCollision();
+        if (this.player) this.player.onCollision();
       },
       null,
       this
@@ -115,22 +111,15 @@ export class Day1Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, height);
     this.cameras.main.startFollow(this.player, true, 0.1, 0);
 
-    // --- Movement ---
-    this.movement = new TapToMove(this, this.player, {
-      speed: charW * 3.5,
-      showTapMarker: true,
-      tapMarkerColor: 0xffcc00,
-      tapMarkerRadius: Math.max(4, this.s * 3),
-      tapMarkerDuration: 350,
-    });
-    this.movement.disable(); // Disabled initially for intro dialogue
+    // Disable movement initially for intro dialogue
+    if (this.player) this.player.disable();
 
     // --- HUD ---
     this._createHUD();
 
-    this.movement.on('move-start', () => this._updateHUD('Walking...'));
-    this.movement.on('move-end', () => this._updateHUD('Tap to move →'));
-    this.movement.on('move-blocked', () => this._updateHUD('Blocked!'));
+    this.player.on('move-start', () => this._updateHUD('Walking...'));
+    this.player.on('move-end', () => this._updateHUD('Tap to move →'));
+    this.player.on('move-blocked', () => this._updateHUD('Blocked!'));
 
     // --- Particles ---
     this.explosionParticles = this.add.particles(0, 0, 'particle', {
@@ -161,10 +150,14 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     this.droneManager.on('all-drones-dodged', () => {
-      this.triggerSceneOver();
+      this.time.delayedCall(1000, () => {
+        if (!this.isGameOver) {
+          this.triggerSceneOver();
+        }
+      });
     });
 
-    this.movement.once('move-start', () => {
+    this.player.once('move-start', () => {
       this.isGameOver = false;
       this.isSceneOver = false;
       this.droneManager.start();
@@ -173,7 +166,7 @@ export class Day1Scene extends Phaser.Scene {
     // --- Play Intro Cutscene Dialogue ---
     this._updateHUD('Incoming transmission...');
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
-      this.movement.enable();
+      this.player.enable();
       this._updateHUD('Tap to move →');
     });
     introDialog.start();
@@ -185,13 +178,8 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    if (this.movement) {
-      this.movement.update();
-    }
-
-    // Depth sort all characters
     if (this.player) {
-      this.player.depthSort();
+      this.player.update();
     }
     for (const npc of this.npcList) {
       npc.depthSort();
@@ -347,10 +335,10 @@ export class Day1Scene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   triggerGameOver() {
-    if (this.isGameOver) return;
+    if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
 
-    if (this.movement) this.movement.disable();
+    if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
 
     // Falling / grey out animation
@@ -408,10 +396,10 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   triggerSceneOver() {
-    if (this.isSceneOver) return;
+    if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
 
-    if (this.movement) this.movement.disable();
+    if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
 
     // Trigger dialogue overlay using externalized dialogue text (Model)
