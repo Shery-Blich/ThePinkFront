@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { Character } from '../entities/character.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 /**
  * FinalScene — The voting booth climax.
@@ -19,6 +20,8 @@ export class FinalScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
+
+    startSceneMusic(this, 'bg-end');
 
     // --- Background Styling ---
     this.cameras.main.setBackgroundColor('#1a1a2e');
@@ -39,7 +42,7 @@ export class FinalScene extends Phaser.Scene {
 
     // --- Start Climax Dialogue ---
     const dialogueLines = [
-      { speaker: 'Player', text: 'Wow, I finally reached the voting booth!' }
+      { speaker: 'שלומי', text: 'וואו, סוף סוף הגעתי לתא ההצבעה!' }
     ];
 
     const dialog = new DialogSystem(this, dialogueLines, () => {
@@ -70,7 +73,7 @@ export class FinalScene extends Phaser.Scene {
     booth.fillRect(cx - 28 * this.s, cy - 23 * this.s, 56 * this.s, 2 * this.s);
 
     // Box label
-    const voteLabel = this.add.text(cx, cy + 15 * this.s, 'VOTE', {
+    const voteLabel = this.add.text(cx, cy + 15 * this.s, 'הצביעו', {
       fontFamily: 'monospace',
       fontSize: `${18 * this.s}px`,
       fontWeight: '900',

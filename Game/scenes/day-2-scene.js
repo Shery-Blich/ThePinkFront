@@ -3,6 +3,7 @@ import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -33,6 +34,12 @@ export class Day2Scene extends Phaser.Scene {
     this._collectedCount = 0;
     this._canDoubleJump = false;   
     this._hasDoubleJumped = false; 
+    this._sounds = {
+      collect: null,
+      cashier: null,
+      ambient: [],
+    };
+    this._ambientSoundEvent = null;
   }
 
   create() {
@@ -100,6 +107,8 @@ export class Day2Scene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.productGroup, this.collectProduct, null, this);
     this.physics.add.overlap(this.player, this.finishZone, this._reachCashier, null, this);
 
+    this._setupSounds();
+    startSceneMusic(this, 'bg-middle');
     this._setupInput(width);
     this._createHUD();
   }
@@ -362,7 +371,7 @@ export class Day2Scene extends Phaser.Scene {
     this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981);
     this.physics.add.existing(this.finishZone, true);
 
-    const label = this.add.text(x, y - 100, 'Cashier', {
+    const label = this.add.text(x, y - 100, 'קופה', {
       fontFamily: 'Arial',
       fontSize: '16px',
       color: '#ffffff',
@@ -388,8 +397,8 @@ export class Day2Scene extends Phaser.Scene {
   _updateHUD() {
     if (this._debugText) {
       this._debugText.setText([
-        `Budget: ${this._formatPrice(this.score)}`,
-        'Use joystick/arrows to move, tap/space to jump',
+        `תקציב: ${this._formatPrice(this.score)}`,
+        'זוז עם הג׳ויסטיק/חיצים, הקש/רווח כדי לקפוץ',
       ]);
     }
   }
@@ -399,12 +408,12 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
 
-    // Player wins if budget is completely spent (= 0)
     if (this.score > 0) {
       this.triggerGameOver();
       return;
     }
 
+    this._playSound('cashier');
     this.triggerSceneOver();
   }
 
@@ -447,6 +456,7 @@ export class Day2Scene extends Phaser.Scene {
     }
 
     this._collectedCount += 1;
+    this._playSound('collect');
   }
 
   _formatPrice(value) {
@@ -457,7 +467,9 @@ export class Day2Scene extends Phaser.Scene {
     if (this.isGameOver || this.isSceneOver) {
       return;
     }
+    this._stopAmbientSounds();
     this.isGameOver = true;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
     this.joystick?.disable();
     this.physics.pause();
 
@@ -497,7 +509,7 @@ export class Day2Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'TAP ANYWHERE TO TRY AGAIN', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'הקישו בכל מקום כדי לנסות שוב', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.045)}px`,
       color: '#ffffff',
@@ -524,7 +536,9 @@ export class Day2Scene extends Phaser.Scene {
     if (this.isSceneOver || this.isGameOver) {
       return;
     }
+    this._stopAmbientSounds();
     this.isSceneOver = true;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
     this.joystick?.disable();
     this.physics.pause();
 
@@ -539,7 +553,7 @@ export class Day2Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'SCENE CLEAR', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'השלב הושלם', {
       fontFamily: 'Impact, sans-serif',
       fontSize: `${Math.round(this.scale.height * 0.1)}px`,
       color: '#00ffcc',
@@ -552,7 +566,7 @@ export class Day2Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',
@@ -573,5 +587,89 @@ export class Day2Scene extends Phaser.Scene {
         });
       }
     });
+  }
+
+  _setupSounds() {
+    if (!this.sound || !this.cache || !this.cache.audio) {
+      return;
+    }
+
+    this._sounds.collect = this._createSound('collect');
+    this._sounds.cashier = this._createSound('cashier');
+
+    const ambientKeys = ['ambient1', 'ambient2', 'ambient3'];
+    this._sounds.ambient = ambientKeys
+      .map((key) => this._createSound(key))
+      .filter(Boolean);
+
+    this._scheduleAmbientSound();
+  }
+
+  _createSound(key, config = {}) {
+    if (!this.cache.audio.exists(key)) {
+      return null;
+    }
+
+    try {
+      return this.sound.add(key, config);
+    } catch (e) {
+      console.warn(`Unable to create sound '${key}':`, e);
+      return null;
+    }
+  }
+
+  _playSound(key) {
+    const sound = this._sounds && this._sounds[key];
+    if (sound && typeof sound.play === 'function') {
+      sound.play();
+    }
+  }
+
+  _scheduleAmbientSound() {
+    if (!this.time || !this._sounds || !this._sounds.ambient.length) {
+      return;
+    }
+
+    if (this._ambientSoundEvent) {
+      this._ambientSoundEvent.remove();
+    }
+
+    const delay = Phaser.Math.Between(5000, 12000);
+    this._ambientSoundEvent = this.time.addEvent({
+      delay,
+      callback: this._playRandomAmbientSound,
+      callbackScope: this,
+    });
+  }
+
+  _playRandomAmbientSound() {
+    const ambientSounds = this._sounds.ambient;
+    if (!ambientSounds || !ambientSounds.length) {
+      return;
+    }
+
+    const index = Phaser.Math.Between(0, ambientSounds.length - 1);
+    const sound = ambientSounds[index];
+    if (sound && typeof sound.play === 'function') {
+      sound.play();
+    }
+
+    this._scheduleAmbientSound();
+  }
+
+  _stopAmbientSounds() {
+    if (this._ambientSoundEvent) {
+      this._ambientSoundEvent.remove();
+      this._ambientSoundEvent = null;
+    }
+
+    const ambientSounds = this._sounds && this._sounds.ambient;
+    if (ambientSounds && ambientSounds.length) {
+      ambientSounds.forEach((sound) => {
+        if (sound && typeof sound.stop === 'function') {
+          sound.stop();
+        }
+      });
+    }
   }
 }

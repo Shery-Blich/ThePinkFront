@@ -131,6 +131,9 @@ export class Drone {
    * @private
    */
   explode() {
+    // 0. Explosion sound
+    this.scene.sound.play('sfx-explosion', { volume: 0.5 });
+
     // 1. Shockwave graphics
     const blast = this.scene.add.graphics({ x: this.tx, y: this.ty });
     blast.lineStyle(2 * this.scale, 0xff3300, 1);

@@ -15,7 +15,7 @@ const questionValidators = [
 
 // GET /api/questions  — admin: full data including correctAnswerIndex
 router.get('/', requireAdmin, async (_req, res) => {
-  const questions = await Question.find().sort({ createdAt: -1 }).lean();
+  const questions = await Question.find().sort({ createdAt: 1 }).lean();
   res.json(questions);
 });
 

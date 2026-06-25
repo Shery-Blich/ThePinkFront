@@ -45,16 +45,6 @@ export class MenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    const subtitleText = this.add.text(width / 2, height * 0.48, 'THE PINK FRONT', {
-      fontFamily: 'monospace',
-      fontSize: `${Math.max(12, Math.round(height * 0.035))}px`,
-      fontWeight: 'bold',
-      color: '#00e6ff',
-      letterSpacing: 4,
-    });
-    subtitleText.setOrigin(0.5);
-    subtitleText.setStroke('#000000', Math.max(2, s));
-
     // --- "Start Game" Interactive Button ---
     // Background button backing using a rectangle Graphics
     const btnWidth = Math.max(180, width * 0.25);
