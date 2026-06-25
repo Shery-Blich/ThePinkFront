@@ -31,6 +31,8 @@ export class Day1Scene extends Phaser.Scene {
 
     /** @type {number} sprite scale factor */
     this.s = 1;
+    this._autoScrollSpeed = 80; // px/sec
+    this._bgTile = null;
 
     /** @type {number} */
     this.roadTop = 0;
@@ -70,6 +72,15 @@ export class Day1Scene extends Phaser.Scene {
     // --- World size ---
     const worldWidth = WORLD_CHARS_WIDE * charW;
 
+    // Parallax tiled background (will repeat automatically)
+    if (this.textures.exists('bg')) {
+      // Use the sky area height so it sits behind the skyline
+      const skyHeight = this.roadTop;
+      this._bgTile = this.add.tileSprite(0, 0, worldWidth, skyHeight, 'bg')
+        .setOrigin(0, 0)
+        .setScrollFactor(0) // we'll control tilePosition manually for parallax
+        .setDepth(0);
+    }
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
     this._buildSkyline(worldWidth, this.roadTop);
@@ -183,8 +194,12 @@ export class Day1Scene extends Phaser.Scene {
       this.player.update();
     }
 
-
-
+    // Parallax background scroll: slower than camera for depth
+    const cam = this.cameras && this.cameras.main;
+    if (this._bgTile && cam) {
+      this._bgTile.tilePositionX = cam.scrollX * 0.35;
+    }
++
     for (const npc of this.npcList) {
       npc.depthSort();
     }
