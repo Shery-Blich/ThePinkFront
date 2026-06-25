@@ -114,7 +114,7 @@ const styles = {
   card: { background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' },
   questionText: { fontWeight: 600, marginBottom: '0.5rem' },
   answerList: { paddingLeft: '1.5rem', paddingRight: '1.5rem', margin: '0 0 0.75rem' },
-  correctAnswer: { color: '#155724', fontWeight: 600 },
+  correctAnswer: { color: '#880e4f', fontWeight: 600 },
   rowActions: { display: 'flex', gap: '0.5rem' },
   btnPrimary: { padding: '0.5rem 1rem', background: '#c2185b', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
   btnEdit: { padding: '0.3rem 0.8rem', background: '#e91e8c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
