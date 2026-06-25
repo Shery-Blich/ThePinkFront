@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/boot-scene.js';
 import { Day1Scene } from './scenes/day-1-scene.js';
+import { Day2Scene } from './scenes/day-2-scene.js';
 import { Day3Scene } from './scenes/day-3-scene.js';
 import { FinalScene } from './scenes/final-scene.js';
 import { SceneOrchestrator } from './systems/scene-orchestrator.js';

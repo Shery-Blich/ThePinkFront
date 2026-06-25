@@ -40,6 +40,7 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
       knobAlpha: 0.5,
       knobStrokeColor: 0xffffff, // Neutral white outline
       knobStrokeAlpha: 0.7,
+      horizontalOnly: false,
       ...config
     };
 
@@ -144,7 +145,9 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
 
       // Determine target velocity based on angle and strength
       const vx = Math.cos(angle) * this.config.speed * strength;
-      const vy = Math.sin(angle) * this.config.speed * strength;
+      const vy = this.config.horizontalOnly
+        ? this.player.body.velocity.y
+        : Math.sin(angle) * this.config.speed * strength;
 
       if (this.player && this.player.body) {
         this.player.body.setVelocity(vx, vy);
@@ -287,7 +290,7 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
     }
 
     let direction;
-    if (Math.abs(vx) > Math.abs(vy)) {
+    if (this.config.horizontalOnly || Math.abs(vx) > Math.abs(vy)) {
       direction = vx > 0 ? 'right' : 'left';
     } else {
       direction = vy > 0 ? 'down' : 'up';
