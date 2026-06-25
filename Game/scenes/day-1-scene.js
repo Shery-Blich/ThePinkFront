@@ -5,7 +5,7 @@ import { NPC } from '../entities/npc.js';
 import { TapToMove } from '../systems/tap-to-move.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
-import { DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -123,7 +123,7 @@ export class Day1Scene extends Phaser.Scene {
       tapMarkerRadius: Math.max(4, this.s * 3),
       tapMarkerDuration: 350,
     });
-    this.movement.enable();
+    this.movement.disable(); // Disabled initially for intro dialogue
 
     // --- HUD ---
     this._createHUD();
@@ -169,6 +169,14 @@ export class Day1Scene extends Phaser.Scene {
       this.isSceneOver = false;
       this.droneManager.start();
     });
+
+    // --- Play Intro Cutscene Dialogue ---
+    this._updateHUD('Incoming transmission...');
+    const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
+      this.movement.enable();
+      this._updateHUD('Tap to move →');
+    });
+    introDialog.start();
 
     // Cleanup on shutdown
     this.events.once('shutdown', () => {
