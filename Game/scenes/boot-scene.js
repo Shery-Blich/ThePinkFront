@@ -19,7 +19,13 @@ export class BootScene extends Phaser.Scene {
     this._generateBuildingTextures();
     this._generateRoadTexture();
 
-    this.scene.start('Day1Scene');
+    if (window.gameStarted) {
+      this.scene.start('Day1Scene');
+    } else {
+      window.addEventListener('start-game', () => {
+        this.scene.start('Day1Scene');
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
