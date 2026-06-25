@@ -37,6 +37,7 @@ const config = {
     activePointers: 2,
   },
   scene: [
+    BootScene,
     Day1Scene,
     Day2Scene,
     Day3Scene,
