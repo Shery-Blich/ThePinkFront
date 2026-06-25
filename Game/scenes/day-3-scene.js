@@ -62,6 +62,7 @@ export class Day3Scene extends Phaser.Scene {
 
     // Supermarket graphics placeholder
     this.supermarket = null;
+
   }
 
   create() {
@@ -238,6 +239,8 @@ export class Day3Scene extends Phaser.Scene {
     if (this.player) {
       this.player.update();
     }
+
+
 
     // Process crumbling stones road update only after the game starts
     if (this.player && this.player.visible && this.gameplayStarted && !this.isGameOver && !this.isSceneOver) {

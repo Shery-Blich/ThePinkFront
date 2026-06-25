@@ -11,7 +11,7 @@ export class Product extends Phaser.GameObjects.Rectangle {
 
     this.price = price !== null
       ? price
-      : Number(`${Phaser.Math.Between(10, 99)}.99`);
+      : Phaser.Math.Between(5, 15);
 
     this.setStrokeStyle(2, 0x663300);
     this.setOrigin(0.5, 1);
@@ -19,7 +19,7 @@ export class Product extends Phaser.GameObjects.Rectangle {
     this.body.setSize(width, height);
     this.body.setOffset(-width / 2, -height);
 
-    this.priceLabel = scene.add.text(x, y - height - 6, `${this.price.toFixed(2)} nis`, {
+    this.priceLabel = scene.add.text(x, y - height - 6, `₪${this.price}`, {
       fontFamily: 'Arial',
       fontSize: '12px',
       color: '#1f2937',

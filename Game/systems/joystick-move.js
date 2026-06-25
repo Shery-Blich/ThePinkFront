@@ -71,6 +71,9 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
       fixed: true,
     });
 
+    /** @type {Phaser.Input.Keyboard.CursorKeys | null} */
+    this._cursors = null;
+
     // Hide initially
     this.joystick.visible = false;
 
@@ -154,8 +157,62 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
         this._updateAnimation(vx, vy);
       }
     } else {
-      if (this.isMoving) {
-        this.stop();
+      // Keyboard support fallback
+      if (!this._cursors && this.scene.input.keyboard) {
+        this._cursors = this.scene.input.keyboard.createCursorKeys();
+      }
+
+      if (this._cursors) {
+        let vx = 0;
+        let vy = 0;
+        const speed = this.config.speed;
+
+        if (this._cursors.left.isDown) {
+          vx = -speed;
+        } else if (this._cursors.right.isDown) {
+          vx = speed;
+        }
+
+        if (!this.config.horizontalOnly) {
+          if (this._cursors.up.isDown) {
+            vy = -speed;
+          } else if (this._cursors.down.isDown) {
+            vy = speed;
+          }
+        }
+
+        // Space/Up key jump check
+        if (Phaser.Input.Keyboard.JustDown(this._cursors.space) || Phaser.Input.Keyboard.JustDown(this._cursors.up)) {
+          if (typeof this.scene._doJump === 'function') {
+            this.scene._doJump();
+          }
+        }
+
+        if (vx !== 0 || vy !== 0) {
+          if (!this.isMoving) {
+            this.isMoving = true;
+            this.emit('move-start', { x: this.player.x, y: this.player.y });
+          }
+          if (vx !== 0 && vy !== 0 && !this.config.horizontalOnly) {
+            vx *= 0.7071;
+            vy *= 0.7071;
+          }
+          if (this.player && this.player.body) {
+            this.player.body.setVelocity(
+              vx,
+              this.config.horizontalOnly ? this.player.body.velocity.y : vy
+            );
+            this._updateAnimation(vx, vy);
+          }
+        } else {
+          if (this.isMoving) {
+            this.stop();
+          }
+        }
+      } else {
+        if (this.isMoving) {
+          this.stop();
+        }
       }
     }
 

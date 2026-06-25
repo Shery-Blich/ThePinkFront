@@ -16,7 +16,7 @@ export class Day2Scene extends Phaser.Scene {
     this._playerEntity = null;
     this.productGroup = null;
     this.platformGroup = null;
-    this.score = 200.0;
+    this.score = 67.0;
     this.isGameOver = false;
     this.isSceneOver = false;
     this._debugText = null;
@@ -25,7 +25,6 @@ export class Day2Scene extends Phaser.Scene {
     this._speedAdjust = 0;
     this._minRunSpeed = 0;
     this._jumpVelocity = -420;
-    this._cursors = null;
     this._levelWidth = 0;
     this.joystick = null;
     this.s = 1;
@@ -37,7 +36,7 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   create() {
-    this.score = 200.0;
+    this.score = 67.0;
     this.isGameOver = false;
     this.isSceneOver = false;
     this._errorMessages = [];
@@ -46,7 +45,6 @@ export class Day2Scene extends Phaser.Scene {
     this._debugText = null;
     this.joystick = null;
 
-    this._cursors = null;
     this._moveDirection = 0;
     this._collectedCount = 0; 
     this._canDoubleJump = false;
@@ -119,6 +117,15 @@ export class Day2Scene extends Phaser.Scene {
         this.triggerGameOver();
         return;
       }
+
+      // Clamp player to prevent escaping the right screen border
+      const rightLimit = cam.scrollX + cam.displayWidth - 16;
+      if (this.player.x > rightLimit) {
+        this.player.x = rightLimit;
+        if (this.player.body) {
+          this.player.body.setVelocityX(Math.min(0, this.player.body.velocity.x));
+        }
+      }
     }
 
     // Reset double-jump on landing
@@ -148,24 +155,7 @@ export class Day2Scene extends Phaser.Scene {
       }
     }
 
-    // 2. Keyboard Fallback (Only executes if joystick is idle)
-    if (!joystickActive && this._cursors && this.player && this.player.body) {
-      if (this._cursors.left.isDown) {
-        this.player.body.setVelocityX(-this._baseRunSpeed);
-      } else if (this._cursors.right.isDown) {
-        this.player.body.setVelocityX(this._baseRunSpeed);
-      } else {
-        this.player.body.setVelocityX(0);
-      }
-    }
-
-    // Handle Keyboard Jumps
-    if (this._cursors) {
-      if (Phaser.Input.Keyboard.JustDown(this._cursors.up) ||
-          Phaser.Input.Keyboard.JustDown(this._cursors.space)) {
-        this._doJump();
-      }
-    }
+    // Keyboard fallback and jump checks are now centrally managed by JoystickMove update.
 
     this._scrollCamera(delta);
 
@@ -187,16 +177,32 @@ export class Day2Scene extends Phaser.Scene {
 
     const camera = this.cameras.main;
     const maxScrollX = Math.max(0, this._levelWidth - camera.displayWidth);
+    
+    let scrollSpeed = this._autoScrollSpeed;
+
+    // Speed up camera scroll if player is past the middle width of the screen
+    if (this.player) {
+      const halfWidth = camera.displayWidth / 2;
+      const playerRelativeX = this.player.x - camera.scrollX;
+
+      if (playerRelativeX > halfWidth) {
+        const overshoot = playerRelativeX - halfWidth;
+        const factor = overshoot / halfWidth; // Normalized 0 to 1
+        // Speed up the camera movement up to 2.5x the base scroll speed
+        scrollSpeed += factor * this._autoScrollSpeed * 1.5;
+      }
+    }
+
     camera.scrollX = Phaser.Math.Clamp(
-      camera.scrollX + (this._autoScrollSpeed * delta) / 1000,
+      camera.scrollX + (scrollSpeed * delta) / 1000,
       0,
       maxScrollX,
     );
   }
 
   _createPlayer(width, height) {
-    const startX = 150; // Shifted slightly right so the player doesn't instantly die on spawn
-    const startY = height - BLOCK_HEIGHT - 80;
+    const startX = 350; // Shifted right to center so player has time to react to autoscroll edge
+    const startY = height - 40; // Spawns directly on the floor surface
 
     try {
       this._playerEntity = new Player(this, startX, startY, this.s);
@@ -237,9 +243,6 @@ export class Day2Scene extends Phaser.Scene {
       this._doJump();
     });
 
-    if (this.input.keyboard) {
-      this._cursors = this.input.keyboard.createCursorKeys();
-    }
   }
 
   _isPointerOnJoystick(pointer) {
@@ -304,11 +307,11 @@ export class Day2Scene extends Phaser.Scene {
     const safeEndX = this._levelWidth - finishBuffer;
 
     const shelves = [
-      { x: 260, y: floorY - 80, width: 180, height: 24 },
-      { x: 620, y: floorY - 130, width: 180, height: 24 },
-      { x: 1040, y: floorY - 100, width: 180, height: 24 },
-      { x: 1460, y: floorY - 170, width: 180, height: 24 },
-      { x: 1860, y: floorY - 80, width: 180, height: 24 },
+      { x: 520, y: floorY - 80, width: 180, height: 24 },
+      { x: 800, y: floorY - 130, width: 180, height: 24 },
+      { x: 1100, y: floorY - 100, width: 180, height: 24 },
+      { x: 1400, y: floorY - 170, width: 180, height: 24 },
+      { x: 1700, y: floorY - 80, width: 180, height: 24 },
       { x: this._levelWidth - 500, y: floorY - 140, width: 180, height: 24 },
     ];
 
@@ -447,7 +450,7 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _formatPrice(value) {
-    return `${value.toFixed(2)}€`;
+    return `₪${value.toFixed(2)}`;
   }
 
   triggerGameOver() {
@@ -549,7 +552,7 @@ export class Day2Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO REPLAY', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',
@@ -566,7 +569,7 @@ export class Day2Scene extends Phaser.Scene {
       duration: 800,
       onComplete: () => {
         this.input.once('pointerdown', () => {
-          this.scene.restart();
+          this.events.emit('complete');
         });
       }
     });
