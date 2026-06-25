@@ -673,7 +673,7 @@ export class Day3Scene extends Phaser.Scene {
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO REPLAY', {
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO CONTINUE', {
       fontFamily: 'monospace',
       fontSize: `${Math.round(this.scale.height * 0.04)}px`,
       color: '#ffffff',
@@ -690,7 +690,7 @@ export class Day3Scene extends Phaser.Scene {
       duration: 800,
       onComplete: () => {
         this.input.once('pointerdown', () => {
-          this.scene.restart();
+          this.events.emit('complete');
         });
       }
     });

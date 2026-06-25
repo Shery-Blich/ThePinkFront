@@ -28,10 +28,10 @@ export class BootScene extends Phaser.Scene {
     this._generateAsphaltTextures();
 
     if (window.gameStarted) {
-      this.scene.start('Day3Scene');
+      this.events.emit('complete');
     } else {
       window.addEventListener('start-game', () => {
-        this.scene.start('Day3Scene');
+        this.events.emit('complete');
       });
     }
   }

@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/boot-scene.js';
 import { Day1Scene } from './scenes/day-1-scene.js';
 import { Day3Scene } from './scenes/day-3-scene.js';
+import { FinalScene } from './scenes/final-scene.js';
+import { SceneOrchestrator } from './systems/scene-orchestrator.js';
 
 /**
  * Phaser game configuration.
@@ -30,8 +32,12 @@ const config = {
   input: {
     activePointers: 1,
   },
-  scene: [BootScene, Day3Scene, Day1Scene],
+  scene: [BootScene, Day1Scene, Day3Scene, FinalScene],
 };
 
 // eslint-disable-next-line no-unused-vars
 const game = new Phaser.Game(config);
+
+// Connect all the stages in chronological order using the Orchestrator
+new SceneOrchestrator(game, [Day1Scene, Day3Scene, FinalScene]);
+
