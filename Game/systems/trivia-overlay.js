@@ -468,7 +468,7 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
       }
       
       if (optText) {
-        optText.setColor(isActive ? '#ff2a5f' : '#ffffff');
+        optText.setColor('#ffffff');
       }
     }
 
@@ -533,15 +533,15 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
         // Redraw chosen answer: correct gets green, incorrect gets red
         const state = isCorrect ? 'correct' : 'incorrect';
         this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, state);
-        if (optText) optText.setColor(isCorrect ? '#10b981' : '#ef4444');
+        if (optText) optText.setColor('#ffffff');
       } else if (i === this.data.correctIndex) {
         // Redraw correct answer always in green
         this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, 'correct');
-        if (optText) optText.setColor('#10b981');
+        if (optText) optText.setColor('#ffffff');
       } else {
         // Dim other option boxes
         this.drawOptionBox(optBg, optionX, optionY, this.colWidth, this.optionHeight, scale, 'inactive');
-        if (optText) optText.setColor('#475569');
+        if (optText) optText.setColor('#ffffff');
       }
     }
 
