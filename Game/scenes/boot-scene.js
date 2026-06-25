@@ -18,6 +18,8 @@ export class BootScene extends Phaser.Scene {
     this._generateNpcTexture();
     this._generateBuildingTextures();
     this._generateRoadTexture();
+    this._generateDroneTexture();
+    this._generateParticleTexture();
 
     this.scene.start('Day1Scene');
   }
@@ -161,5 +163,35 @@ export class BootScene extends Phaser.Scene {
     swGfx.strokeRect(0, 0, 16, 16);
     swGfx.generateTexture('sidewalk', 16, 16);
     swGfx.destroy();
+  }
+
+  /** Drone: 24×16 metal quadcopter with red core and propellers */
+  _generateDroneTexture() {
+    const gfx = this.add.graphics();
+    // Metal grey chassis
+    gfx.fillStyle(0x3f3f46, 1);
+    gfx.fillRect(4, 6, 16, 6);
+    gfx.fillRect(10, 4, 4, 10);
+    // Red sensor/eye
+    gfx.fillStyle(0xef4444, 1);
+    gfx.fillRect(11, 7, 2, 2);
+    // Propellers/wings
+    gfx.fillStyle(0x71717a, 1);
+    gfx.fillRect(2, 4, 3, 2);
+    gfx.fillRect(19, 4, 3, 2);
+    gfx.fillRect(2, 12, 3, 2);
+    gfx.fillRect(19, 12, 3, 2);
+
+    gfx.generateTexture('drone', 24, 16);
+    gfx.destroy();
+  }
+
+  /** Particle: 4×4 white block for explosions */
+  _generateParticleTexture() {
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(0, 0, 4, 4);
+    gfx.generateTexture('particle', 4, 4);
+    gfx.destroy();
   }
 }
