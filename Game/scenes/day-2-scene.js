@@ -2,8 +2,7 @@ import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
-import { JoystickMove } from '../systems/joystick-move.js'
-import VirtualJoyStickPlugin from 'phaser3-rex-plugins/plugins/virtualjoystick-plugin.js';
+import { JoystickMove } from '../systems/joystick-move.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -19,23 +18,38 @@ export class Day2Scene extends Phaser.Scene {
     this.platformGroup = null;
     this.score = 200.0;
     this.isGameOver = false;
+    this.isSceneOver = false;
     this._debugText = null;
     this._errorMessages = [];
-    this._lastTapTime = 0;
-    this._doubleTapThreshold = 300;
-    this._activePointerId = null;
-    this._isPointerDown = false;
-    this._moveDirection = 0;
     this._baseRunSpeed = 120;
     this._speedAdjust = 140;
     this._minRunSpeed = 80;
     this._jumpVelocity = -420;
     this._cursors = null;
     this._levelWidth = 0;
+    this.joystick = null;
     this.s = 1;
+    this._autoScrollSpeed = 80; // px/sec
   }
 
   create() {
+    // Reset scene state on first load and restart
+    this.score = 200.0;
+    this.isGameOver = false;
+    this.isSceneOver = false;
+    this._errorMessages = [];
+    this._playerEntity = null;
+    this.player = null;
+    this._debugText = null;
+    this.joystick = null;
+
+    // ensure input / camera / movement state is clean for restarts
+    this._cursors = null;
+    this._moveDirection = 0;
+    if (this.cameras && this.cameras.main) {
+      this.cameras.main.scrollX = 0;
+    }
+    
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
     const charWidth = 12 * this.s;
@@ -59,53 +73,58 @@ export class Day2Scene extends Phaser.Scene {
 
     this.physics.world.gravity.y = 900;
 
-    // 1. Build the static map elements first
     this._buildGround(width, height);
     this._buildShelves(width, height);
-    this._buildCashier(width, height); // <--- FIXED: Added missing cashier initialization
 
-    // 2. Instantiate your player BEFORE adding colliders
-    this._createPlayer(width, height); // <--- FIXED: Added missing player initialization
-
-    this.productGroup = this.physics.add.group({
-      immovable: true,
-      allowGravity: false,
-    });
+    this.productGroup = this.physics.add.staticGroup();
     this._spawnProducts(width, height);
 
-    // 3. Set up physical collisions
+    this._buildCashier(width, height);
+
+    this._createPlayer(width, height);
+
+    this.joystick = new JoystickMove(this, this.player, {
+      speed: 140,
+      leftOffset: 60,
+      bottomOffset: 60,
+      horizontalOnly: true,
+    });
+    this.joystick.enable();
+
     this.physics.add.collider(this.player, this.platformGroup);
     this.physics.add.collider(this.player, this.ground);
-    this.physics.add.collider(this.player, this.productGroup, this.collectProduct, null, this);
+    this.physics.add.overlap(this.player, this.productGroup, this.collectProduct, null, this);
     this.physics.add.overlap(this.player, this.finishZone, this._reachCashier, null, this);
 
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    // remove follow so camera can auto-scroll independently
+    // this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
     this._setupInput(width);
     this._createHUD();
   }
 
-  update() {
-    if (this.isGameOver) {
+  update(time, delta) {
+    if (this.isGameOver || this.isSceneOver) {
+      return;
+    }
+
+    if (this.score <= 0) {
+      this.triggerGameOver();
       return;
     }
 
     if (this._cursors && this.player && this.player.body) {
-      if (this._cursors.left.isDown) {
-        this._moveDirection = -1;
-      } else if (this._cursors.right.isDown) {
-        this._moveDirection = 1;
-      } else if (!this._isPointerDown) {
-        this._moveDirection = 0;
-      }
-
       if (Phaser.Input.Keyboard.JustDown(this._cursors.up) ||
           Phaser.Input.Keyboard.JustDown(this._cursors.space)) {
         this._doJump();
       }
     }
 
-    this._applyMoveVelocity();
+    if (this.joystick) {
+      this.joystick.update();
+    }
+
+    this._scrollCamera(delta);
 
     if (this._playerEntity && this._playerEntity.update) {
       try {
@@ -118,9 +137,23 @@ export class Day2Scene extends Phaser.Scene {
     if (this._debugText) {
       this._debugText.setText([
         `Budget: ${this._formatPrice(this.score)}`,
-        'Tap left/right to steer, double-tap to jump',
+        'Use joystick to move, tap to jump',
       ]);
     }
+  }
+
+  _scrollCamera(delta) {
+    if (!this.cameras.main) {
+      return;
+    }
+
+    const camera = this.cameras.main;
+    const maxScrollX = Math.max(0, this._levelWidth - camera.displayWidth);
+    camera.scrollX = Phaser.Math.Clamp(
+      camera.scrollX + (this._autoScrollSpeed * delta) / 1000,
+      0,
+      maxScrollX,
+    );
   }
 
   _createPlayer(width, height) {
@@ -138,6 +171,8 @@ export class Day2Scene extends Phaser.Scene {
     if (this._playerEntity && this._playerEntity.body) {
       this.player = this._playerEntity;
       this.player.body.setCollideWorldBounds(true);
+      // ensure body is active on (re)start
+      if (this.player.body) this.player.body.moves = true;
     } else {
       this.player = this.physics.add.sprite(startX, startY, 'player');
       this.player.setOrigin(0.5, 1);
@@ -146,47 +181,22 @@ export class Day2Scene extends Phaser.Scene {
         this.player.body.setSize(12, 20);
         this.player.body.setOffset(-6, -20);
         this.player.setCollideWorldBounds(true);
+        this.player.body.moves = true;
       }
     }
   }
 
   _setupInput(width) {
-    this.input.on('pointerdown', (pointer) => {
+    this.input.on('pointerup', (pointer) => {
       if (this.isGameOver) {
         return;
       }
 
-      const now = this.time.now || Date.now();
-      const dt = now - (this._lastTapTime || 0);
-
-      if (dt <= this._doubleTapThreshold) {
-        this._doJump();
-        this._lastTapTime = 0;
+      if (this._isPointerOnJoystick(pointer)) {
         return;
       }
 
-      this._lastTapTime = now;
-      this._activePointerId = pointer.id;
-      this._isPointerDown = true;
-
-      const playerX = this.player && this.player.x != null ? this.player.x : width / 2;
-      this._moveDirection = pointer.worldX < playerX ? -1 : 1;
-    });
-
-    this.input.on('pointerup', (pointer) => {
-      if (pointer.id === this._activePointerId) {
-        this._stopMovement();
-        this._activePointerId = null;
-        this._isPointerDown = false;
-      }
-    });
-
-    this.input.on('pointercancel', (pointer) => {
-      if (pointer.id === this._activePointerId) {
-        this._stopMovement();
-        this._activePointerId = null;
-        this._isPointerDown = false;
-      }
+      this._doJump();
     });
 
     if (this.input.keyboard) {
@@ -194,19 +204,23 @@ export class Day2Scene extends Phaser.Scene {
     }
   }
 
+  _isPointerOnJoystick(pointer) {
+    if (!this.joystick) {
+      return false;
+    }
+
+    const dx = pointer.x - this.joystick.baseX;
+    const dy = pointer.y - this.joystick.baseY;
+    return Math.hypot(dx, dy) <= this.joystick.config.maxRadius;
+  }
+
   _applyMoveVelocity() {
     if (!this.player || !this.player.body) {
       return;
     }
 
-    // FIXED: Halt movement entirely if no move direction is active
-    if (this._moveDirection === 0) {
-      this.player.body.setVelocityX(0);
-      return;
-    }
-
     const extra = this._moveDirection * this._speedAdjust;
-    const velocityX = this._moveDirection * Math.max(this._minRunSpeed, this._baseRunSpeed + Math.abs(extra));
+    const velocityX = Math.max(this._minRunSpeed, this._baseRunSpeed + extra);
     this.player.body.setVelocityX(velocityX);
   }
 
@@ -280,6 +294,11 @@ export class Day2Scene extends Phaser.Scene {
     for (const pos of productPositions) {
       const product = new Product(this, pos.x, pos.y);
       this.productGroup.add(product);
+      
+      // Forces the static body's size and position to match the custom Product object
+      if (product.body) {
+        product.body.updateFromGameObject();
+      }
     }
   }
 
@@ -296,30 +315,14 @@ export class Day2Scene extends Phaser.Scene {
       backgroundColor: '#00000099',
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5, 1);
-    // Note: If you want this text label to scroll along with the game world, 
-    // change setScrollFactor(0) to setScrollFactor(1) or remove it.
-    label.setScrollFactor(1); 
+    label.setScrollFactor(0);
   }
 
   _reachCashier() {
-    if (this.isGameOver) {
+    if (this.isGameOver || this.isSceneOver) {
       return;
     }
-
-    this.isGameOver = true;
-    if (this.player && this.player.body) {
-      this.player.body.setVelocity(0);
-      this.player.body.moves = false;
-    }
-
-    const message = this.add.text(this.scale.width / 2, this.scale.height / 2, 'You reached the cashier!', {
-      fontFamily: 'Arial',
-      fontSize: '28px',
-      color: '#ffffff',
-      backgroundColor: '#000000c0',
-      padding: { x: 10, y: 8 },
-    }).setOrigin(0.5, 0.5);
-    message.setScrollFactor(0);
+    this.triggerSceneOver();
   }
 
   collectProduct(player, product) {
@@ -328,46 +331,178 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
 
+    // remove price label if present
     if (actualProduct.priceLabel) {
       actualProduct.priceLabel.destroy();
     }
 
     const price = typeof actualProduct.price === 'number' ? actualProduct.price : 0;
+    // deduct price from the budget (but do not end game just because a product was touched)
     this.score = Math.max(0, this.score - price);
     this._updateHUD();
 
-    if (actualProduct.disableBody) {
-      actualProduct.disableBody(true, true);
-    } else if (actualProduct.destroy) {
-      actualProduct.destroy();
+    // remove product from the world and its physics body
+    try {
+      // if the product is part of the static group, remove it from the group first
+      if (this.productGroup && this.productGroup.remove) {
+        this.productGroup.remove(actualProduct, true, true);
+      } else if (actualProduct.disableBody) {
+        actualProduct.disableBody(true, true);
+      } else if (actualProduct.destroy) {
+        actualProduct.destroy();
+      }
+    } catch (e) {
+      // fallback: ensure it's destroyed
+      if (actualProduct.destroy) actualProduct.destroy();
     }
-  }
 
-  _createHUD() {
-    const hudStyle = {
-      fontFamily: 'monospace',
-      fontSize: '20px',
-      color: '#f8f8f2',
-      backgroundColor: '#000000dd',
-      padding: { x: 8, y: 6 },
-    };
-
-    this.scoreText = this.add.text(16, 16, `Budget: ${this._formatPrice(this.score)}`, hudStyle)
-      .setScrollFactor(0)
-      .setShadow(1, 1, '#000000', 1, true, true);
-  }
-
-  _updateHUD() {
-    if (this.scoreText) {
-      this.scoreText.setText(`Budget: ${this._formatPrice(this.score)}`);
+    // only trigger game over if budget fully depleted
+    if (this.score <= 0) {
+      this.triggerGameOver();
     }
   }
 
   _formatPrice(value) {
-    return `${value.toFixed(2)} nis`;
+    return `\$${value.toFixed(2)}`;
+  }
+
+  _createHUD() {
+    const { width } = this.scale;
+
+    this.hud = this.add.container(0, 0);
+    this.hud.setScrollFactor(0);
+
+    const background = this.add.graphics();
+    background.fillStyle(0x000000, 0.5);
+    background.fillRect(0, 0, width, 50);
+    this.hud.add(background);
+
+    this._debugText = this.add.text(10, 10, '', {
+      fontFamily: 'Arial',
+      fontSize: '16px',
+      color: '#ffffff',
+    });
+    this.hud.add(this._debugText);
+
+    this._updateHUD();
+  }
+
+  _updateHUD() {
+    if (this._debugText) {
+      this._debugText.setText([
+        `Budget: ${this._formatPrice(this.score)}`,
+        'Use joystick to move, tap to jump',
+      ]);
+    }
   }
 
   triggerGameOver() {
+    if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
+    this.joystick?.disable();
+
+    if (this.player && this.player.body) {
+      this.player.body.setVelocity(0, 0);
+      this.player.body.moves = false;
+    }
+
+    const restartLevel = () => {
+      this.scene.restart();
+    };
+    this.input.once('pointerdown', restartLevel);
+
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.75);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    overlay.setScrollFactor(0);
+    overlay.setDepth(10000);
+    overlay.setAlpha(0);
+
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 40, 'GAME OVER', {
+      fontFamily: 'Impact, sans-serif',
+      fontSize: `${Math.round(this.scale.height * 0.12)}px`,
+      color: '#ff2a5f',
+      stroke: '#000000',
+      strokeThickness: 6,
+      align: 'center'
+    });
+    title.setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(10001);
+    title.setAlpha(0);
+
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'TAP ANYWHERE TO TRY AGAIN', {
+      fontFamily: 'monospace',
+      fontSize: `${Math.round(this.scale.height * 0.045)}px`,
+      color: '#ffffff',
+      align: 'center'
+    });
+    subtitle.setOrigin(0.5);
+    subtitle.setScrollFactor(0);
+    subtitle.setDepth(10001);
+    subtitle.setAlpha(0);
+
+    this.tweens.add({
+      targets: [overlay, title, subtitle],
+      alpha: 1,
+      duration: 800
+    });
+  }
+
+  triggerSceneOver() {
+    if (this.isSceneOver || this.isGameOver) return;
+    this.isSceneOver = true;
+    this.joystick?.disable();
+
+    if (this.player && this.player.body) {
+      this.player.body.setVelocity(0, 0);
+      this.player.body.moves = false;
+    }
+
+    this.showVictoryScreen();
+  }
+
+  showVictoryScreen() {
+    const restartLevel = () => {
+      this.scene.restart();
+    };
+    this.input.once('pointerdown', restartLevel);
+
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x0f0c1b, 0.85);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    overlay.setScrollFactor(0);
+    overlay.setDepth(10000);
+    overlay.setAlpha(0);
+
+    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'SCENE CLEAR', {
+      fontFamily: 'Impact, sans-serif',
+      fontSize: `${Math.round(this.scale.height * 0.1)}px`,
+      color: '#00ffcc',
+      stroke: '#000000',
+      strokeThickness: 6,
+      align: 'center'
+    });
+    title.setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(10001);
+    title.setAlpha(0);
+
+    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'TAP ANYWHERE TO REPLAY', {
+      fontFamily: 'monospace',
+      fontSize: `${Math.round(this.scale.height * 0.04)}px`,
+      color: '#ffffff',
+      align: 'center'
+    });
+    subtitle.setOrigin(0.5);
+    subtitle.setScrollFactor(0);
+    subtitle.setDepth(10001);
+    subtitle.setAlpha(0);
+
+    this.tweens.add({
+      targets: [overlay, title, subtitle],
+      alpha: 1,
+      duration: 800
+    });
   }
 }
