@@ -29,6 +29,15 @@ export class Player extends Character {
     /** @type {number} The scale factor */
     this.s = s;
 
+    // Apply proportional aspect-ratio scaling (using original height 20 as baseline)
+    if (this.width && this.height) {
+      const aspectRatio = this.width / this.height;
+      const targetHeight = 20 * s;
+      const targetWidth = targetHeight * aspectRatio;
+      this.setDisplaySize(targetWidth, targetHeight);
+      this._setupCollisionBody();
+    }
+
     // --- Rushing Speed Logic Configuration ---
     const charW = 12 * s;
     /** @type {number} Base walking speed */
@@ -167,6 +176,39 @@ export class Player extends Character {
   setWorldBounds(x, y, width, height) {
     this.scene.physics.world.setBounds(x, y, width, height);
     this.setCollideWorldBounds(true);
+  }
+
+  /**
+   * Override collision body setup for the player.
+   * Dynamically calculates body sizes to fit the bottom half of the texture,
+   * matching the original footprint scale and centering it width-wise.
+   *
+   * @protected
+   * @override
+   */
+  _setupCollisionBody() {
+    if (!this.texture || this.width === 0 || this.height === 0 || !this.body) {
+      return;
+    }
+
+    const s = this.spriteScale;
+    const aspectRatio = this.width / this.height;
+    const targetHeight = 20 * s;
+    const targetWidth = targetHeight * aspectRatio;
+
+    const scaleX = targetWidth / this.width;
+    const scaleY = targetHeight / this.height;
+
+    // Calculate local body dimensions and offsets:
+    const localWidth = (10 * s) / scaleX;
+    const localHeight = (10 * s) / scaleY;
+    
+    // Center the collision body horizontally relative to the scaled sprite width:
+    const localOffsetX = ((targetWidth - 10 * s) / 2) / scaleX;
+    const localOffsetY = (10 * s) / scaleY;
+
+    this.body.setSize(localWidth, localHeight);
+    this.body.setOffset(localOffsetX, localOffsetY);
   }
 
   /**
