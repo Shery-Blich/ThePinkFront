@@ -5,6 +5,7 @@ import { NPC } from '../entities/npc.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -67,6 +68,8 @@ export class Day3Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    startSceneMusic(this, 'bg-sessions');
 
     // --- Reset states for scene restart ---
     this.warningTiles = [];
@@ -477,6 +480,7 @@ export class Day3Scene extends Phaser.Scene {
   triggerGameOver(reason = 'DRONE_HIT') {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
@@ -567,6 +571,7 @@ export class Day3Scene extends Phaser.Scene {
   triggerSceneOver(roadCenterY, worldWidth) {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
 
     // 1. Player loses controls
     if (this.player) this.player.disable();

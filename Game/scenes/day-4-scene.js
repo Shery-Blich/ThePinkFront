@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { startSceneMusic } from "../systems/bg-music.js";
 
 /**
  * Day4Scene — Cutscene: bus ride from Kiryat Shmona to Jerusalem.
@@ -39,7 +40,7 @@ export class Day4Scene extends Phaser.Scene {
     this.cameras.main.fadeIn(700);
     this._genBackgroundTextures(width, height);
     this._buildScene(width, height);
-    this._startMusic();
+    startSceneMusic(this, 'bg-day4');
     this._scheduleTimeline(width, height);
     this.events.once("shutdown", () => this._stopMusic());
   }

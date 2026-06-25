@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { Character } from '../entities/character.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 /**
  * FinalScene — The voting booth climax.
@@ -19,6 +20,8 @@ export class FinalScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
+
+    startSceneMusic(this, 'bg-end');
 
     // --- Background Styling ---
     this.cameras.main.setBackgroundColor('#1a1a2e');

@@ -13,6 +13,18 @@ export class BootScene extends Phaser.Scene {
 
   preload() {
     this.load.image('player', 'assets/Shlomi.png');
+    this.load.audio('sfx-explosion', 'assets/sounds/drone_bomb.wav');
+    this.load.audio('sfx-gameover',  'assets/sounds/game-over.wav');
+    this.load.audio('sfx-levelup',   'assets/sounds/level-up.wav');
+    this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
+    this.load.audio('bg-middle',   'assets/sounds/music-for-middle.wav');
+    this.load.audio('bg-end',      'assets/sounds/gaming-for-end.wav');
+    this.load.audio('bg-day4',     'assets/sounds/scene-4-music.wav');
+    // Day 5 (cats) SFX
+    this.load.audio('sfx-meow',   'assets/sounds/meow.mp3');
+    this.load.audio('sfx-catbag', 'assets/sounds/cat-in-a-bag.mp3');
+    // Day 2 supermarket collect — key 'collect' is consumed by Day2Scene's existing sound system
+    this.load.audio('collect',    'assets/sounds/supermarket-collect.mp3');
   }
 
   create() {

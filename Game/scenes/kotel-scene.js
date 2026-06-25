@@ -3,6 +3,7 @@ import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -45,6 +46,8 @@ export class KotelScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    startSceneMusic(this, 'bg-end');
 
     // --- Reset states ---
     this.isSceneOver = false;
@@ -388,6 +391,8 @@ export class KotelScene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
+    this.sound.play('sfx-levelup', { volume: 0.6 });
+
     const overlay = this.add.graphics();
     overlay.fillStyle(0x0f0c1b, 0.85);
     overlay.fillRect(0, 0, this.scale.width, this.scale.height);

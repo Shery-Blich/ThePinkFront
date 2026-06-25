@@ -5,6 +5,7 @@ import { NPC } from '../entities/npc.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { startSceneMusic } from '../systems/bg-music.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -57,6 +58,8 @@ export class Day1Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    startSceneMusic(this, 'bg-sessions');
 
     // --- Scale from screen height ---
     this.s = Character.computeScale(height);
@@ -344,6 +347,7 @@ export class Day1Scene extends Phaser.Scene {
   triggerGameOver() {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
@@ -432,6 +436,7 @@ export class Day1Scene extends Phaser.Scene {
   triggerSceneOver() {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
 
     if (this.player) {
       this.player.disable();
