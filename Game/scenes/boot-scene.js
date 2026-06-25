@@ -25,10 +25,10 @@ export class BootScene extends Phaser.Scene {
     this._generateSolbergPortrait();
 
     if (window.gameStarted) {
-      this.scene.start('Day1Scene');
+      this.scene.start('TriviaScene');
     } else {
       window.addEventListener('start-game', () => {
-        this.scene.start('Day1Scene');
+        this.scene.start('TriviaScene');
       });
     }
   }

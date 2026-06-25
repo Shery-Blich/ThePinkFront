@@ -27,14 +27,17 @@ export class TriviaScene extends Phaser.Scene {
    */
   init(data) {
     const config = data || {};
-    // Load Question 1 from the local database as a default/fallback for testing
-    const defaultQuestion = TRIVIA_QUESTIONS && TRIVIA_QUESTIONS[0] ? TRIVIA_QUESTIONS[0] : null;
-
-    this.dialogueText = config.dialogueText || (defaultQuestion ? `שאלת טריוויה. ענה נכונה כדי להמשיך:` : 'שאלת טריוויה:');
-    this.questionText = config.questionText || (defaultQuestion ? defaultQuestion[0] : 'שאלת ברירת מחדל?');
-    this.options = config.options || (defaultQuestion ? defaultQuestion[1] : ['א', 'ב', 'ג', 'ד']);
-    this.correctIndex = config.correctIndex !== undefined ? config.correctIndex : (defaultQuestion ? defaultQuestion[2] : 0);
+    const questionIndex = config.questionIndex !== undefined ? config.questionIndex : 0;
     
+    // Look up question by index in database
+    const qData = TRIVIA_QUESTIONS && TRIVIA_QUESTIONS[questionIndex] ? TRIVIA_QUESTIONS[questionIndex] : null;
+
+    this.dialogueText = config.dialogueText || (qData ? `שאלה ${questionIndex + 1} מתוך ${TRIVIA_QUESTIONS.length}. ענה נכונה כדי להמשיך:` : 'שאלת טריוויה:');
+    this.questionText = config.questionText || (qData ? qData[0] : 'שאלת ברירת מחדל?');
+    this.options = config.options || (qData ? qData[1] : ['א', 'ב', 'ג', 'ד']);
+    this.correctIndex = config.correctIndex !== undefined ? config.correctIndex : (qData ? qData[2] : 0);
+    
+    this.questionIndex = questionIndex;
     this.onComplete = config.onComplete || null;
     this.nextSceneKey = config.nextSceneKey || null;
     this.parentScene = config.parentScene || null;
@@ -428,6 +431,13 @@ export class TriviaScene extends Phaser.Scene {
 
       if (this.nextSceneKey) {
         this.scene.start(this.nextSceneKey);
+      } else if (!this.onComplete) {
+        // Standalone testing mode: run sequential queue then start Day1Scene
+        if (this.questionIndex + 1 < TRIVIA_QUESTIONS.length) {
+          this.scene.start('TriviaScene', { questionIndex: this.questionIndex + 1 });
+        } else {
+          this.scene.start('Day1Scene');
+        }
       } else {
         this.scene.stop('TriviaScene');
       }
