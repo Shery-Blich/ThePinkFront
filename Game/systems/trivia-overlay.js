@@ -81,9 +81,9 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
    * Starts the trivia dialogue overlay, renders UI, and enables controls.
    */
   start() {
-    // Disable game character movement if movement exists
-    if (this.scene.movement) {
-      this.scene.movement.disable();
+    // Disable game character movement if player exists
+    if (this.scene.player) {
+      this.scene.player.disable();
     }
 
     this.createUI();
@@ -535,9 +535,9 @@ export class TriviaOverlay extends Phaser.Events.EventEmitter {
     this.arrowIndicator = null;
 
     // Enable character movement back on scene exit
-    if (this.scene.movement) {
-      this.scene.movement.enable();
-      this.scene._updateHUD('Tap to move →');
+    if (this.scene.player) {
+      this.scene.player.enable();
+      this.scene._updateHUD('Drag joystick to move →');
     }
   }
 }

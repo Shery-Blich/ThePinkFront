@@ -38,6 +38,7 @@ All developments must align with the following directory structure:
 * **CSS Classes**: Lowercase, kebab-case (e.g., `.admin-panel-container`).
 * **JSON Keys**: camelCase or snake_case as per data structures, but must be consistent.
 * **Documentation**: Provide JSDoc headers for all classes, helper functions, and custom Phaser methods detailing types and parameters.
+* **Polymorphism over Type Checking**: Prefer subclassing and polymorphic overrides (e.g., overriding class methods) over adding class/type-conditional logic (like checking texture keys or subclass names with `if/else`) inside base classes.
 
 ---
 

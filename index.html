@@ -7,6 +7,9 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <title>ThePinkFront</title>
   <style>
+    /* Menu Google Fonts Import */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Rubik:wght@400;700;900&display=swap');
+
     * {
       margin: 0;
       padding: 0;
@@ -65,6 +68,9 @@
       #game-container {
         display: none;
       }
+      #html-menu {
+        display: none !important;
+      }
     }
 
     .warning-content {
@@ -118,9 +124,260 @@
       color: #a0aec0;
       margin-top: 4px;
     }
+
+    /* HTML Menu Overlay Styling */
+    #html-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000; /* Under orientation-warning (99999) but above game-container */
+      background-color: #12121c;
+      font-family: 'Rubik', sans-serif;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+    }
+
+    #html-menu .hero-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('assets/background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -2;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      transform: scale(1.05);
+      animation: slowZoom 20s infinite alternate ease-in-out;
+    }
+
+    #html-menu .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(18, 18, 28, 0.4);
+      z-index: -1;
+    }
+
+    #html-menu .crt-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      );
+      background-size: 100% 4px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    #html-menu .page-container {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      width: 100%;
+      height: 100%;
+      max-width: 960px;
+      max-height: 480px;
+      padding: 1.5rem;
+      gap: 1.5rem;
+      align-items: center;
+      z-index: 1;
+    }
+
+    #html-menu header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      padding: 1rem;
+    }
+
+    #html-menu .main-title {
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1.1;
+      color: #fff;
+      text-shadow: 
+        3px 3px 0px #000, 
+        -3px -3px 0px #000, 
+        3px -3px 0px #000, 
+        -3px 3px 0px #000,
+        6px 6px 0px #ff007f;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+      animation: bounceRetro 1.5s infinite alternate ease-in-out;
+    }
+
+    #html-menu .content-card {
+      background: rgba(18, 18, 28, 0.85);
+      border: 4px solid #ffffff;
+      box-shadow: 4px 4px 0px #000000, inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 90%;
+      max-height: 320px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #html-menu .content-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #00e6ff, #ff007f);
+    }
+
+    #html-menu .card-description {
+      font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+      line-height: 1.5;
+      color: #a0a0b0;
+      margin-bottom: 1rem;
+      text-align: right;
+    }
+
+    #html-menu .cta-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: #ff007f;
+      color: #ffffff;
+      font-family: 'Rubik', sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 0.75rem 1.5rem;
+      border: 3px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px #000000;
+      transition: all 0.15s steps(4, end);
+      text-shadow: 1px 1px 0px #000;
+      width: 100%;
+    }
+
+    #html-menu .cta-button:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: #e60072;
+    }
+
+    #html-menu .cta-button:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
+    #html-menu .cta-button .arrow {
+      font-weight: 900;
+      display: inline-block;
+      transition: all 0.15s steps(4, end);
+    }
+
+    #html-menu .cta-button:hover .arrow {
+      transform: translateX(-4px);
+    }
+
+    @keyframes slowZoom {
+      0% {
+        transform: scale(1.03) translate(0, 0);
+      }
+      100% {
+        transform: scale(1.08) translate(-10px, -5px);
+      }
+    }
+
+    @keyframes bounceRetro {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @media (max-width: 600px) or (orientation: portrait) {
+      #html-menu {
+        overflow-y: auto;
+      }
+      #html-menu .page-container {
+        grid-template-columns: 1fr;
+        max-height: none;
+        height: auto;
+        gap: 2rem;
+      }
+      #html-menu header {
+        height: auto;
+      }
+      #html-menu .content-card {
+        height: auto;
+        max-height: none;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- HTML Menu Overlay -->
+  <div id="html-menu">
+    <!-- Retro Scanlines Overlay -->
+    <div class="crt-overlay"></div>
+
+    <!-- Animated Pixel Art Background & Overlay -->
+    <div class="hero-background" id="hero-bg"></div>
+    <div class="hero-overlay"></div>
+
+    <!-- Horizontal Grid Layout Container -->
+    <div class="page-container">
+      <!-- Left Section: Bouncing Title Header -->
+      <header>
+        <h1 class="main-title" id="main-header">ברוכים הבאים לקריית שמונה</h1>
+      </header>
+
+      <!-- Right Section: HUD Style Card -->
+      <main class="content-card" id="welcome-card">
+        <div>
+          <p class="card-description">
+            בוקר הבחירות הגדול! הקפה חם, תעודת הזהות מוכנה, ואז זה מכה בך... שכחת לעדכן כתובת במשרד הפנים!
+            <br />
+            רצת לקלפי השכונתית בקריית שמונה לקוות לנס, אבל מזכיר הקלפי לא התרשם: 'את רשומה אצל ההורים. פה זה לא קלפי
+            נגישה. סעי הביתה לירושלים!
+            <br />
+            בואו נשחק!
+          </p>
+        </div>
+
+        <div>
+          <!-- Retro Action Button -->
+          <button class="cta-button" id="cta-btn">
+            <span>בואו נתחיל</span>
+            <span class="arrow">←</span>
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+
   <div id="orientation-warning">
     <div class="warning-content">
       <div class="phone-icon"></div>
@@ -128,7 +385,22 @@
       <p>המשחק מותאם למצב מאוזן (Landscape) בלבד</p>
     </div>
   </div>
+  
   <div id="game-container"></div>
+  
   <script type="module" src="./Game/main.js"></script>
+
+  <script>
+    document.getElementById('cta-btn').addEventListener('click', () => {
+      window.gameStarted = true;
+      window.dispatchEvent(new Event('start-game'));
+      
+      const menu = document.getElementById('html-menu');
+      menu.style.opacity = '0';
+      setTimeout(() => {
+        menu.style.display = 'none';
+      }, 600);
+    });
+  </script>
 </body>
 </html>

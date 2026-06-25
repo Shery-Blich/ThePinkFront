@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { NPC } from '../entities/npc.js';
-import { TapToMove } from '../systems/tap-to-move.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { TriviaOverlay } from '../systems/trivia-overlay.js';
@@ -11,7 +10,7 @@ import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
  *
- * Uses the reusable Player, NPC, and TapToMove classes.
+ * Uses the reusable Player, NPC, and JoystickMove classes.
  * Everything positioned relative to screen height.
  */
 
@@ -24,9 +23,6 @@ export class Day1Scene extends Phaser.Scene {
 
     /** @type {Player} */
     this.player = null;
-
-    /** @type {TapToMove} */
-    this.movement = null;
 
     /** @type {Phaser.Physics.Arcade.StaticGroup} */
     this.npcGroup = null;
@@ -96,7 +92,7 @@ export class Day1Scene extends Phaser.Scene {
     this.npcList = npcs;
 
     // --- Player ---
-    const startX = charW * 3;
+    const startX = this.scale.width / 2;
     const startY = roadCenterY + charH * 0.3;
     this.player = new Player(this, startX, startY, this.s);
     this.player.setWorldBounds(0, this.roadTop, worldWidth, roadHeight);
@@ -106,7 +102,7 @@ export class Day1Scene extends Phaser.Scene {
       this.player,
       this.npcGroup,
       () => {
-        if (this.movement) this.movement.onCollision();
+        if (this.player) this.player.onCollision();
       },
       null,
       this
@@ -116,22 +112,15 @@ export class Day1Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, height);
     this.cameras.main.startFollow(this.player, true, 0.1, 0);
 
-    // --- Movement ---
-    this.movement = new TapToMove(this, this.player, {
-      speed: charW * 3.5,
-      showTapMarker: true,
-      tapMarkerColor: 0xffcc00,
-      tapMarkerRadius: Math.max(4, this.s * 3),
-      tapMarkerDuration: 350,
-    });
-    this.movement.disable(); // Disabled initially for intro dialogue
+    // Disable movement initially for intro dialogue
+    if (this.player) this.player.disable();
 
     // --- HUD ---
     this._createHUD();
 
-    this.movement.on('move-start', () => this._updateHUD('Walking...'));
-    this.movement.on('move-end', () => this._updateHUD('Tap to move →'));
-    this.movement.on('move-blocked', () => this._updateHUD('Blocked!'));
+    this.player.on('move-start', () => this._updateHUD('Walking...'));
+    this.player.on('move-end', () => this._updateHUD('Drag joystick to move →'));
+    this.player.on('move-blocked', () => this._updateHUD('Blocked!'));
 
     // --- Particles ---
     this.explosionParticles = this.add.particles(0, 0, 'particle', {
@@ -162,10 +151,14 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     this.droneManager.on('all-drones-dodged', () => {
-      this.triggerSceneOver();
+      this.time.delayedCall(1000, () => {
+        if (!this.isGameOver) {
+          this.triggerSceneOver();
+        }
+      });
     });
 
-    this.movement.once('move-start', () => {
+    this.player.once('move-start', () => {
       this.isGameOver = false;
       this.isSceneOver = false;
       this.droneManager.start();
@@ -188,11 +181,11 @@ export class Day1Scene extends Phaser.Scene {
         correctIndex: 1
       }, (isCorrect) => {
         if (isCorrect) {
-          this._updateHUD('Correct! +20 Points. Tap to move →');
+          this._updateHUD('Correct! +20 Points. Drag joystick to move →');
         } else {
-          this._updateHUD('Incorrect! -5 Points. Tap to move →');
+          this._updateHUD('Incorrect! -5 Points. Drag joystick to move →');
         }
-        this.movement.enable();
+        this.player.enable();
       });
       trivia.start();
     });
@@ -205,13 +198,8 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    if (this.movement) {
-      this.movement.update();
-    }
-
-    // Depth sort all characters
     if (this.player) {
-      this.player.depthSort();
+      this.player.update();
     }
     for (const npc of this.npcList) {
       npc.depthSort();
@@ -328,7 +316,7 @@ export class Day1Scene extends Phaser.Scene {
   /** @private */
   _createHUD() {
     const fontSize = Math.max(12, Math.round(this.scale.height * 0.025));
-    this._hudText = this.add.text(10, 10, 'Tap to move →', {
+    this._hudText = this.add.text(10, 10, 'Drag joystick to move →', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ffffff',
@@ -367,10 +355,10 @@ export class Day1Scene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   triggerGameOver() {
-    if (this.isGameOver) return;
+    if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
 
-    if (this.movement) this.movement.disable();
+    if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
 
     // Falling / grey out animation
@@ -428,10 +416,10 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   triggerSceneOver() {
-    if (this.isSceneOver) return;
+    if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
 
-    if (this.movement) this.movement.disable();
+    if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
 
     // Trigger dialogue overlay using externalized dialogue text (Model)
