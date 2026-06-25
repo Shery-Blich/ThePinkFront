@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/boot-scene.js';
 import { Day1Scene } from './scenes/day-1-scene.js';
+import { Day3Scene } from './scenes/day-3-scene.js';
 
 /**
  * Phaser game configuration.
@@ -29,7 +30,7 @@ const config = {
   input: {
     activePointers: 1,
   },
-  scene: [BootScene, Day1Scene],
+  scene: [BootScene, Day3Scene, Day1Scene],
 };
 
 // eslint-disable-next-line no-unused-vars

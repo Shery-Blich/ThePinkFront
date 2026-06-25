@@ -22,6 +22,9 @@ export class BootScene extends Phaser.Scene {
     this._generateRoadTexture();
     this._generateDroneTexture();
     this._generateParticleTexture();
+    this._generateJerusalemStoneTextures();
+    this._generateEggedBusTexture();
+    this._generateJerusalemBuildings();
 
     if (window.gameStarted) {
       this.scene.start('Day1Scene');
@@ -201,5 +204,175 @@ export class BootScene extends Phaser.Scene {
     gfx.fillRect(0, 0, 4, 4);
     gfx.generateTexture('particle', 4, 4);
     gfx.destroy();
+  }
+
+  /** Jerusalem Stones: Intact, Cracked, and Broken (hole) */
+  _generateJerusalemStoneTextures() {
+    // Intact stone: beige/sand color
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0xe6d5b8, 1); // Light sand/beige
+    gfx.fillRect(0, 0, 32, 16);
+    // Draw some stone texture highlights/borders
+    gfx.lineStyle(1, 0xd4b88a, 1); // Darker sand border
+    gfx.strokeRect(0, 0, 32, 16);
+    // Add some random texture dots
+    gfx.fillStyle(0xd4b88a, 1);
+    gfx.fillRect(5, 4, 2, 1);
+    gfx.fillRect(20, 11, 1, 2);
+    gfx.fillRect(12, 8, 2, 2);
+    gfx.generateTexture('stone_intact', 32, 16);
+    gfx.destroy();
+
+    // Cracked stone
+    const crackedGfx = this.add.graphics();
+    crackedGfx.fillStyle(0xe6d5b8, 1);
+    crackedGfx.fillRect(0, 0, 32, 16);
+    crackedGfx.lineStyle(1, 0xd4b88a, 1);
+    crackedGfx.strokeRect(0, 0, 32, 16);
+    // Texture dots
+    crackedGfx.fillStyle(0xd4b88a, 1);
+    crackedGfx.fillRect(5, 4, 2, 1);
+    crackedGfx.fillRect(20, 11, 1, 2);
+    crackedGfx.fillRect(12, 8, 2, 2);
+    // Dark cracks (brown/grey)
+    crackedGfx.lineStyle(1, 0x4a3c28, 1);
+    crackedGfx.beginPath();
+    crackedGfx.moveTo(4, 2);
+    crackedGfx.lineTo(12, 8);
+    crackedGfx.lineTo(10, 14);
+    crackedGfx.moveTo(28, 4);
+    crackedGfx.lineTo(20, 7);
+    crackedGfx.lineTo(22, 12);
+    crackedGfx.strokePath();
+    crackedGfx.generateTexture('stone_cracked', 32, 16);
+    crackedGfx.destroy();
+    
+    // Broken stone (hole)
+    const brokenGfx = this.add.graphics();
+    brokenGfx.fillStyle(0x110e1a, 1); // Dark pit color
+    brokenGfx.fillRect(0, 0, 32, 16);
+    brokenGfx.lineStyle(1, 0x2d1f47, 1);
+    brokenGfx.strokeRect(0, 0, 32, 16);
+    // Draw some jagged edges on the border
+    brokenGfx.fillStyle(0xd4b88a, 1);
+    brokenGfx.fillRect(0, 0, 4, 3);
+    brokenGfx.fillRect(28, 0, 4, 4);
+    brokenGfx.fillRect(0, 13, 3, 3);
+    brokenGfx.fillRect(29, 12, 3, 4);
+    brokenGfx.generateTexture('stone_broken', 32, 16);
+    brokenGfx.destroy();
+  }
+
+  /** Egged Bus: Green/White Israeli Egged bus */
+  _generateEggedBusTexture() {
+    const gfx = this.add.graphics();
+    const w = 96;
+    const h = 36;
+
+    // Background body - Egged Green
+    gfx.fillStyle(0x009b48, 1);
+    gfx.fillRect(0, 6, w, h - 12);
+
+    // Roof - White/light grey
+    gfx.fillStyle(0xf3f4f6, 1);
+    gfx.fillRect(2, 2, w - 4, 4);
+
+    // Bumpers
+    gfx.fillStyle(0x374151, 1);
+    gfx.fillRect(0, h - 8, 6, 4);
+    gfx.fillRect(w - 6, h - 8, 6, 4);
+
+    // Windows
+    const winW = 12;
+    const winH = 10;
+    const winY = 8;
+    const winGap = 4;
+    const winStartX = 8;
+    for (let i = 0; i < 5; i++) {
+      const wx = winStartX + i * (winW + winGap);
+      gfx.fillStyle(0x1f2937, 1);
+      gfx.fillRect(wx - 1, winY - 1, winW + 2, winH + 2);
+      gfx.fillStyle(0x93c5fd, 1);
+      gfx.fillRect(wx, winY, winW, winH);
+      gfx.fillStyle(0xffffff, 0.4);
+      gfx.fillRect(wx + 2, winY + 2, 2, winH - 4);
+    }
+
+    // Bus door (near the front, folding type)
+    const doorX = 72;
+    const doorW = 10;
+    const doorH = 22;
+    gfx.fillStyle(0x111827, 1);
+    gfx.fillRect(doorX - 1, 8, doorW + 2, doorH + 1);
+    gfx.fillStyle(0xd1d5db, 1);
+    gfx.fillRect(doorX, 9, doorW, doorH);
+    gfx.fillStyle(0x111827, 1);
+    gfx.fillRect(doorX + doorW/2 - 1, 9, 2, doorH);
+
+    // Egged logo red/white placeholder
+    gfx.fillStyle(0xef4444, 1);
+    gfx.fillRect(32, 22, 10, 6);
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(33, 24, 2, 2);
+    gfx.fillRect(36, 24, 2, 2);
+    gfx.fillRect(39, 24, 2, 2);
+
+    // Wheels
+    const whY = h - 6;
+    gfx.fillStyle(0x111827, 1);
+    gfx.fillCircle(20, whY, 8);
+    gfx.fillCircle(76, whY, 8);
+    gfx.fillStyle(0x9ca3af, 1);
+    gfx.fillCircle(20, whY, 3);
+    gfx.fillCircle(76, whY, 3);
+
+    gfx.generateTexture('egged_bus', w, h);
+    gfx.destroy();
+  }
+
+  /** Jerusalem buildings: domes and arches */
+  _generateJerusalemBuildings() {
+    const jlmBuildings = [
+      { key: 'jlm_bld_a', w: 18, h: 22, color: 0xdfcbaf },
+      { key: 'jlm_bld_b', w: 16, h: 30, color: 0xcfb99c },
+      { key: 'jlm_bld_c', w: 20, h: 26, color: 0xe5d6c0 },
+      { key: 'jlm_bld_d', w: 14, h: 20, color: 0xd6c0a5 },
+    ];
+
+    for (const b of jlmBuildings) {
+      const gfx = this.add.graphics();
+
+      if (b.key === 'jlm_bld_b') {
+        gfx.fillStyle(0xd9b36c, 1);
+        gfx.fillEllipse(b.w / 2, 8, b.w - 4, 10);
+        gfx.fillStyle(b.color, 1);
+        gfx.fillRect(0, 8, b.w, b.h - 8);
+        gfx.fillStyle(0x4a3a2d, 1);
+        gfx.fillRect(b.w / 2 - 2, 14, 4, 6);
+        gfx.fillCircle(b.w / 2, 14, 2);
+      } else if (b.key === 'jlm_bld_c') {
+        gfx.fillStyle(b.color, 1);
+        gfx.fillRect(0, 4, b.w, b.h - 4);
+        gfx.fillStyle(0x1a1a2e, 1);
+        gfx.fillRect(4, 0, 4, 4);
+        gfx.fillRect(12, 0, 4, 4);
+        gfx.fillStyle(0x2b2118, 1);
+        gfx.fillRect(b.w / 2 - 1, 10, 2, 6);
+      } else {
+        gfx.fillStyle(b.color, 1);
+        gfx.fillRect(0, 0, b.w, b.h);
+        gfx.fillStyle(0x4a3a2d, 1);
+        gfx.fillRect(4, 6, 4, 6);
+        gfx.fillCircle(6, 6, 2);
+        gfx.fillRect(12, 6, 4, 6);
+        gfx.fillCircle(14, 6, 2);
+      }
+
+      gfx.lineStyle(1, 0x9e8a75, 0.4);
+      gfx.strokeRect(0, 0, b.w, b.h);
+
+      gfx.generateTexture(b.key, b.w, b.h);
+      gfx.destroy();
+    }
   }
 }
