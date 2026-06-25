@@ -607,6 +607,7 @@ export class Day5Scene extends Phaser.Scene {
     this._cats.splice(i, 1);
     this._score++;
     this._updateHUD();
+    this.sound.play('sfx-catbag', { volume: 0.6 });
 
     const color = cat.img.texture.key.replace("day5_cat_", "");
     this._lastColors.push(color);
@@ -631,6 +632,7 @@ export class Day5Scene extends Phaser.Scene {
     this._cats.splice(i, 1);
     this._lives--;
     this._updateHUD();
+    this.sound.play('sfx-meow', { volume: 0.6 });
 
     const flash = this.add.graphics();
     flash.fillStyle(0xff2222, 0.28);
@@ -745,6 +747,7 @@ export class Day5Scene extends Phaser.Scene {
   _triggerGameOver() {
     if (this._sceneEnded) return;
     this._gameActive = false;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
     if (this._player) this._player.disable();
     for (const cat of this._cats) {
       this.tweens.killTweensOf(cat.img);
@@ -807,6 +810,7 @@ export class Day5Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._sceneEnded = true;
     this._gameActive = false;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
     if (this._player) this._player.disable();
     for (const cat of this._cats) {
       this.tweens.killTweensOf(cat.img);
