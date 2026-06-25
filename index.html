@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>ThePinkFront</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #1a1a2e;
+      /* Prevent pull-to-refresh and overscroll on mobile */
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      display: block;
+      /* Prevent long-press context menu on mobile */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #orientation-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f0c1b, #241442);
+      color: #ffffff;
+      z-index: 99999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 20px;
+    }
+
+    /* Show only in portrait mode on mobile/touch devices */
+    @media (orientation: portrait) {
+      #orientation-warning {
+        display: flex;
+      }
+      #game-container {
+        display: none;
+      }
+    }
+
+    .warning-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .phone-icon {
+      position: relative;
+      width: 50px;
+      height: 85px;
+      border: 3px solid #ffffff;
+      border-radius: 6px;
+      animation: rotatePhone 2.5s ease-in-out infinite;
+    }
+
+    .phone-icon::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #ffffff;
+    }
+
+    @keyframes rotatePhone {
+      0%, 10% {
+        transform: rotate(0deg);
+      }
+      40%, 60% {
+        transform: rotate(-90deg);
+      }
+      90%, 100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    #orientation-warning h2 {
+      font-size: 22px;
+      margin-top: 10px;
+      font-weight: 700;
+    }
+
+    #orientation-warning p {
+      font-size: 15px;
+      color: #a0aec0;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="orientation-warning">
+    <div class="warning-content">
+      <div class="phone-icon"></div>
+      <h2>אנא סובבו את המכשיר לרוחב</h2>
+      <p>המשחק מותאם למצב מאוזן (Landscape) בלבד</p>
+    </div>
+  </div>
+  <div id="game-container"></div>
+  <script type="module" src="./Game/main.js"></script>
+</body>
+</html>

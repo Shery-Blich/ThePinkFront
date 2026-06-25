@@ -1,0 +1,29 @@
+{
+  "name": "thepinkfront",
+  "version": "1.0.0",
+  "description": "Dykeathon project",
+  "homepage": "https://github.com/Shery-Blich/ThePinkFront#readme",
+  "bugs": {
+    "url": "https://github.com/Shery-Blich/ThePinkFront/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shery-Blich/ThePinkFront.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "phaser": "^3.88.2"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}
