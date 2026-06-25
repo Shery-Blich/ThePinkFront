@@ -1,7 +1,7 @@
 {
-  "name": "thepinkfront",
+  "name": "thepinkfront-game",
   "version": "1.0.0",
-  "description": "Dykeathon project",
+  "description": "Dykeathon Pink Front game",
   "homepage": "https://github.com/Shery-Blich/ThePinkFront#readme",
   "bugs": {
     "url": "https://github.com/Shery-Blich/ThePinkFront/issues"
@@ -13,9 +13,12 @@
   "license": "ISC",
   "author": "",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dev:admin": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
-    "dev:frontend": "npm --prefix frontend run dev",
-    "install:all": "npm --prefix backend install && npm --prefix frontend install"
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install"
   },
   "dependencies": {
     "phaser": "^3.88.2"
