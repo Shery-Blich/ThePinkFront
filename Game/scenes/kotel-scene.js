@@ -388,6 +388,8 @@ export class KotelScene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
+    this.sound.play('sfx-levelup', { volume: 0.6 });
+
     const overlay = this.add.graphics();
     overlay.fillStyle(0x0f0c1b, 0.85);
     overlay.fillRect(0, 0, this.scale.width, this.scale.height);

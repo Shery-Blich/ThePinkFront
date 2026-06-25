@@ -458,6 +458,7 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
     this.isGameOver = true;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
     this.joystick?.disable();
     this.physics.pause();
 
@@ -525,6 +526,7 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
     this.isSceneOver = true;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
     this.joystick?.disable();
     this.physics.pause();
 

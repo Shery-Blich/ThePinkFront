@@ -341,6 +341,7 @@ export class Day1Scene extends Phaser.Scene {
   triggerGameOver() {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
@@ -402,6 +403,7 @@ export class Day1Scene extends Phaser.Scene {
   triggerSceneOver() {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();

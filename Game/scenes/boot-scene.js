@@ -13,6 +13,9 @@ export class BootScene extends Phaser.Scene {
 
   preload() {
     this.load.image('player', 'assets/Shlomi.png');
+    this.load.audio('sfx-explosion', 'assets/sounds/drone_bomb.wav');
+    this.load.audio('sfx-gameover',  'assets/sounds/game-over.wav');
+    this.load.audio('sfx-levelup',   'assets/sounds/level-up.wav');
   }
 
   create() {

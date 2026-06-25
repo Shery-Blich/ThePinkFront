@@ -477,6 +477,7 @@ export class Day3Scene extends Phaser.Scene {
   triggerGameOver(reason = 'DRONE_HIT') {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
+    this.sound.play('sfx-gameover', { volume: 0.6 });
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
@@ -567,6 +568,7 @@ export class Day3Scene extends Phaser.Scene {
   triggerSceneOver(roadCenterY, worldWidth) {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
+    this.sound.play('sfx-levelup', { volume: 0.6 });
 
     // 1. Player loses controls
     if (this.player) this.player.disable();
