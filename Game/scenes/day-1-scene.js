@@ -6,6 +6,7 @@ import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
+import { TRIVIA_QUESTIONS } from '../data/trivia-questions.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -173,8 +174,69 @@ export class Day1Scene extends Phaser.Scene {
     // --- Play Intro Cutscene Dialogue ---
     this._updateHUD('שידור נכנס');
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
-      this.player.enable();
-      this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←');
+      // Trigger the Judge Solberg Trivia DOM Overlay series!
+      const runTriviaQueue = (index) => {
+        if (index >= TRIVIA_QUESTIONS.length) {
+          this._updateHUD('הטריוויה הושלמה! גררי את הג׳ויסטיק כדי לזוז ←');
+          this.player.enable();
+          return;
+        }
+
+        const qData = TRIVIA_QUESTIONS[index];
+        this._updateHUD(`שאלת טריוויה ${index + 1}/${TRIVIA_QUESTIONS.length}...`);
+
+        // Disable player movement during trivia
+        this.player.disable();
+
+        // Listen for completion from the Vue overlay
+        const onTriviaComplete = (event) => {
+          if (event.detail.questionIndex === index) {
+            window.removeEventListener('trivia-complete', onTriviaComplete);
+            this.events.off('shutdown', cleanupListener);
+            
+            const isCorrect = event.detail.isCorrect;
+            if (isCorrect) {
+              this._updateHUD('נכון! טוען את השאלה הבאה...');
+            } else {
+              this._updateHUD('טעות! טוען את השאלה הבאה...');
+            }
+            
+            // 1-second delay so player can see feedback before next question loads
+            this.time.delayedCall(1000, () => {
+              runTriviaQueue(index + 1);
+            });
+          }
+        };
+
+        const cleanupListener = () => {
+          window.removeEventListener('trivia-complete', onTriviaComplete);
+        };
+
+        window.addEventListener('trivia-complete', onTriviaComplete);
+        this.events.once('shutdown', cleanupListener);
+
+        // Convert programmatically drawn portrait to base64 for Vue component
+        let portraitBase64 = null;
+        try {
+          portraitBase64 = this.textures.getBase64('solberg_portrait');
+        } catch (err) {
+          console.warn('Could not extract solberg_portrait base64:', err);
+        }
+
+        // Dispatch window event to show Vue trivia overlay
+        window.dispatchEvent(new CustomEvent('show-trivia', {
+          detail: {
+            questionIndex: index,
+            questionText: qData[0],
+            options: qData[1],
+            correctIndex: qData[2],
+            portraitDataUrl: portraitBase64,
+            totalQuestions: TRIVIA_QUESTIONS.length
+          }
+        }));
+      };
+
+      runTriviaQueue(0);
     });
     introDialog.start();
 

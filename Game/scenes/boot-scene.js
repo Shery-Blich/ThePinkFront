@@ -38,6 +38,7 @@ export class BootScene extends Phaser.Scene {
     this._generateEggedBusTexture();
     this._generateJerusalemBuildings();
     this._generateAsphaltTextures();
+    this._generateSolbergPortrait();
 
     if (window.gameStarted) {
       this.events.emit('complete');
@@ -464,5 +465,59 @@ export class BootScene extends Phaser.Scene {
     crackedGfx.strokePath();
     crackedGfx.generateTexture('asphalt_cracked', 32, 16);
     crackedGfx.destroy();
+  }
+
+  /** Solberg Portrait: 48×48 pixel art face, glasses, suit */
+  _generateSolbergPortrait() {
+    const gfx = this.add.graphics();
+
+    // 1. Background box (slate grey)
+    gfx.fillStyle(0x475569, 1);
+    gfx.fillRect(0, 0, 48, 48);
+
+    // 2. Suit/Shoulders (dark blue/navy)
+    gfx.fillStyle(0x1e3a8a, 1);
+    gfx.fillRect(6, 36, 36, 12);
+    
+    // Tie / Collar (white shirt, blue tie)
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(20, 36, 8, 4);
+    gfx.fillStyle(0x0f172a, 1);
+    gfx.fillRect(23, 38, 2, 10);
+
+    // 3. Head/Face (skin tone)
+    gfx.fillStyle(0xfbcfe8, 1);
+    gfx.fillRect(14, 10, 20, 26);
+
+    // Hair (grey)
+    gfx.fillStyle(0x94a3b8, 1);
+    gfx.fillRect(14, 6, 20, 5);
+    gfx.fillRect(12, 10, 3, 16);
+    gfx.fillRect(33, 10, 3, 16);
+
+    // Glasses frame (black)
+    gfx.fillStyle(0x000000, 1);
+    gfx.fillRect(16, 17, 7, 2);
+    gfx.fillRect(25, 17, 7, 2);
+    gfx.fillRect(23, 17, 2, 1);
+
+    // Eyes inside glasses
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(17, 18, 5, 2);
+    gfx.fillRect(26, 18, 5, 2);
+    gfx.fillStyle(0x3b82f6, 1);
+    gfx.fillRect(19, 18, 1, 1);
+    gfx.fillRect(28, 18, 1, 1);
+
+    // Mouth / Smile (red line)
+    gfx.fillStyle(0xe11d48, 1);
+    gfx.fillRect(20, 29, 8, 1);
+
+    // Outline / Border
+    gfx.lineStyle(1.5, 0x0f172a, 1);
+    gfx.strokeRect(0, 0, 48, 48);
+
+    gfx.generateTexture('solberg_portrait', 48, 48);
+    gfx.destroy();
   }
 }

@@ -571,8 +571,17 @@
 
   <!-- Toast Notification -->
   <div id="html-toast">Copied share link to clipboard!</div>
+
+  <!-- Vue trivia overlay mount point -->
+  <div id="trivia-app"></div>
   
   <script type="module" src="./Game/main.js"></script>
+
+  <script type="module">
+    import { createApp } from 'vue';
+    import TriviaOverlay from './Game/components/trivia-overlay.vue';
+    createApp(TriviaOverlay).mount('#trivia-app');
+  </script>
 
   <script>
     document.getElementById('cta-btn').addEventListener('click', () => {
