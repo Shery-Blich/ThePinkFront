@@ -32,7 +32,6 @@ export class TriviaScene extends Phaser.Scene {
     // Look up question by index in database
     const qData = TRIVIA_QUESTIONS && TRIVIA_QUESTIONS[questionIndex] ? TRIVIA_QUESTIONS[questionIndex] : null;
 
-    this.dialogueText = config.dialogueText || 'ענה נכונה כדי להמשיך:';
     this.questionText = config.questionText || (qData ? qData[0] : 'שאלת ברירת מחדל?');
     this.options = config.options || (qData ? qData[1] : ['א', 'ב', 'ג', 'ד']);
     this.correctIndex = config.correctIndex !== undefined ? config.correctIndex : (qData ? qData[2] : 0);
@@ -96,66 +95,17 @@ export class TriviaScene extends Phaser.Scene {
     this.colWidth = (this.panelWidth - spacing) / 2;
 
     // -------------------------------------------------------------------------
-    // 1. SOLBERG DIALOGUE CARD & PORTRAIT (Centered Top)
+    // 1. SOLBERG DIALOGUE CARD & PORTRAIT (Centered Top - Now hosts the question text)
     // -------------------------------------------------------------------------
     const solbergY = margin;
-
-    // Solberg Portrait box
-    const portraitX = this.leftX + this.panelWidth - portraitSize;
-    const portraitBg = this.add.graphics();
-    portraitBg.fillStyle(0x334155, 1);
-    portraitBg.lineStyle(1.5 * scale, 0xffffff, 1);
-    portraitBg.fillRect(portraitX, solbergY, portraitSize, portraitSize);
-    portraitBg.strokeRect(portraitX, solbergY, portraitSize, portraitSize);
-    this.container.add(portraitBg);
-
-    // Portrait image texture
-    const portraitImg = this.add.image(portraitX + portraitSize / 2, solbergY + portraitSize / 2, 'solberg_portrait');
-    portraitImg.setDisplaySize(portraitSize - 4 * scale, portraitSize - 4 * scale);
-    this.container.add(portraitImg);
-
-    // Solberg Dialogue box
     const dialogBoxX = this.leftX;
     const dialogBoxWidth = this.panelWidth - portraitSize - spacing;
-    const dialogBoxHeight = portraitSize;
-
-    const dialogBg = this.add.graphics();
-    dialogBg.fillStyle(0x0a0f1d, 0.95);
-    dialogBg.lineStyle(1.2 * scale, 0x94a3b8, 1);
-    dialogBg.fillRoundedRect(dialogBoxX, solbergY, dialogBoxWidth, dialogBoxHeight, 3 * scale);
-    dialogBg.strokeRoundedRect(dialogBoxX, solbergY, dialogBoxWidth, dialogBoxHeight, 3 * scale);
-    this.container.add(dialogBg);
-
-    // Dialogue text
     const fontSize = Math.max(9, Math.round(height * 0.025));
+
+    // Create dialogue text first to measure height dynamically
     const labelText = this.add.text(
-      dialogBoxX + dialogBoxWidth - 6 * scale,
-      solbergY + 6 * scale,
-      '',
-      {
-        fontFamily: 'monospace',
-        fontSize: `${fontSize}px`,
-        color: '#ffffff',
-        align: 'right',
-        rtl: true,
-        wordWrap: { width: dialogBoxWidth - 12 * scale }
-      }
-    );
-    labelText.setOrigin(1, 0);
-    this.container.add(labelText);
-
-    // Animate speech prompt using typewriter effect
-    this.typewriterText(labelText, this.dialogueText);
-
-    // -------------------------------------------------------------------------
-    // 2. TRIVIA QUESTION CARD (Centered Middle)
-    // -------------------------------------------------------------------------
-    const questionY = solbergY + portraitSize + spacing;
-
-    // Create Question Text first to measure height dynamically
-    const questionTextObj = this.add.text(
-      this.leftX + this.panelWidth - 8 * scale,
-      questionY + 6 * scale,
+      0,
+      0,
       this.questionText,
       {
         fontFamily: 'monospace',
@@ -164,22 +114,61 @@ export class TriviaScene extends Phaser.Scene {
         color: '#ffffff',
         align: 'right',
         rtl: true,
-        wordWrap: { width: this.panelWidth - 16 * scale }
+        wordWrap: { width: dialogBoxWidth - 12 * scale }
       }
     );
-    questionTextObj.setOrigin(1, 0);
+    labelText.setVisible(false); // Hide temporary measurement text
 
-    this.questionHeight = questionTextObj.height + 12 * scale;
-    this.optionStartY = questionY + this.questionHeight + spacing;
+    const padding = 6 * scale;
+    const dialogBoxHeight = Math.max(portraitSize, labelText.height + padding * 2);
+    this.optionStartY = solbergY + dialogBoxHeight + spacing;
 
-    // Question Box
-    const questionBg = this.add.graphics();
-    questionBg.fillStyle(0x0a0f1d, 0.95);
-    questionBg.lineStyle(1.2 * scale, 0x94a3b8, 1);
-    questionBg.fillRoundedRect(this.leftX, questionY, this.panelWidth, this.questionHeight, 3 * scale);
-    questionBg.strokeRoundedRect(this.leftX, questionY, this.panelWidth, this.questionHeight, 3 * scale);
-    this.container.add(questionBg);
-    this.container.add(questionTextObj);
+    // Solberg Portrait box (centered vertically relative to the dynamic dialogue bubble height)
+    const portraitX = this.leftX + this.panelWidth - portraitSize;
+    const portraitY = solbergY + (dialogBoxHeight - portraitSize) / 2;
+    const portraitBg = this.add.graphics();
+    portraitBg.fillStyle(0x334155, 1);
+    portraitBg.lineStyle(1.5 * scale, 0xffffff, 1);
+    portraitBg.fillRect(portraitX, portraitY, portraitSize, portraitSize);
+    portraitBg.strokeRect(portraitX, portraitY, portraitSize, portraitSize);
+    this.container.add(portraitBg);
+
+    // Portrait image texture
+    const portraitImg = this.add.image(portraitX + portraitSize / 2, portraitY + portraitSize / 2, 'solberg_portrait');
+    portraitImg.setDisplaySize(portraitSize - 4 * scale, portraitSize - 4 * scale);
+    this.container.add(portraitImg);
+
+    // Solberg Dialogue box (drawn with dynamic height)
+    const dialogBg = this.add.graphics();
+    dialogBg.fillStyle(0x0a0f1d, 0.95);
+    dialogBg.lineStyle(1.2 * scale, 0x94a3b8, 1);
+    dialogBg.fillRoundedRect(dialogBoxX, solbergY, dialogBoxWidth, dialogBoxHeight, 3 * scale);
+    dialogBg.strokeRoundedRect(dialogBoxX, solbergY, dialogBoxWidth, dialogBoxHeight, 3 * scale);
+    this.container.add(dialogBg);
+
+    // Dialogue text (for actual typewriter animation)
+    const animText = this.add.text(
+      dialogBoxX + dialogBoxWidth - padding,
+      solbergY + padding,
+      '',
+      {
+        fontFamily: 'monospace',
+        fontSize: `${fontSize}px`,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        align: 'right',
+        rtl: true,
+        wordWrap: { width: dialogBoxWidth - 12 * scale }
+      }
+    );
+    animText.setOrigin(1, 0);
+    this.container.add(animText);
+
+    // Clean up measurement text
+    labelText.destroy();
+
+    // Animate the question prompt using typewriter effect directly inside Solberg dialogue bubble
+    this.typewriterText(animText, this.questionText);
 
     // -------------------------------------------------------------------------
     // 3. MULTIPLE CHOICE OPTION GRID (Centered Bottom - 2 rows x 2 columns)
