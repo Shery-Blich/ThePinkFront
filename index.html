@@ -334,6 +334,170 @@
         max-height: none;
       }
     }
+
+    /* HTML Score Popup Overlay Styling */
+    #html-score-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1001; /* Above welcome menu */
+      background: rgba(18, 16, 28, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Rubik', sans-serif;
+      color: #ffffff;
+      opacity: 0;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+    }
+
+    #html-score-popup .popup-container {
+      background: #0f0c1b;
+      border: 4px solid #00e6ff;
+      box-shadow: 0 0 20px rgba(0, 230, 255, 0.35), 6px 6px 0px #ff007f;
+      padding: 1.75rem;
+      width: 90%;
+      max-width: 440px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      border-radius: 8px;
+    }
+
+    #html-score-popup .popup-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #00e6ff, #ff007f);
+    }
+
+    #html-score-popup .star-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+      animation: slowPulse 1.5s infinite alternate ease-in-out;
+    }
+
+    #html-score-popup .popup-title {
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+      font-weight: 900;
+      line-height: 1.2;
+      color: #00ffcc;
+      text-shadow: 2px 2px 0px #000;
+      margin-bottom: 0.1rem;
+      direction: ltr;
+    }
+
+    #html-score-popup .popup-subtitle {
+      font-size: clamp(0.85rem, 1.8vw, 1rem);
+      color: #ffffff;
+      opacity: 0.9;
+      direction: ltr;
+    }
+
+    #html-score-popup .button-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.25rem;
+    }
+
+    #html-score-popup .popup-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: #ff007f;
+      color: #ffffff;
+      font-family: 'Rubik', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 900;
+      padding: 0.65rem 1rem;
+      border: 3px solid #ffffff;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px #000000;
+      transition: all 0.15s steps(4, end);
+      text-shadow: 1px 1px 0px #000;
+      width: 100%;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+
+    #html-score-popup .popup-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: #ff3399;
+      border-color: #00e6ff;
+    }
+
+    #html-score-popup .popup-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
+    #html-score-popup .play-again-link {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #888899;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s;
+      background: none;
+      border: none;
+      padding: 0.25rem;
+      margin-top: 0.25rem;
+    }
+
+    #html-score-popup .play-again-link:hover {
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* HTML Toast Notification */
+    #html-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translate(-50%, 15px);
+      background-color: #0f0c1b;
+      border: 2px solid #00e6ff;
+      color: #ffffff;
+      padding: 0.75rem 1.5rem;
+      font-family: 'Rubik', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 4px;
+      z-index: 99999;
+      opacity: 0;
+      display: none;
+      transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    @keyframes slowPulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.06);
+      }
+    }
   </style>
 </head>
 <body>
@@ -387,6 +551,26 @@
   </div>
   
   <div id="game-container"></div>
+
+  <!-- Responsive Score UI Popup Overlay -->
+  <div id="html-score-popup">
+    <div class="popup-container">
+      <div class="star-badge">★ 100% ★</div>
+      <h2 class="popup-title">You are the perfect voter!</h2>
+      <p class="popup-subtitle">100% answers right!</p>
+      
+      <div class="button-group">
+        <button class="popup-btn" id="popup-share-btn">Share your score</button>
+        <a class="popup-btn" href="https://www.instagram.com/ourknesset" target="_blank" rel="noopener noreferrer">Check us out on Instagram</a>
+        <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">Check out our website for info</a>
+      </div>
+
+      <button class="play-again-link" id="popup-replay-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="html-toast">Copied share link to clipboard!</div>
   
   <script type="module" src="./Game/main.js"></script>
 
@@ -401,6 +585,67 @@
         menu.style.display = 'none';
       }, 600);
     });
+
+    // Score Popup Management APIs
+    window.showScorePopup = () => {
+      const popup = document.getElementById('html-score-popup');
+      popup.style.display = 'flex';
+      popup.offsetHeight; // force reflow
+      popup.style.opacity = '1';
+    };
+
+    window.hideScorePopup = () => {
+      const popup = document.getElementById('html-score-popup');
+      popup.style.opacity = '0';
+      setTimeout(() => {
+        popup.style.display = 'none';
+      }, 400);
+    };
+
+    // Share action
+    document.getElementById('popup-share-btn').addEventListener('click', () => {
+      const shareText = "I got 100% try beating my score!";
+      const shareUrl = window.location.href;
+
+      if (navigator.share) {
+        navigator.share({
+          title: 'The Pink Front',
+          text: shareText,
+          url: shareUrl
+        }).catch(err => console.log('Share canceled/failed:', err));
+      } else {
+        const shareStr = `${shareText} ${shareUrl}`;
+        navigator.clipboard.writeText(shareStr).then(() => {
+          showToastNotification('Copied share link to clipboard!');
+        }).catch(() => {
+          alert(shareStr);
+        });
+      }
+    });
+
+    // Replay Game action
+    document.getElementById('popup-replay-btn').addEventListener('click', () => {
+      window.hideScorePopup();
+      window.dispatchEvent(new Event('replay-game-event'));
+    });
+
+    // Toast Notification helper
+    function showToastNotification(message) {
+      const toast = document.getElementById('html-toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      toast.offsetHeight; // force reflow
+      toast.style.opacity = '1';
+      toast.style.transform = 'translate(-50%, 0)';
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, 15px)';
+        setTimeout(() => {
+          toast.style.display = 'none';
+        }, 300);
+      }, 2000);
+    }
   </script>
 </body>
 </html>
