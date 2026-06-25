@@ -1,10 +1,11 @@
-import Phaser from 'phaser';
-import { BootScene } from './scenes/boot-scene.js';
-import { Day1Scene } from './scenes/day-1-scene.js';
-import { Day2Scene } from './scenes/day-2-scene.js';
-import { Day3Scene } from './scenes/day-3-scene.js';
-import { FinalScene } from './scenes/final-scene.js';
-import { SceneOrchestrator } from './systems/scene-orchestrator.js';
+import Phaser from "phaser";
+import { BootScene } from "./scenes/boot-scene.js";
+import { Day1Scene } from "./scenes/day-1-scene.js";
+import { Day2Scene } from "./scenes/day-2-scene.js";
+import { Day3Scene } from "./scenes/day-3-scene.js";
+import { FinalScene } from "./scenes/final-scene.js";
+import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
+import { Day4Scene } from "./scenes/day-4-scene.js";
 
 /**
  * Phaser game configuration.
@@ -15,8 +16,8 @@ import { SceneOrchestrator } from './systems/scene-orchestrator.js';
  */
 const config = {
   type: Phaser.AUTO,
-  parent: 'game-container',
-  backgroundColor: '#1a1a2e',
+  parent: "game-container",
+  backgroundColor: "#1a1a2e",
   pixelArt: true,
   scale: {
     mode: Phaser.Scale.EXPAND,
@@ -25,7 +26,7 @@ const config = {
     height: 360,
   },
   physics: {
-    default: 'arcade',
+    default: "arcade",
     arcade: {
       debug: false,
     },
@@ -41,4 +42,3 @@ const game = new Phaser.Game(config);
 
 // Connect all the stages in chronological order using the Orchestrator
 new SceneOrchestrator(game, [Day1Scene, Day3Scene, FinalScene]);
-
