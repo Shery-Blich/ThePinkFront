@@ -79,7 +79,7 @@ const styles = {
   textarea: { padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' },
   answerRow: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
   answerInput: { flex: 1, padding: '0.4rem', borderRadius: '4px', border: '1px solid #ccc' },
-  correctBadge: { background: '#d4edda', color: '#155724', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem' },
+  correctBadge: { background: '#fce4ec', color: '#880e4f', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem' },
   actions: { display: 'flex', gap: '0.5rem', marginTop: '1rem' },
   btnPrimary: { padding: '0.5rem 1.2rem', background: '#c2185b', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
   btnSecondary: { padding: '0.5rem 1.2rem', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' },
