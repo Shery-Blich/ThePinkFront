@@ -4,8 +4,6 @@ import { Player } from '../entities/player.js';
 import { NPC } from '../entities/npc.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
-import { TriviaOverlay } from '../systems/trivia-overlay.js';
-import { TRIVIA_QUESTIONS } from '../data/trivia-questions.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 /**
@@ -168,38 +166,8 @@ export class Day1Scene extends Phaser.Scene {
     // --- Play Intro Cutscene Dialogue ---
     this._updateHUD('Incoming transmission...');
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
-      // Trigger the Judge Solberg Trivia Overlay series!
-      const runTriviaQueue = (index) => {
-        if (index >= TRIVIA_QUESTIONS.length) {
-          this._updateHUD('All trivia completed! Drag joystick to move →');
-          this.player.enable();
-          return;
-        }
-
-        const qData = TRIVIA_QUESTIONS[index];
-        this._updateHUD(`Trivia Question ${index + 1}/${TRIVIA_QUESTIONS.length}...`);
-
-        const trivia = new TriviaOverlay(this, {
-          dialogueText: `שאלה ${index + 1} מתוך ${TRIVIA_QUESTIONS.length}. ענה נכונה כדי להמשיך:`,
-          questionText: qData[0],
-          options: qData[1],
-          correctIndex: qData[2]
-        }, (isCorrect) => {
-          if (isCorrect) {
-            this._updateHUD('Correct! loading next question...');
-          } else {
-            this._updateHUD('Incorrect! loading next question...');
-          }
-          
-          // 1-second delay so player can see feedback before next question loads
-          this.time.delayedCall(1000, () => {
-            runTriviaQueue(index + 1);
-          });
-        });
-        trivia.start();
-      };
-
-      runTriviaQueue(0);
+      this._updateHUD('Drag joystick to move →');
+      this.player.enable();
     });
     introDialog.start();
 
