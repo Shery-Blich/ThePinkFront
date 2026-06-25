@@ -11,17 +11,25 @@ export class BootScene extends Phaser.Scene {
     super({ key: 'BootScene' });
   }
 
-  preload() {}
+  preload() {
+    this.load.image('player', 'assets/Shlomi.png');
+  }
 
   create() {
-    this._generatePlayerTexture();
+    // Player texture is now preloaded from assets/Shlomi.png
     this._generateNpcTexture();
     this._generateBuildingTextures();
     this._generateRoadTexture();
     this._generateDroneTexture();
     this._generateParticleTexture();
 
-    this.scene.start('Day2Scene');
+    if (window.gameStarted) {
+      this.scene.start('Day1Scene');
+    } else {
+      window.addEventListener('start-game', () => {
+        this.scene.start('Day1Scene');
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
