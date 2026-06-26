@@ -8,7 +8,7 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+    app.listen(PORT, '0.0.0.0', () => console.log(`Backend running on port ${PORT}`));
   })
   .catch((err) => {
     console.error('MongoDB connection failed:', err.message);

@@ -10,6 +10,10 @@ import analyticsRouter from './routes/analytics.js';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
 app.use(helmet());
 app.use(
   cors({

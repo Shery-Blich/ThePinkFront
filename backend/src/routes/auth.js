@@ -17,9 +17,14 @@ function issueAdminCookie(res, payload) {
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
   });
+  const secureCookie =
+    process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production';
+
   res.cookie('adminToken', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: secureCookie,
     sameSite: 'strict',
     maxAge: 60 * 60 * 1000, // 1 hour
   });
@@ -67,7 +72,12 @@ router.get('/me', requireAdmin, async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (_req, res) => {
-  res.clearCookie('adminToken', { httpOnly: true, sameSite: 'strict' });
+  const secureCookie =
+    process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production';
+
+  res.clearCookie('adminToken', { httpOnly: true, sameSite: 'strict', secure: secureCookie });
   res.json({ message: 'Logged out' });
 });
 

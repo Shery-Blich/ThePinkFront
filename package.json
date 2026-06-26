@@ -18,7 +18,11 @@
     "preview": "vite preview",
     "dev:admin": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
-    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install"
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
+    "build:firebase": "node scripts/build-firebase.mjs",
+    "deploy:hosting": "npm run build:firebase && firebase deploy --only hosting",
+    "deploy:api": "node scripts/deploy-api.mjs",
+    "deploy": "npm run deploy:api && npm run deploy:hosting"
   },
   "dependencies": {
     "phaser": "^3.88.2"
