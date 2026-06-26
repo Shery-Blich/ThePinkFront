@@ -4,6 +4,7 @@ import { Player } from '../entities/player.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
+import { runLevelTrivia } from '../systems/level-trivia.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -429,7 +430,8 @@ export class KotelScene extends Phaser.Scene {
       alpha: 1,
       duration: 800,
       onComplete: () => {
-        this.input.once('pointerdown', () => {
+        this.input.once('pointerdown', async () => {
+          await runLevelTrivia(this, 'KotelScene');
           this.events.emit('complete');
         });
       }

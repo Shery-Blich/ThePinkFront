@@ -11,7 +11,7 @@ let _registeredSessionId = null;
 let _registrationPromise = null;
 let _questionIdsPromise = null;
 let _endedSessionId = null;
-const _questionIds = {}; // local index -> MongoDB ObjectId
+const _questionIds = {}; // local index → MongoDB ObjectId
 
 export function getSessionId() {
   if (!_currentSessionId) {
@@ -102,6 +102,9 @@ export function trackEndLinkClicked(linkType) {
   trackEvent('end_link_clicked', { link_type: linkType });
 }
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
 function _buffer(event) {
   try {
     const log = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
