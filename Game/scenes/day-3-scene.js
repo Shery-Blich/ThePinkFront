@@ -68,6 +68,13 @@ export class Day3Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    // --- Background image ---
+    this.add.image(0, 0, 'bg')
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDisplaySize(width, height)
+      .setDepth(0);
+
     // --- Reset states for scene restart ---
     this.warningTiles = [];
     this.roadTiles = [];
