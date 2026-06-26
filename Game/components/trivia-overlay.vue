@@ -5,6 +5,10 @@
 
     <!-- Master UI Panel -->
     <div class="trivia-panel">
+      <div class="score-chip">
+        ניקוד: {{ score }} / {{ maxScore }}
+      </div>
+
       <!-- 1. SOLBERG DIALOGUE CARD & PORTRAIT (Centered Top) -->
       <div class="solberg-card-row">
         <!-- Dialogue box with dynamic height -->
@@ -58,6 +62,8 @@ export default {
       correctIndex: 0,
       portraitDataUrl: null,
       totalQuestions: 4,
+      score: 0,
+      maxScore: 0,
 
       // State trackers
       selectedIndex: 0,
@@ -84,6 +90,8 @@ export default {
       this.correctIndex = data.correctIndex !== undefined ? data.correctIndex : 0;
       this.portraitDataUrl = data.portraitDataUrl || null;
       this.totalQuestions = data.totalQuestions || 4;
+      this.score = data.score || 0;
+      this.maxScore = data.maxScore || 0;
 
       // Reset states
       this.selectedIndex = 0;
@@ -222,6 +230,17 @@ export default {
   flex-direction: column;
   gap: 6px;
   pointer-events: auto;
+}
+
+.score-chip {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border: 3px solid #ffffff;
+  background: #111827;
+  color: #f8fafc;
+  font-size: clamp(14px, 2vw, 20px);
+  font-weight: 800;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.24);
 }
 
 .solberg-card-row {

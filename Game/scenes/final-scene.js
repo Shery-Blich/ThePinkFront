@@ -3,6 +3,7 @@ import { DialogSystem } from '../systems/dialog-system.js';
 import { Character } from '../entities/character.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { trackGameCompleted } from '../analytics.js';
+import { getTriviaScoreSummary } from '../systems/level-trivia.js';
 
 /**
  * FinalScene — The voting booth climax.
@@ -113,9 +114,15 @@ export class FinalScene extends Phaser.Scene {
    * Delegates the display of the final score screen to the responsive HTML overlay APIs.
    */
   showScorePopup() {
-    trackGameCompleted();
+    const scoreSummary = getTriviaScoreSummary();
+    trackGameCompleted({
+      score: scoreSummary.score,
+      max_score: scoreSummary.maxScore,
+      correct_answers: scoreSummary.correctAnswers,
+      answered_questions: scoreSummary.answeredQuestions,
+    });
     if (typeof window.showScorePopup === 'function') {
-      window.showScorePopup();
+      window.showScorePopup(scoreSummary);
     }
 
     // Listen for the replay event triggered by the HTML overlay

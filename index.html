@@ -490,6 +490,26 @@
       pointer-events: none;
     }
 
+    #html-score-hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 1000;
+      display: none;
+      padding: 0.65rem 0.9rem;
+      border: 3px solid #ffffff;
+      background: rgba(15, 12, 27, 0.92);
+      color: #00ffcc;
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      font-size: clamp(0.9rem, 2vw, 1.05rem);
+      font-weight: 900;
+      box-shadow: 4px 4px 0px #000000;
+      text-shadow: 1px 1px 0px #000000;
+      border-radius: 6px;
+      direction: rtl;
+      text-align: right;
+    }
+
     @keyframes slowPulse {
       0% {
         transform: scale(1);
@@ -555,9 +575,9 @@
   <!-- Responsive Score UI Popup Overlay -->
   <div id="html-score-popup">
     <div class="popup-container">
-      <div class="star-badge">★ 100% ★</div>
-      <h2 class="popup-title">את המצביעה המושלמת!</h2>
-      <p class="popup-subtitle">100% תשובות נכונות!</p>
+      <div class="star-badge" id="popup-score-badge">★ 0 / 0 ★</div>
+      <h2 class="popup-title" id="popup-score-title">כל הכבוד!</h2>
+      <p class="popup-subtitle" id="popup-score-subtitle">0 תשובות נכונות</p>
 
       <div class="button-group">
         <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד</button>
@@ -571,6 +591,8 @@
 
   <!-- Toast Notification -->
   <div id="html-toast">Copied share link to clipboard!</div>
+
+  <div id="html-score-hud">ניקוד: 0 / 0</div>
 
   <!-- Vue trivia overlay mount point -->
   <div id="trivia-app"></div>
@@ -603,7 +625,39 @@
     });
 
     // Score Popup Management APIs
-    window.showScorePopup = () => {
+    const scoreHud = document.getElementById('html-score-hud');
+    const popupScoreBadge = document.getElementById('popup-score-badge');
+    const popupScoreTitle = document.getElementById('popup-score-title');
+    const popupScoreSubtitle = document.getElementById('popup-score-subtitle');
+
+    function updateScoreHud(detail = {}) {
+      const score = Math.round(detail.score ?? 0);
+      const maxScore = detail.maxScore ?? 0;
+      scoreHud.textContent = `ניקוד: ${score} / ${maxScore}`;
+    }
+
+    function getScoreTitle(score, maxScore) {
+      if (maxScore > 0 && score === maxScore) return 'את המצביעה המושלמת!';
+      if (maxScore > 0 && score >= maxScore * 0.6) return 'כל הכבוד!';
+      return 'המשיכי ללמוד ולשחק';
+    }
+
+    window.addEventListener('trivia-score-updated', (event) => {
+      updateScoreHud(event.detail);
+    });
+
+    window.showScorePopup = (scoreSummary = {}) => {
+      const score = Math.round(scoreSummary.score ?? 0);
+      const maxScore = scoreSummary.maxScore ?? 0;
+      const correctAnswers = scoreSummary.correctAnswers ?? 0;
+      const totalQuestions = scoreSummary.totalQuestions ?? 0;
+
+      popupScoreBadge.textContent = `★ ${score} / ${maxScore} ★`;
+      popupScoreTitle.textContent = getScoreTitle(score, maxScore);
+      popupScoreSubtitle.textContent = `${correctAnswers}/${totalQuestions} תשובות נכונות`;
+
+      scoreHud.style.display = 'none';
+
       const popup = document.getElementById('html-score-popup');
       popup.style.display = 'flex';
       popup.offsetHeight; // force reflow
@@ -620,7 +674,8 @@
 
     // Share action
     document.getElementById('popup-share-btn').addEventListener('click', () => {
-      const shareText = "קיבלתי 100%, נסו לנצח את הניקוד שלי!";
+      const scoreText = popupScoreBadge.textContent.replace(/★/g, '').trim();
+      const shareText = `קיבלתי ${scoreText}, נסו לנצח את הניקוד שלי!`;
       const shareUrl = window.location.href;
 
       if (navigator.share) {
@@ -642,7 +697,13 @@
     // Replay Game action
     document.getElementById('popup-replay-btn').addEventListener('click', () => {
       window.hideScorePopup();
+      scoreHud.style.display = 'none';
       window.dispatchEvent(new Event('replay-game-event'));
+    });
+
+    scoreHud.style.display = 'none';
+    window.addEventListener('start-game', () => {
+      scoreHud.style.display = 'block';
     });
 
     // Toast Notification helper
