@@ -419,7 +419,7 @@ export class Day3Scene extends Phaser.Scene {
     this._hudText.setScrollFactor(0);
     this._hudText.setDepth(1000);
 
-    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'רחפנים שחמקת מהם: 0/10', {
+    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'רחפנים שחמקת מהם: 0/5', {
       fontFamily: 'monospace',
       fontSize: `${fontSize}px`,
       color: '#ff2a5f',
@@ -439,7 +439,7 @@ export class Day3Scene extends Phaser.Scene {
 
   _updateDroneHUD(count) {
     if (this._droneHudText) {
-      this._droneHudText.setText(`רחפנים שחמקת מהם: ${count}/10`);
+      this._droneHudText.setText(`רחפנים שחמקת מהם: ${count}/5`);
     }
   }
 
