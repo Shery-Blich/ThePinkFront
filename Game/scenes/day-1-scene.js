@@ -81,6 +81,13 @@ export class Day1Scene extends Phaser.Scene {
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
+    if (this.textures.exists('day1-bg')) {
+      this.add.image(0, 0, 'day1-bg')
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDisplaySize(width, height)
+        .setDepth(-10);
+    }
     this._buildSkyline(worldWidth, this.roadTop);
     this._buildRoad(worldWidth, roadHeight, roadCenterY);
 
@@ -99,6 +106,12 @@ export class Day1Scene extends Phaser.Scene {
     const { group, npcs } = NPC.spawnGroup(this, npcPositions, this.s);
     this.npcGroup = group;
     this.npcList = npcs;
+    this.npcList.forEach((npc, index) => {
+      const textureKey = index % 2 === 0 ? 'npc-yuval' : 'npc-shiri';
+      if (this.textures.exists(textureKey) && typeof npc.setTexture === 'function') {
+        npc.setTexture(textureKey);
+      }
+    });
 
     // --- Player ---
     const startX = this.scale.width / 2;
