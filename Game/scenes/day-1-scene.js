@@ -7,6 +7,7 @@ import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { TRIVIA_QUESTIONS } from '../data/trivia-questions.js';
+import { trackSceneStarted, trackFirstMove, trackObstacleHit, trackGameFailed } from '../analytics.js';
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -60,6 +61,7 @@ export class Day1Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    trackSceneStarted('kiryat_shmona');
     startSceneMusic(this, 'bg-sessions');
 
     // --- Scale from screen height ---
@@ -151,6 +153,7 @@ export class Day1Scene extends Phaser.Scene {
     // Listen to MVC controller notifications
     this.droneManager.on('drone-exploded', (count) => {
       this._updateDroneHUD(count);
+      trackObstacleHit('drone', 'kiryat_shmona', { drones_dodged: count });
     });
 
     this.droneManager.on('player-hit', () => {
@@ -166,6 +169,7 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     this.player.once('move-start', () => {
+      trackFirstMove({ scene_id: 'kiryat_shmona' });
       this.isGameOver = false;
       this.isSceneOver = false;
       this.droneManager.start();
@@ -409,6 +413,7 @@ export class Day1Scene extends Phaser.Scene {
   triggerGameOver() {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
+    trackGameFailed({ scene_id: 'kiryat_shmona' });
     this.sound.play('sfx-gameover', { volume: 0.6 });
 
     if (this.player) this.player.disable();
