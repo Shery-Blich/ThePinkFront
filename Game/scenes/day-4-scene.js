@@ -41,7 +41,7 @@ export class Day4Scene extends Phaser.Scene {
     this.cameras.main.fadeIn(700);
     this._genBackgroundTextures(width, height);
     this._buildScene(width, height);
-    startSceneMusic(this, 'bg-day4');
+    this._startMusic();
     this._scheduleTimeline(width, height);
     this.events.once("shutdown", () => this._stopMusic());
   }
