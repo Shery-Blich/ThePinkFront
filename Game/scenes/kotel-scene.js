@@ -75,8 +75,8 @@ export class KotelScene extends Phaser.Scene {
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
 
-    // 1. Draw the white Kotel Wall in the background
-    this._buildKotelWall(worldWidth, this.roadTop);
+    // 1. Draw the Kotel backdrop image
+    this._buildKotelBackground(worldWidth, this.roadTop);
 
     // 2. Draw Jerusalem Stone Road Plaza
     this._buildJerusalemPlaza(worldWidth, roadHeight);
@@ -167,46 +167,23 @@ export class KotelScene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------------------
-  // White Kotel Background Drawing
+  // Kotel Background Drawing
   // ---------------------------------------------------------------------------
 
   /**
-   * Builds the white stone Western Wall backdrop.
+   * Builds the Kotel backdrop image.
    * @private
    */
-  _buildKotelWall(worldWidth, groundY) {
-    const s = this.s;
-    const wall = this.add.graphics();
-    
-    // Base white wall
-    wall.fillStyle(0xffffff, 1);
-    wall.fillRect(0, 0, worldWidth, groundY);
+  _buildKotelBackground(worldWidth, groundY) {
+    const texture = this.textures.get('kotel-bg').getSourceImage();
+    const scale = groundY / texture.height;
+    const displayWidth = texture.width * scale;
 
-    // Draw stone joints in subtle light grey to suggest huge Kotel ashlar blocks
-    wall.lineStyle(2 * s, 0xe2e8f0, 0.95);
-    const stoneW = 56 * s;
-    const stoneH = 26 * s;
-
-    // Horizontal block lines
-    for (let y = 0; y < groundY; y += stoneH) {
-      wall.lineBetween(0, y, worldWidth, y);
+    for (let x = displayWidth / 2; x < worldWidth + displayWidth / 2; x += displayWidth) {
+      const bg = this.add.image(x, groundY / 2, 'kotel-bg');
+      bg.setDisplaySize(displayWidth, groundY);
+      bg.setDepth(1);
     }
-
-    // Vertical running-bond joints
-    let row = 0;
-    for (let y = 0; y < groundY; y += stoneH) {
-      const offsetX = (row % 2 === 0) ? 0 : stoneW / 2;
-      for (let x = -offsetX; x < worldWidth + stoneW; x += stoneW) {
-        wall.lineBetween(x, y, x, y + stoneH);
-      }
-      row++;
-    }
-
-    // Add depth and outline at the ground level
-    wall.lineStyle(4 * s, 0xd1d5db, 1);
-    wall.lineBetween(0, groundY, worldWidth, groundY);
-
-    wall.setDepth(1);
   }
 
   /**

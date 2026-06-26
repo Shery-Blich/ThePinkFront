@@ -96,8 +96,7 @@ export class Day3Scene extends Phaser.Scene {
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
-    // Reuse original skyline style (modern skyscraper graphics)
-    this._buildSkyline(worldWidth, this.roadTop);
+    this._buildBackground(worldWidth, this.roadTop);
     
     // Draw crumbling asphalt road (uses asphalt_intact/asphalt_cracked)
     this._buildCrumblingRoad(worldWidth, roadHeight);
@@ -253,49 +252,19 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------------------
-  // Kiryat Shmona style Skyline (reused from Day 1)
+  // Kiryat Shmona background image
   // ---------------------------------------------------------------------------
 
   /** @private */
-  _buildSkyline(worldWidth, groundY) {
-    const bldKeys = ['bld_a', 'bld_b', 'bld_c', 'bld_d', 'bld_e'];
-    const s = this.s;
+  _buildBackground(worldWidth, groundY) {
+    const texture = this.textures.get('day3-bg').getSourceImage();
+    const scale = groundY / texture.height;
+    const displayWidth = texture.width * scale;
 
-    let seed = 42;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return seed / 2147483647;
-    };
-
-    // Back layer
-    let x = -10 * s;
-    while (x < worldWidth + 100 * s) {
-      const key = bldKeys[Math.floor(rand() * bldKeys.length)];
-      const frame = this.textures.get(key).getSourceImage();
-      const bScale = s * 0.85;
-
-      const b = this.add.image(x, groundY, key);
-      b.setOrigin(0, 1);
-      b.setScale(bScale);
-      b.setTint(0x444460);
-      b.setAlpha(0.5);
-      b.setDepth(1);
-
-      x += frame.width * bScale - 2 * s;
-    }
-
-    // Front layer
-    x = 5 * s;
-    while (x < worldWidth + 100 * s) {
-      const key = bldKeys[Math.floor(rand() * bldKeys.length)];
-      const frame = this.textures.get(key).getSourceImage();
-
-      const b = this.add.image(x, groundY, key);
-      b.setOrigin(0, 1);
-      b.setScale(s);
-      b.setDepth(2);
-
-      x += frame.width * s - 1 * s;
+    for (let x = displayWidth / 2; x < worldWidth + displayWidth / 2; x += displayWidth) {
+      const bg = this.add.image(x, groundY / 2, 'day3-bg');
+      bg.setDisplaySize(displayWidth, groundY);
+      bg.setDepth(1);
     }
   }
 
