@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { Player } from "../entities/player.js";
+import { runLevelTrivia } from "../systems/level-trivia.js";
 
 export class Day5Scene extends Phaser.Scene {
   constructor() {
@@ -818,9 +819,10 @@ export class Day5Scene extends Phaser.Scene {
     }
     this._cats = [];
     this.cameras.main.fade(700, 0, 0, 0);
-    this.cameras.main.once("camerafadeoutcomplete", () =>
-      this.events.emit("complete"),
-    );
+    this.cameras.main.once("camerafadeoutcomplete", async () => {
+      await runLevelTrivia(this, "Day5Scene");
+      this.events.emit("complete");
+    });
   }
 
   _showReprimand() {

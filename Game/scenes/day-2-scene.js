@@ -4,6 +4,7 @@ import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
+import { runLevelTrivia } from '../systems/level-trivia.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -582,7 +583,8 @@ export class Day2Scene extends Phaser.Scene {
       alpha: 1,
       duration: 800,
       onComplete: () => {
-        this.input.once('pointerdown', () => {
+        this.input.once('pointerdown', async () => {
+          await runLevelTrivia(this, 'Day2Scene');
           this.events.emit('complete');
         });
       }

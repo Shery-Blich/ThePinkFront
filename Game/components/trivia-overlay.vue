@@ -46,6 +46,8 @@
 </template>
 
 <script>
+import { trackQuestionShown, trackQuestionAnswered } from '../analytics.js';
+
 export default {
   name: 'TriviaOverlay',
   data() {
@@ -61,7 +63,8 @@ export default {
       // State trackers
       selectedIndex: 0,
       isAnswered: false,
-      feedbackActive: false
+      feedbackActive: false,
+      questionStartTime: 0
     };
   },
   mounted() {
@@ -87,7 +90,9 @@ export default {
       this.selectedIndex = 0;
       this.isAnswered = false;
       this.feedbackActive = false;
+      this.questionStartTime = Date.now();
       this.isActive = true;
+      trackQuestionShown(this.questionIndex, this.questionText);
     },
 
 
@@ -120,6 +125,7 @@ export default {
       this.feedbackActive = true;
 
       const isCorrect = index === this.correctIndex;
+      trackQuestionAnswered(this.questionIndex, index, isCorrect, Date.now() - this.questionStartTime);
 
       // Wait exactly 1 second before firing the event and hiding the overlay
       setTimeout(() => {
