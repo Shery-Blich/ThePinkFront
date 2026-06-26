@@ -47,11 +47,16 @@ function dispatchScoreUpdate() {
 
 function getSceneQuestionCount(sceneKey) {
   const sceneIndex = TRIVIA_SCENE_ORDER.indexOf(sceneKey);
-  if (sceneIndex === -1) return 0;
+  if (sceneIndex === -1) {
+    console.warn(`[Trivia Debug] Scene key "${sceneKey}" not found in TRIVIA_SCENE_ORDER`);
+    return 0;
+  }
 
   const state = getTriviaState();
   const questionsRemaining = TRIVIA_QUESTIONS.length - state.nextQuestionIndex;
   const levelsRemaining = TRIVIA_SCENE_ORDER.length - sceneIndex;
+
+  console.log(`[Trivia Debug] getSceneQuestionCount: sceneKey=${sceneKey}, nextQuestionIndex=${state.nextQuestionIndex}, questionsRemaining=${questionsRemaining}, levelsRemaining=${levelsRemaining}`);
 
   if (questionsRemaining <= 0) return 0;
   if (questionsRemaining > levelsRemaining) return 2;
@@ -99,6 +104,7 @@ function showTriviaQuestion(scene, questionIndex, totalQuestions) {
         totalQuestions,
         score: scoreSummary.score,
         maxScore: scoreSummary.maxScore,
+        theme: 'stone',
       },
     }));
   });
@@ -106,6 +112,7 @@ function showTriviaQuestion(scene, questionIndex, totalQuestions) {
 
 export async function runLevelTrivia(scene, sceneKey) {
   const questionCount = getSceneQuestionCount(sceneKey);
+  console.log(`[Trivia Debug] runLevelTrivia: starting trivia sequence for "${sceneKey}" with ${questionCount} questions`);
   if (questionCount === 0) return;
 
   const state = getTriviaState();

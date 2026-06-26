@@ -36,7 +36,7 @@ export class DroneManager extends Phaser.Events.EventEmitter {
     /** @type {number} */
     this.dronesExploded = 0;
     /** @type {number} Total drones to dodge */
-    this.maxDrones = 5;
+    this.maxDrones = config.maxDrones || 5;
     /** @type {Drone[]} List of active drone instances */
     this.activeDrones = [];
     /** @type {Phaser.Time.TimerEvent | null} Spawning timer */

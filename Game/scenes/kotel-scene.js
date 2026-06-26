@@ -131,10 +131,7 @@ export class KotelScene extends Phaser.Scene {
     // --- HUD ---
     this._createHUD();
 
-    // Setup player movement listeners for HUD feedback
-    this.player.on('move-start', () => this._updateHUD('רודף אחרי הנשיא...'));
-    this.player.on('move-end', () => this._updateHUD('מצא את הנשיא!'));
-    this.player.on('move-blocked', () => this._updateHUD('חסום על ידי הקיר!'));
+
 
     // --- Start Intro Dialogue ---
     this._updateHUD('שידור נכנס');
@@ -144,6 +141,10 @@ export class KotelScene extends Phaser.Scene {
       this._updateHUD('רדוף אחרי הנשיא! השתמש במקשים או בג׳ויסטיק כדי לזוז!');
     });
     introDialog.start();
+
+    this.events.once('shutdown', () => {
+      // Instructions HUD is removed
+    });
   }
 
   update(time, delta) {
@@ -351,24 +352,14 @@ export class KotelScene extends Phaser.Scene {
 
   /** @private */
   _createHUD() {
-    const fontSize = Math.max(12, Math.round(this.scale.height * 0.026));
-    this._hudText = this.add.text(10, 10, 'מצא את הנשיא...', {
-      fontFamily: 'monospace',
-      fontSize: `${fontSize}px`,
-      color: '#ffffff',
-      backgroundColor: '#000000aa',
-      padding: { x: 6, y: 4 },
-    });
-    this._hudText.setScrollFactor(0);
-    this._hudText.setDepth(4000);
+    // Instructions HUD is removed
   }
 
   /** @private */
   _updateHUD(message) {
-    if (this._hudText) {
-      this._hudText.setText(message);
-    }
+    // Instructions HUD is removed
   }
+
 
   showVictoryScreen() {
     this.sound.play('sfx-levelup', { volume: 0.6 });

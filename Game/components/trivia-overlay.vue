@@ -4,7 +4,7 @@
     <div class="trivia-dimmer"></div>
 
     <!-- Master UI Panel -->
-    <div class="trivia-panel">
+    <div class="trivia-panel" :class="'theme-' + theme">
       <div class="score-chip">
         ניקוד: {{ score }} / {{ maxScore }}
       </div>
@@ -64,6 +64,7 @@ export default {
       totalQuestions: 4,
       score: 0,
       maxScore: 0,
+      theme: 'stone',
 
       // State trackers
       selectedIndex: 0,
@@ -73,6 +74,7 @@ export default {
     };
   },
   mounted() {
+    console.log('[Trivia Overlay Vue] Mounted and listening to show-trivia');
     window.addEventListener('show-trivia', this.handleShowTrivia);
     window.addEventListener('keydown', this.handleKeyDown);
   },
@@ -82,6 +84,7 @@ export default {
   },
   methods: {
     handleShowTrivia(event) {
+      console.log('[Trivia Overlay Vue] handleShowTrivia received event details:', event.detail);
       const data = event.detail || {};
       
       this.questionIndex = data.questionIndex !== undefined ? data.questionIndex : 0;
@@ -92,6 +95,7 @@ export default {
       this.totalQuestions = data.totalQuestions || 4;
       this.score = data.score || 0;
       this.maxScore = data.maxScore || 0;
+      this.theme = data.theme || 'stone';
 
       // Reset states
       this.selectedIndex = 0;
@@ -290,8 +294,8 @@ export default {
 }
 
 .dialogue-text {
-  font-family: monospace;
-  font-size: clamp(12px, 2.5vh, 18px);
+  font-family: 'Rubik', 'Outfit', sans-serif;
+  font-size: clamp(14px, 2.8vh, 22px);
   font-weight: bold;
   color: #ffffff;
   line-height: 1.4;
@@ -332,8 +336,8 @@ export default {
 }
 
 .option-text {
-  font-family: monospace;
-  font-size: clamp(11px, 2.3vh, 16px);
+  font-family: 'Rubik', 'Outfit', sans-serif;
+  font-size: clamp(13px, 2.5vh, 18px);
   color: #ffffff;
   line-height: 1.3;
   width: 100%;
@@ -372,5 +376,90 @@ export default {
     width: 64px;
     height: 64px;
   }
+}
+
+/* --- STONE THEME --- */
+.trivia-panel.theme-stone .solberg-dialogue-box {
+  background: rgba(242, 230, 207, 0.98);
+  border: 2.5px solid #6b5a43;
+  box-shadow: 4px 4px 0px #000000;
+}
+.trivia-panel.theme-stone .dialogue-text {
+  color: #201c18;
+}
+.trivia-panel.theme-stone .option-box {
+  background: rgba(242, 230, 207, 0.98);
+  border: 2px solid #8c7355;
+  box-shadow: 3px 3px 0px #000000;
+}
+.trivia-panel.theme-stone .option-box.inactive:hover,
+.trivia-panel.theme-stone .option-box.active {
+  background: #e2d2b5;
+}
+.trivia-panel.theme-stone .option-text {
+  color: #201c18;
+}
+.trivia-panel.theme-stone .score-chip {
+  background: #f2e6cf;
+  border: 3px solid #6b5a43;
+  color: #3d3025;
+  box-shadow: 3px 3px 0px #000000;
+}
+.trivia-panel.theme-stone .solberg-portrait-box {
+  border: 3px solid #6b5a43;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+/* Correct answer state: soft green background, green border, dark green text */
+.trivia-panel.theme-stone .option-box.correct {
+  background: rgba(209, 250, 229, 0.98) !important;
+  border-color: #10b981 !important;
+  border-width: 3.6px !important;
+}
+.trivia-panel.theme-stone .option-box.correct .option-text {
+  color: #065f46 !important;
+}
+
+/* Incorrect selected answer state: soft red background, red border, dark red text */
+.trivia-panel.theme-stone .option-box.incorrect {
+  background: rgba(254, 226, 226, 0.98) !important;
+  border-color: #ef4444 !important;
+  border-width: 3.6px !important;
+}
+.trivia-panel.theme-stone .option-box.incorrect .option-text {
+  color: #991b1b !important;
+}
+
+/* Keep other non-selected options fully visible with no dimming */
+.trivia-panel.theme-stone .option-box.inactive-dimmed {
+  opacity: 1.0 !important;
+}
+
+/* --- STATE THEME --- */
+.trivia-panel.theme-state .solberg-dialogue-box {
+  background: rgba(250, 250, 249, 0.98);
+  border: 2.5px solid #1e3a8a;
+}
+.trivia-panel.theme-state .dialogue-text {
+  color: #111827;
+}
+.trivia-panel.theme-state .option-box {
+  background: rgba(250, 250, 249, 0.98);
+  border: 2px solid #94a3b8;
+}
+.trivia-panel.theme-state .option-box.inactive:hover,
+.trivia-panel.theme-state .option-box.active {
+  background: #e2e8f0;
+}
+.trivia-panel.theme-state .option-text {
+  color: #111827;
+}
+.trivia-panel.theme-state .score-chip {
+  background: #fafaf9;
+  border: 3px solid #1e3a8a;
+  color: #111827;
+}
+.trivia-panel.theme-state .solberg-portrait-box {
+  border: 3px solid #1e3a8a;
 }
 </style>

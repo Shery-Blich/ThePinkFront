@@ -355,9 +355,9 @@
     }
 
     #html-score-popup .popup-container {
-      background: #0f0c1b;
-      border: 4px solid #00e6ff;
-      box-shadow: 0 0 20px rgba(0, 230, 255, 0.35), 6px 6px 0px #ff007f;
+      background: rgba(242, 230, 207, 0.98);
+      border: 4px solid #6b5a43;
+      box-shadow: 6px 6px 0px #000000;
       padding: 1.75rem;
       width: 90%;
       max-width: 440px;
@@ -372,21 +372,15 @@
     }
 
     #html-score-popup .popup-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: linear-gradient(90deg, #00e6ff, #ff007f);
+      display: none;
     }
 
     #html-score-popup .star-badge {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: 900;
-      color: #ffd700;
-      text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+      color: #b58900;
+      text-shadow: none;
       animation: slowPulse 1.5s infinite alternate ease-in-out;
     }
 
@@ -395,17 +389,18 @@
       font-size: clamp(1.2rem, 3.5vw, 1.8rem);
       font-weight: 900;
       line-height: 1.2;
-      color: #00ffcc;
-      text-shadow: 2px 2px 0px #000;
+      color: #201c18;
+      text-shadow: none;
       margin-bottom: 0.1rem;
-      direction: ltr;
+      direction: rtl;
     }
 
     #html-score-popup .popup-subtitle {
       font-size: clamp(0.85rem, 1.8vw, 1rem);
-      color: #ffffff;
+      color: #3d3025;
+      font-weight: 700;
       opacity: 0.9;
-      direction: ltr;
+      direction: rtl;
     }
 
     #html-score-popup .button-group {
@@ -421,17 +416,17 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      background: #ff007f;
-      color: #ffffff;
+      background: #6b5a43;
+      color: #f2e6cf;
       font-family: 'Rubik', sans-serif;
       font-size: 0.85rem;
       font-weight: 900;
       padding: 0.65rem 1rem;
-      border: 3px solid #ffffff;
+      border: 3px solid #201c18;
       cursor: pointer;
       box-shadow: 4px 4px 0px #000000;
       transition: all 0.15s steps(4, end);
-      text-shadow: 1px 1px 0px #000;
+      text-shadow: none;
       width: 100%;
       text-decoration: none;
       box-sizing: border-box;
@@ -440,8 +435,8 @@
     #html-score-popup .popup-btn:hover {
       transform: translate(2px, 2px);
       box-shadow: 2px 2px 0px #000000;
-      background: #ff3399;
-      border-color: #00e6ff;
+      background: #7e6b52;
+      border-color: #201c18;
     }
 
     #html-score-popup .popup-btn:active {
@@ -452,7 +447,7 @@
     #html-score-popup .play-again-link {
       font-size: 0.8rem;
       font-weight: 700;
-      color: #888899;
+      color: #6b5a43;
       text-decoration: underline;
       cursor: pointer;
       transition: color 0.2s, transform 0.2s;
@@ -463,7 +458,7 @@
     }
 
     #html-score-popup .play-again-link:hover {
-      color: #ffffff;
+      color: #201c18;
       transform: scale(1.05);
     }
 
@@ -490,24 +485,101 @@
       pointer-events: none;
     }
 
-    #html-score-hud {
+    .hud-chip {
       position: fixed;
-      top: 16px;
-      right: 16px;
       z-index: 1000;
       display: none;
       padding: 0.65rem 0.9rem;
-      border: 3px solid #ffffff;
-      background: rgba(15, 12, 27, 0.92);
-      color: #00ffcc;
+      border: 3px solid #6b5a43;
+      background: rgba(242, 230, 207, 0.95);
+      color: #201c18;
       font-family: 'Outfit', 'Rubik', sans-serif;
-      font-size: clamp(0.9rem, 2vw, 1.05rem);
+      font-size: clamp(0.85rem, 1.8vw, 1.05rem);
       font-weight: 900;
       box-shadow: 4px 4px 0px #000000;
-      text-shadow: 1px 1px 0px #000000;
+      text-shadow: none;
       border-radius: 6px;
       direction: rtl;
       text-align: right;
+    }
+
+    #html-score-hud {
+      top: 16px;
+      right: 16px;
+    }
+
+    #html-lives-hud {
+      top: 70px;
+      right: 16px;
+      color: #dc2626;
+    }
+
+    #html-stats-hud {
+      top: 16px;
+      left: 16px;
+    }
+
+    #html-dialog-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      z-index: 9000;
+      display: none;
+      direction: rtl;
+    }
+
+    #html-dialog-box {
+      background: rgba(242, 230, 207, 0.95);
+      border: 3px solid #6b5a43;
+      box-shadow: 4px 4px 0px #000000;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      position: relative;
+      min-height: 100px;
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      text-align: right;
+      cursor: pointer;
+    }
+
+    #html-dialog-name {
+      font-size: clamp(0.95rem, 2vw, 1.15rem);
+      font-weight: 900;
+      color: #3d3025;
+      margin-bottom: 0.3rem;
+    }
+
+    #html-dialog-body {
+      font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+      font-weight: 700;
+      color: #201c18;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    #html-dialog-arrow {
+      position: absolute;
+      bottom: 8px;
+      left: 14px;
+      font-size: 0.9rem;
+      color: #6b5a43;
+      animation: bounceArrow 0.8s infinite alternate ease-in-out;
+      display: none;
+    }
+
+    @keyframes bounceArrow {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-4px); }
+    }
+
+    #html-speed-hud {
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: #d97706;
     }
 
     @keyframes slowPulse {
@@ -592,18 +664,24 @@
   <!-- Toast Notification -->
   <div id="html-toast">Copied share link to clipboard!</div>
 
-  <div id="html-score-hud">ניקוד: 0 / 0</div>
+  <div id="html-score-hud" class="hud-chip">ניקוד: 0 / 0</div>
+  <div id="html-lives-hud" class="hud-chip">♥ ♥ ♥</div>
+  <div id="html-stats-hud" class="hud-chip"></div>
+  <div id="html-speed-hud" class="hud-chip"></div>
+
+  <!-- HTML Dialogue System overlay -->
+  <div id="html-dialog-container">
+    <div id="html-dialog-box">
+      <div id="html-dialog-name"></div>
+      <div id="html-dialog-body"></div>
+      <div id="html-dialog-arrow">▼</div>
+    </div>
+  </div>
 
   <!-- Vue trivia overlay mount point -->
   <div id="trivia-app"></div>
   
   <script type="module" src="./Game/main.js"></script>
-
-  <script type="module">
-    import { createApp } from 'vue';
-    import TriviaOverlay from './Game/components/trivia-overlay.vue';
-    createApp(TriviaOverlay).mount('#trivia-app');
-  </script>
 
   <script type="module">
     import { trackEndLinkClicked } from './Game/analytics.js';
@@ -629,6 +707,29 @@
     const popupScoreBadge = document.getElementById('popup-score-badge');
     const popupScoreTitle = document.getElementById('popup-score-title');
     const popupScoreSubtitle = document.getElementById('popup-score-subtitle');
+
+    // Global HUD utilities for Phaser scenes
+    window.showHUD = (hudId, text) => {
+      const el = document.getElementById(hudId);
+      if (el) {
+        el.innerHTML = text.replace(/\n/g, '<br />');
+        el.style.display = 'block';
+      }
+    };
+
+    window.hideHUD = (hudId) => {
+      const el = document.getElementById(hudId);
+      if (el) {
+        el.style.display = 'none';
+      }
+    };
+
+    window.updateHUDText = (hudId, text) => {
+      const el = document.getElementById(hudId);
+      if (el) {
+        el.innerHTML = text.replace(/\n/g, '<br />');
+      }
+    };
 
     function updateScoreHud(detail = {}) {
       const score = Math.round(detail.score ?? 0);
@@ -697,11 +798,22 @@
     // Replay Game action
     document.getElementById('popup-replay-btn').addEventListener('click', () => {
       window.hideScorePopup();
-      scoreHud.style.display = 'none';
+      // Hide all HUDs
+      const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container'];
+      huds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
       window.dispatchEvent(new Event('replay-game-event'));
     });
 
-    scoreHud.style.display = 'none';
+    // Hide all HUDs initially
+    const initHuds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container'];
+    initHuds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+
     window.addEventListener('start-game', () => {
       scoreHud.style.display = 'block';
     });
