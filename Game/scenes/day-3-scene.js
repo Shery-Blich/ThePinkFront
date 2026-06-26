@@ -135,13 +135,13 @@ export class Day3Scene extends Phaser.Scene {
     });
     this.explosionParticles.setDepth(2500);
 
-    // --- Drone Spawning & Coordination ---
     this.droneManager = new DroneManager(this, this.player, {
       particles: this.explosionParticles,
       roadTop: this.roadTop,
       roadBottom: this.roadBottom,
       worldWidth: worldWidth,
-      scale: this.s
+      scale: this.s,
+      maxDrones: 5
     });
 
     this.droneManager.on('drone-exploded', (count) => {
@@ -163,6 +163,9 @@ export class Day3Scene extends Phaser.Scene {
     // Cleanup on shutdown
     this.events.once('shutdown', () => {
       if (this.droneManager) this.droneManager.destroy();
+      if (typeof window.hideHUD === 'function') {
+        window.hideHUD('html-stats-hud');
+      }
     });
 
     // Start Phase 1: Intro Dialogue Immediately
@@ -234,7 +237,7 @@ export class Day3Scene extends Phaser.Scene {
           });
         }
       });
-    });
+    }, 'stone');
     introDialog.start();
   }
 
@@ -408,38 +411,19 @@ export class Day3Scene extends Phaser.Scene {
 
   /** @private */
   _createHUD() {
-    const fontSize = Math.max(12, Math.round(this.scale.height * 0.025));
-    this._hudText = this.add.text(10, 10, 'שידור נכנס', {
-      fontFamily: 'monospace',
-      fontSize: `${fontSize}px`,
-      color: '#ffffff',
-      backgroundColor: '#000000aa',
-      padding: { x: 6, y: 4 },
-    });
-    this._hudText.setScrollFactor(0);
-    this._hudText.setDepth(1000);
-
-    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'רחפנים שחמקת מהם: 0/5', {
-      fontFamily: 'monospace',
-      fontSize: `${fontSize}px`,
-      color: '#ff2a5f',
-      backgroundColor: '#000000aa',
-      padding: { x: 6, y: 4 },
-    });
-    this._droneHudText.setScrollFactor(0);
-    this._droneHudText.setDepth(1000);
+    if (typeof window.showHUD === 'function') {
+      window.showHUD('html-stats-hud', 'רחפנים שחמקת מהם: 0/5');
+    }
   }
 
   /** @private */
   _updateHUD(message) {
-    if (this._hudText) {
-      this._hudText.setText(message);
-    }
+    // Instructions HUD is removed
   }
 
   _updateDroneHUD(count) {
-    if (this._droneHudText) {
-      this._droneHudText.setText(`רחפנים שחמקת מהם: ${count}/5`);
+    if (typeof window.updateHUDText === 'function') {
+      window.updateHUDText('html-stats-hud', `רחפנים שחמקת מהם: ${count}/5`);
     }
   }
 
@@ -626,7 +610,7 @@ export class Day3Scene extends Phaser.Scene {
     this._updateHUD('המשימה הצליחה!');
     const dialog = new DialogSystem(this, DAY_3_VICTORY_DIALOG, () => {
       this.showVictoryScreen();
-    });
+    }, 'stone');
     dialog.start();
   }
 

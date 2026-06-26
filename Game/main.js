@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { createApp } from "vue";
 import { BootScene } from "./scenes/boot-scene.js";
 import { Day1Scene } from "./scenes/day-1-scene.js";
 import { Day2Scene } from "./scenes/day-2-scene.js";
@@ -10,6 +11,7 @@ import { FinalScene } from "./scenes/final-scene.js";
 import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
 import { resetLevelTrivia } from "./systems/level-trivia.js";
 import { trackGameStarted } from "./analytics.js";
+import TriviaOverlay from "./components/trivia-overlay.vue";
 
 /**
  * Phaser game configuration.
@@ -68,3 +70,6 @@ new SceneOrchestrator(game, [
   KotelScene,
   FinalScene,
 ]);
+
+// Mount the Vue trivia overlay component
+createApp(TriviaOverlay).mount("#trivia-app");

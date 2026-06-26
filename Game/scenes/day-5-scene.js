@@ -50,6 +50,14 @@ export class Day5Scene extends Phaser.Scene {
     this._buildPlayer(width, height);
     this._createHUD(width, height);
     this._showIntro(width, height);
+
+    this.events.once("shutdown", () => {
+      if (typeof window.hideHUD === 'function') {
+        window.hideHUD('html-stats-hud');
+        window.hideHUD('html-lives-hud');
+        window.hideHUD('html-speed-hud');
+      }
+    });
   }
 
   update(_time, delta) {
@@ -659,50 +667,21 @@ export class Day5Scene extends Phaser.Scene {
 
   // ─── HUD ──────────────────────────────────────────────────────
 
-  _createHUD(width, height) {
-    const fs = Math.max(12, Math.round(height * 0.038));
-    const style = (color) => ({
-      fontFamily: "system-ui, sans-serif",
-      fontSize: `${fs}px`,
-      fontWeight: "bold",
-      color,
-      stroke: "#000000",
-      strokeThickness: 3,
-    });
-
-    this._scoreText = this.add.text(
-      14,
-      10,
-      `חתולים: 0 / ${this._TARGET}`,
-      style("#ffffff"),
-    );
-    this._scoreText.setDepth(1000).setScrollFactor(0);
-
-    this._livesText = this.add.text(width - 14, 10, "♥ ♥ ♥", style("#ff4466"));
-    this._livesText.setOrigin(1, 0).setDepth(1000).setScrollFactor(0);
-
-    // Speed-boost indicator — bottom centre, above the joystick
-    this._speedText = this.add.text(
-      width / 2,
-      height - Math.round(height * 0.06),
-      "",
-      {
-        fontFamily: "system-ui, sans-serif",
-        fontSize: `${Math.max(10, Math.round(height * 0.034))}px`,
-        fontWeight: "bold",
-        color: "#ffdd00",
-        stroke: "#000000",
-        strokeThickness: 3,
-      },
-    );
-    this._speedText.setOrigin(0.5, 1).setDepth(1000).setScrollFactor(0);
+  _createHUD() {
+    if (typeof window.showHUD === 'function') {
+      window.showHUD('html-stats-hud', `חתולים: 0 / ${this._TARGET}`);
+      window.showHUD('html-lives-hud', '♥ ♥ ♥');
+      window.hideHUD('html-speed-hud');
+    }
   }
 
   _updateHUD() {
-    this._scoreText.setText(`חתולים: ${this._score} / ${this._TARGET}`);
-    const full = "♥ ".repeat(this._lives).trimEnd();
-    const empty = "♡ ".repeat(3 - this._lives).trimEnd();
-    this._livesText.setText([full, empty].filter(Boolean).join(" "));
+    if (typeof window.updateHUDText === 'function') {
+      window.updateHUDText('html-stats-hud', `חתולים: ${this._score} / ${this._TARGET}`);
+      const full = "♥ ".repeat(this._lives).trimEnd();
+      const empty = "♡ ".repeat(3 - this._lives).trimEnd();
+      window.updateHUDText('html-lives-hud', [full, empty].filter(Boolean).join(" "));
+    }
   }
 
   // ─── Tap-combo speed boost ────────────────────────────────────
@@ -741,12 +720,12 @@ export class Day5Scene extends Phaser.Scene {
     else if (this._tapCombo >= 2) this._player.setTint(0xffdd44);
     else this._player.clearTint();
 
-    if (this._speedText) {
+    if (typeof window.updateHUDText === 'function') {
       if (this._tapCombo > 0) {
         const bars = ">>".repeat(this._tapCombo);
-        this._speedText.setText(`${bars} x${Math.round(mult * 100)}%`);
+        window.showHUD('html-speed-hud', `${bars} x${Math.round(mult * 100)}%`);
       } else {
-        this._speedText.setText("");
+        window.hideHUD('html-speed-hud');
       }
     }
   }

@@ -128,6 +128,13 @@ export class Day2Scene extends Phaser.Scene {
     startSceneMusic(this, 'bg-middle');
     this._setupInput(width);
     this._createHUD();
+
+    this.events.once('shutdown', () => {
+      if (this.joystick) this.joystick.destroy();
+      if (typeof window.hideHUD === 'function') {
+        window.hideHUD('html-stats-hud');
+      }
+    });
   }
 
   update(time, delta) {
@@ -415,24 +422,14 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _createHUD() {
-    this._debugText = this.add.text(16, 16, '', {
-      fontFamily: 'Arial',
-      fontSize: '18px',
-      color: '#ffffff',
-      backgroundColor: '#00000099',
-      padding: { x: 10, y: 5 }
-    });
-    this._debugText.setScrollFactor(0);
-    this._debugText.setDepth(2000);
-    this._updateHUD();
+    if (typeof window.showHUD === 'function') {
+      window.showHUD('html-stats-hud', `תקציב: ${this._formatPrice(this.score)}`);
+    }
   }
 
   _updateHUD() {
-    if (this._debugText) {
-      this._debugText.setText([
-        `תקציב: ${this._formatPrice(this.score)}`,
-        'זוז עם הג׳ויסטיק/חיצים, הקש/רווח כדי לקפוץ',
-      ]);
+    if (typeof window.updateHUDText === 'function') {
+      window.updateHUDText('html-stats-hud', `תקציב: ${this._formatPrice(this.score)}`);
     }
   }
 
