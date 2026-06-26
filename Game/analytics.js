@@ -105,7 +105,6 @@ export function trackEndLinkClicked(linkType) {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
 function _buffer(event) {
   try {
     const log = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
