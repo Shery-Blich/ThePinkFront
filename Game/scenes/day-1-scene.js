@@ -1,13 +1,21 @@
-import Phaser from 'phaser';
-import { Character } from '../entities/character.js';
-import { Player } from '../entities/player.js';
-import { NPC } from '../entities/npc.js';
-import { DialogSystem } from '../systems/dialog-system.js';
-import { DroneManager } from '../systems/drone-manager.js';
-import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from '../data/dialog-data.js';
-import { startSceneMusic } from '../systems/bg-music.js';
-import { runLevelTrivia } from '../systems/level-trivia.js';
-import { trackSceneStarted, trackFirstMove, trackObstacleHit, trackGameFailed } from '../analytics.js';
+import Phaser from "phaser";
+import { Character } from "../entities/character.js";
+import { Player } from "../entities/player.js";
+import { NPC } from "../entities/npc.js";
+import { DialogSystem } from "../systems/dialog-system.js";
+import { DroneManager } from "../systems/drone-manager.js";
+import {
+  DAY_1_INTRO_DIALOG,
+  DAY_1_VICTORY_DIALOG,
+} from "../data/dialog-data.js";
+import { startSceneMusic } from "../systems/bg-music.js";
+import { runLevelTrivia } from "../systems/level-trivia.js";
+import {
+  trackSceneStarted,
+  trackFirstMove,
+  trackObstacleHit,
+  trackGameFailed,
+} from "../analytics.js";
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -21,7 +29,7 @@ const WORLD_CHARS_WIDE = 120;
 
 export class Day1Scene extends Phaser.Scene {
   constructor() {
-    super({ key: 'Day1Scene' });
+    super({ key: "Day1Scene" });
 
     /** @type {Player} */
     this.player = null;
@@ -61,8 +69,8 @@ export class Day1Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    trackSceneStarted('kiryat_shmona');
-    startSceneMusic(this, 'bg-sessions');
+    trackSceneStarted("kiryat_shmona");
+    startSceneMusic(this, "bg-sessions");
 
     // --- Scale from screen height ---
     this.s = Character.computeScale(height);
@@ -71,7 +79,7 @@ export class Day1Scene extends Phaser.Scene {
     const charW = 12 * this.s;
 
     // --- Road band ---
-    this.roadTop = Math.round(height * 0.60);
+    this.roadTop = Math.round(height * 0.6);
     this.roadBottom = Math.round(height * 0.92);
     const roadHeight = this.roadBottom - this.roadTop;
     const roadCenterY = this.roadTop + roadHeight / 2;
@@ -81,8 +89,9 @@ export class Day1Scene extends Phaser.Scene {
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
-    if (this.textures.exists('day1-bg')) {
-      this.add.image(0, 0, 'day1-bg')
+    if (this.textures.exists("day1-bg")) {
+      this.add
+        .image(0, 0, "day1-bg")
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDisplaySize(width, height)
@@ -97,9 +106,10 @@ export class Day1Scene extends Phaser.Scene {
     for (let i = 0; i < 10; i++) {
       npcPositions.push({
         x: npcSpacing * (i + 1),
-        y: (i % 2 === 0)
-          ? this.roadTop + roadHeight * 0.35
-          : this.roadTop + roadHeight * 0.70,
+        y:
+          i % 2 === 0
+            ? this.roadTop + roadHeight * 0.35
+            : this.roadTop + roadHeight * 0.7,
       });
     }
 
@@ -107,8 +117,11 @@ export class Day1Scene extends Phaser.Scene {
     this.npcGroup = group;
     this.npcList = npcs;
     this.npcList.forEach((npc, index) => {
-      const textureKey = index % 2 === 0 ? 'npc-yuval' : 'npc-shiri';
-      if (this.textures.exists(textureKey) && typeof npc.setTexture === 'function') {
+      const textureKey = index % 2 === 0 ? "npc-yuval" : "npc-shiri";
+      if (
+        this.textures.exists(textureKey) &&
+        typeof npc.setTexture === "function"
+      ) {
         npc.setTexture(textureKey);
       }
     });
@@ -127,7 +140,7 @@ export class Day1Scene extends Phaser.Scene {
         if (this.player) this.player.onCollision();
       },
       null,
-      this
+      this,
     );
 
     // --- Camera ---
@@ -140,17 +153,19 @@ export class Day1Scene extends Phaser.Scene {
     // --- HUD ---
     this._createHUD();
 
-    this.player.on('move-start', () => this._updateHUD('הולכת...'));
-    this.player.on('move-end', () => this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←'));
-    this.player.on('move-blocked', () => this._updateHUD('חסום!'));
+    this.player.on("move-start", () => this._updateHUD("הולכת..."));
+    this.player.on("move-end", () =>
+      this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←"),
+    );
+    this.player.on("move-blocked", () => this._updateHUD("חסום!"));
 
     // --- Particles ---
-    this.explosionParticles = this.add.particles(0, 0, 'particle', {
+    this.explosionParticles = this.add.particles(0, 0, "particle", {
       speed: { min: 40 * this.s, max: 130 * this.s },
       scale: { start: 3, end: 0 },
       lifespan: 500,
       tint: [0xff0000, 0xff5500, 0xffaa00, 0xffffff],
-      emitting: false
+      emitting: false,
     });
     this.explosionParticles.setDepth(2500);
 
@@ -160,20 +175,20 @@ export class Day1Scene extends Phaser.Scene {
       roadTop: this.roadTop,
       roadBottom: this.roadBottom,
       worldWidth: worldWidth,
-      scale: this.s
+      scale: this.s,
     });
 
     // Listen to MVC controller notifications
-    this.droneManager.on('drone-exploded', (count) => {
+    this.droneManager.on("drone-exploded", (count) => {
       this._updateDroneHUD(count);
-      trackObstacleHit('drone', 'kiryat_shmona', { drones_dodged: count });
+      trackObstacleHit("drone", "kiryat_shmona", { drones_dodged: count });
     });
 
-    this.droneManager.on('player-hit', () => {
+    this.droneManager.on("player-hit", () => {
       this.triggerGameOver();
     });
 
-    this.droneManager.on('all-drones-dodged', () => {
+    this.droneManager.on("all-drones-dodged", () => {
       this.time.delayedCall(1000, () => {
         if (!this.isGameOver) {
           this.triggerSceneOver();
@@ -181,23 +196,23 @@ export class Day1Scene extends Phaser.Scene {
       });
     });
 
-    this.player.once('move-start', () => {
-      trackFirstMove({ scene_id: 'kiryat_shmona' });
+    this.player.once("move-start", () => {
+      trackFirstMove({ scene_id: "kiryat_shmona" });
       this.isGameOver = false;
       this.isSceneOver = false;
       this.droneManager.start();
     });
 
     // --- Play Intro Cutscene Dialogue ---
-    this._updateHUD('שידור נכנס');
+    this._updateHUD("שידור נכנס");
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
-      this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←');
+      this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←");
       this.player.enable();
     });
     introDialog.start();
 
     // Cleanup on shutdown
-    this.events.once('shutdown', () => {
+    this.events.once("shutdown", () => {
       if (this.droneManager) this.droneManager.destroy();
     });
   }
@@ -206,8 +221,6 @@ export class Day1Scene extends Phaser.Scene {
     if (this.player) {
       this.player.update();
     }
-
-
 
     for (const npc of this.npcList) {
       npc.depthSort();
@@ -220,7 +233,7 @@ export class Day1Scene extends Phaser.Scene {
 
   /** @private */
   _buildSkyline(worldWidth, groundY) {
-    const bldKeys = ['bld_a', 'bld_b', 'bld_c', 'bld_d', 'bld_e'];
+    const bldKeys = ["bld_a", "bld_b", "bld_c", "bld_d", "bld_e"];
     const s = this.s;
 
     let seed = 42;
@@ -274,7 +287,7 @@ export class Day1Scene extends Phaser.Scene {
 
     // Asphalt
     for (let i = 0; i < tilesNeeded; i++) {
-      const tile = this.add.image(i * tileW, this.roadTop, 'road');
+      const tile = this.add.image(i * tileW, this.roadTop, "road");
       tile.setOrigin(0, 0);
       tile.setDisplaySize(tileW, roadHeight);
       tile.setDepth(3);
@@ -282,7 +295,7 @@ export class Day1Scene extends Phaser.Scene {
 
     // Upper curb
     for (let i = 0; i < tilesNeeded; i++) {
-      const curb = this.add.image(i * tileW, this.roadTop, 'curb');
+      const curb = this.add.image(i * tileW, this.roadTop, "curb");
       curb.setOrigin(0, 0);
       curb.setScale(s);
       curb.setDepth(4);
@@ -290,7 +303,7 @@ export class Day1Scene extends Phaser.Scene {
 
     // Lower curb
     for (let i = 0; i < tilesNeeded; i++) {
-      const curb = this.add.image(i * tileW, this.roadBottom - 2 * s, 'curb');
+      const curb = this.add.image(i * tileW, this.roadBottom - 2 * s, "curb");
       curb.setOrigin(0, 0);
       curb.setScale(s);
       curb.setDepth(4);
@@ -301,7 +314,11 @@ export class Day1Scene extends Phaser.Scene {
     const dashGap = 10 * s;
     const dashCount = Math.ceil(worldWidth / (dashW + dashGap));
     for (let i = 0; i < dashCount; i++) {
-      const dash = this.add.image(i * (dashW + dashGap), roadCenterY, 'road_line');
+      const dash = this.add.image(
+        i * (dashW + dashGap),
+        roadCenterY,
+        "road_line",
+      );
       dash.setOrigin(0, 0.5);
       dash.setScale(s);
       dash.setAlpha(0.7);
@@ -310,7 +327,7 @@ export class Day1Scene extends Phaser.Scene {
 
     // Sidewalk below road
     for (let i = 0; i < tilesNeeded; i++) {
-      const sw = this.add.image(i * tileW, this.roadBottom, 'sidewalk');
+      const sw = this.add.image(i * tileW, this.roadBottom, "sidewalk");
       sw.setOrigin(0, 0);
       sw.setDisplaySize(tileW, height - this.roadBottom);
       sw.setDepth(3);
@@ -324,23 +341,28 @@ export class Day1Scene extends Phaser.Scene {
   /** @private */
   _createHUD() {
     const fontSize = Math.max(12, Math.round(this.scale.height * 0.025));
-    this._hudText = this.add.text(10, 10, 'גררי את הג׳ויסטיק כדי לזוז ←', {
-      fontFamily: 'monospace',
+    this._hudText = this.add.text(10, 10, "גררי את הג׳ויסטיק כדי לזוז ←", {
+      fontFamily: "monospace",
       fontSize: `${fontSize}px`,
-      color: '#ffffff',
-      backgroundColor: '#000000aa',
+      color: "#ffffff",
+      backgroundColor: "#000000aa",
       padding: { x: 6, y: 4 },
     });
     this._hudText.setScrollFactor(0);
     this._hudText.setDepth(1000);
 
-    this._droneHudText = this.add.text(10, 15 + fontSize * 1.5, 'רחפנים שחמקת מהם: 0/10', {
-      fontFamily: 'monospace',
-      fontSize: `${fontSize}px`,
-      color: '#ff2a5f',
-      backgroundColor: '#000000aa',
-      padding: { x: 6, y: 4 },
-    });
+    this._droneHudText = this.add.text(
+      10,
+      15 + fontSize * 1.5,
+      "רחפנים שחמקת מהם: 0/10",
+      {
+        fontFamily: "monospace",
+        fontSize: `${fontSize}px`,
+        color: "#ff2a5f",
+        backgroundColor: "#000000aa",
+        padding: { x: 6, y: 4 },
+      },
+    );
     this._droneHudText.setScrollFactor(0);
     this._droneHudText.setDepth(1000);
   }
@@ -365,8 +387,8 @@ export class Day1Scene extends Phaser.Scene {
   triggerGameOver() {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
-    trackGameFailed({ scene_id: 'kiryat_shmona' });
-    this.sound.play('sfx-gameover', { volume: 0.6 });
+    trackGameFailed({ scene_id: "kiryat_shmona" });
+    this.sound.play("sfx-gameover", { volume: 0.6 });
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
@@ -378,7 +400,7 @@ export class Day1Scene extends Phaser.Scene {
       tint: 0x333333,
       y: this.player.y + 5 * this.s,
       duration: 600,
-      ease: 'Bounce.easeOut'
+      ease: "Bounce.easeOut",
     });
 
     // Screen darken overlay
@@ -389,25 +411,35 @@ export class Day1Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 40, 'GAME OVER', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${Math.round(this.scale.height * 0.12)}px`,
-      color: '#ff2a5f',
-      stroke: '#000000',
-      strokeThickness: 6,
-      align: 'center'
-    });
+    const title = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2 - 40,
+      "GAME OVER",
+      {
+        fontFamily: "Impact, sans-serif",
+        fontSize: `${Math.round(this.scale.height * 0.12)}px`,
+        color: "#ff2a5f",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+      },
+    );
     title.setOrigin(0.5);
     title.setScrollFactor(0);
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'הקישו בכל מקום כדי לנסות שוב', {
-      fontFamily: 'monospace',
-      fontSize: `${Math.round(this.scale.height * 0.045)}px`,
-      color: '#ffffff',
-      align: 'center'
-    });
+    const subtitle = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2 + 20,
+      "הקישו בכל מקום כדי לנסות שוב",
+      {
+        fontFamily: "monospace",
+        fontSize: `${Math.round(this.scale.height * 0.045)}px`,
+        color: "#ffffff",
+        align: "center",
+      },
+    );
     subtitle.setOrigin(0.5);
     subtitle.setScrollFactor(0);
     subtitle.setDepth(10001);
@@ -418,10 +450,10 @@ export class Day1Scene extends Phaser.Scene {
       alpha: 1,
       duration: 800,
       onComplete: () => {
-        this.input.once('pointerdown', () => {
+        this.input.once("pointerdown", () => {
           this.scene.restart();
         });
-      }
+      },
     });
   }
 
@@ -438,15 +470,22 @@ export class Day1Scene extends Phaser.Scene {
     this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
     // Dark rectangle hole door
     this.supermarket.fillStyle(0x110e1a, 1);
-    this.supermarket.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
-    
+    this.supermarket.fillRect(
+      x - doorW / 2,
+      this.roadTop - doorH,
+      doorW,
+      doorH,
+    );
+
     // Add text label "SUPER"
-    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'סופר', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${12 * s}px`,
-      color: '#ff2a5f',
-      align: 'center'
-    }).setOrigin(0.5);
+    this.superLabel = this.add
+      .text(x, this.roadTop - h + 15 * s, "סופר", {
+        fontFamily: "Impact, sans-serif",
+        fontSize: `${12 * s}px`,
+        color: "#ff2a5f",
+        align: "center",
+      })
+      .setOrigin(0.5);
 
     this.supermarket.setDepth(2.5);
     this.superLabel.setDepth(2.6);
@@ -455,7 +494,7 @@ export class Day1Scene extends Phaser.Scene {
   triggerSceneOver() {
     if (this.isSceneOver || this.isGameOver) return;
     this.isSceneOver = true;
-    this.sound.play('sfx-levelup', { volume: 0.6 });
+    this.sound.play("sfx-levelup", { volume: 0.6 });
 
     if (this.player) {
       this.player.disable();
@@ -479,14 +518,14 @@ export class Day1Scene extends Phaser.Scene {
     const frontX = superX;
     const frontY = this.roadTop + 15 * s;
 
-    this._updateHUD('הולכת לסופרמרקט...');
+    this._updateHUD("הולכת לסופרמרקט...");
 
     this.tweens.add({
       targets: this.player,
       x: frontX,
       y: frontY,
       duration: 2000,
-      ease: 'Linear',
+      ease: "Linear",
       onComplete: () => {
         // Stop following once player reaches the storefront
         this.cameras.main.stopFollow();
@@ -499,24 +538,26 @@ export class Day1Scene extends Phaser.Scene {
           y: doorY,
           alpha: 0,
           duration: 1000,
-          ease: 'Quad.easeIn',
+          ease: "Quad.easeIn",
           onComplete: () => {
             this.player.setVisible(false);
             this.player.setAlpha(1); // Reset alpha back to 1
 
             // 5. The final dialog will start to trigger the end scene as usual
             this.time.delayedCall(300, () => {
-              this._updateHUD('זמן מצוין לקניות!');
-              const dialog = new DialogSystem(this, [
-                { speaker: 'שלומית', text: 'זמן מצוין לקניות!' }
-              ], () => {
-                this.showVictoryScreen();
-              });
+              this._updateHUD("זמן מצוין לקניות!");
+              const dialog = new DialogSystem(
+                this,
+                [{ speaker: "נהוראי", text: "זמן מצוין לקניות!" }],
+                () => {
+                  this.showVictoryScreen();
+                },
+              );
               dialog.start();
             });
-          }
+          },
         });
-      }
+      },
     });
   }
 
@@ -528,25 +569,35 @@ export class Day1Scene extends Phaser.Scene {
     overlay.setDepth(10000);
     overlay.setAlpha(0);
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'השלב הושלם', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${Math.round(this.scale.height * 0.1)}px`,
-      color: '#00ffcc',
-      stroke: '#000000',
-      strokeThickness: 6,
-      align: 'center'
-    });
+    const title = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2 - 30,
+      "השלב הושלם",
+      {
+        fontFamily: "Impact, sans-serif",
+        fontSize: `${Math.round(this.scale.height * 0.1)}px`,
+        color: "#00ffcc",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+      },
+    );
     title.setOrigin(0.5);
     title.setScrollFactor(0);
     title.setDepth(10001);
     title.setAlpha(0);
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
-      fontFamily: 'monospace',
-      fontSize: `${Math.round(this.scale.height * 0.04)}px`,
-      color: '#ffffff',
-      align: 'center'
-    });
+    const subtitle = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2 + 25,
+      "הקישו בכל מקום כדי להמשיך",
+      {
+        fontFamily: "monospace",
+        fontSize: `${Math.round(this.scale.height * 0.04)}px`,
+        color: "#ffffff",
+        align: "center",
+      },
+    );
     subtitle.setOrigin(0.5);
     subtitle.setScrollFactor(0);
     subtitle.setDepth(10001);
@@ -557,11 +608,11 @@ export class Day1Scene extends Phaser.Scene {
       alpha: 1,
       duration: 800,
       onComplete: () => {
-        this.input.once('pointerdown', async () => {
-          await runLevelTrivia(this, 'Day1Scene');
-          this.events.emit('complete');
+        this.input.once("pointerdown", async () => {
+          await runLevelTrivia(this, "Day1Scene");
+          this.events.emit("complete");
         });
-      }
+      },
     });
   }
 }
