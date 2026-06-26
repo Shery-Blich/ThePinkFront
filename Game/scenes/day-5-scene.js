@@ -37,6 +37,13 @@ export class Day5Scene extends Phaser.Scene {
   }
 
   create() {
+    this._score = 0;
+    this._lives = 3;
+    this._cats = [];
+    this._gameActive = false;
+    this._sceneEnded = false;
+    this._scrollLayers = [];
+    this._midPool = [];
     const { width, height } = this.scale;
     this._genTextures(width, height);
     this._buildBackground(width, height);
