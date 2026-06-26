@@ -41,6 +41,8 @@ export class Day2Scene extends Phaser.Scene {
       ambient: [],
     };
     this._ambientSoundEvent = null;
+    this.backgroundImage = null;
+    this._backgroundScrollX = 0;
   }
 
   create() {
@@ -76,6 +78,20 @@ export class Day2Scene extends Phaser.Scene {
         color: '#ff0000',
       });
       return;
+    }
+
+    if (this.textures.exists('day2-bg')) {
+      const bgSource = this.textures.get('day2-bg').getSourceImage();
+      const texW = bgSource.width;
+      const texH = bgSource.height;
+      const scale = Math.max(width / texW, height / texH);
+
+      this.backgroundImage = this.add.image(0, 0, 'day2-bg')
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(0)
+        .setScale(scale);
+      this._backgroundScrollX = 0;
     }
 
     this.cameras.main.setBackgroundColor(0x74b9ff);
@@ -117,6 +133,16 @@ export class Day2Scene extends Phaser.Scene {
   update(time, delta) {
     if (this.isGameOver || this.isSceneOver) {
       return;
+    }
+
+    if (this.backgroundImage) {
+      const scrollSpeed = 10;
+      this._backgroundScrollX += (scrollSpeed * delta) / 1000;
+      const maxOffset = Math.max(0, this.backgroundImage.displayWidth - this.scale.width);
+      if (this._backgroundScrollX > maxOffset) {
+        this._backgroundScrollX = 0;
+      }
+      this.backgroundImage.x = -this._backgroundScrollX;
     }
 
     const cam = this.cameras && this.cameras.main;
@@ -369,8 +395,14 @@ export class Day2Scene extends Phaser.Scene {
   _buildCashier(width, height) {
     const x = this._levelWidth - 100;
     const y = height - 20;
-    this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981);
+    this.finishZone = this.add.rectangle(x, y - 40, 32, 80, 0x10b981, 0);
     this.physics.add.existing(this.finishZone, true);
+
+    if (this.textures.exists('cashier-character')) {
+      this.add.image(x, y - 40, 'cashier-character')
+        .setOrigin(0.5, 1)
+        .setScale(0.5);
+    }
 
     const label = this.add.text(x, y - 100, 'קופה', {
       fontFamily: 'Arial',
