@@ -520,9 +520,21 @@ export class Day4Scene extends Phaser.Scene {
         duration: 1000,
         ease: "Linear",
         onComplete: () => {
-          // Close the doors then move on
+          // Close doors, then bus drives off to the right
           this._bus.setTexture("egged_bus");
-          this.time.delayedCall(600, () => this._endScene());
+          this.tweens.add({
+            targets: this,
+            _scrollSpeed: 280,
+            duration: 600,
+            ease: "Quad.easeIn",
+          });
+          this.tweens.add({
+            targets: this._bus,
+            x: width + 300 * s,
+            duration: 2000,
+            ease: "Quad.easeIn",
+            onComplete: () => this._endScene(),
+          });
         },
       });
     });
