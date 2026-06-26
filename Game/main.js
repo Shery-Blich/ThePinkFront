@@ -8,6 +8,7 @@ import { Day5Scene } from "./scenes/day-5-scene.js";
 import { KotelScene } from "./scenes/kotel-scene.js";
 import { FinalScene } from "./scenes/final-scene.js";
 import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
+import { trackGameStarted } from "./analytics.js";
 
 /**
  * Phaser game configuration.
@@ -50,6 +51,10 @@ const config = {
 
 // eslint-disable-next-line no-unused-vars
 const game = new Phaser.Game(config);
+
+window.addEventListener('start-game', () => {
+  trackGameStarted();
+});
 
 // Connect all the stages in chronological order using the Orchestrator
 new SceneOrchestrator(game, [
