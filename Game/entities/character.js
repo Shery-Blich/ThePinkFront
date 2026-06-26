@@ -31,8 +31,7 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     /** @type {number} The pixel art scale factor */
     this.spriteScale = scale;
 
-    // --- Common setup ---
-    this.setScale(scale);
+    this._applyCharacterScale(scale);
     this.setOrigin(0.5, 1); // Feet at position
 
     // --- Bottom-half collision body ---
@@ -72,5 +71,30 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     // 12×20 texture → body covers bottom 10px (feet area)
     this.body.setSize(10, 10);
     this.body.setOffset(1, 10);
+  }
+
+  setTexture(key, frame) {
+    const result = super.setTexture(key, frame);
+
+    if (typeof this.spriteScale === 'number') {
+      this._applyCharacterScale(this.spriteScale);
+      if (this.body) {
+        this.body.updateFromGameObject();
+        this._setupCollisionBody();
+      }
+    }
+
+    return result;
+  }
+
+  _applyCharacterScale(scale) {
+    const desiredHeight = 20 * scale;
+    const textureHeight = this.frame?.realHeight || this.frame?.height || this.height;
+
+    if (textureHeight > 0) {
+      this.setScale(desiredHeight / textureHeight);
+    } else {
+      this.setScale(scale);
+    }
   }
 }

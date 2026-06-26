@@ -8,6 +8,7 @@ import { Day5Scene } from "./scenes/day-5-scene.js";
 import { KotelScene } from "./scenes/kotel-scene.js";
 import { FinalScene } from "./scenes/final-scene.js";
 import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
+import { resetLevelTrivia } from "./systems/level-trivia.js";
 import { trackGameStarted } from "./analytics.js";
 
 /**
@@ -53,6 +54,7 @@ const config = {
 const game = new Phaser.Game(config);
 
 window.addEventListener('start-game', () => {
+  resetLevelTrivia();
   trackGameStarted();
 });
 
