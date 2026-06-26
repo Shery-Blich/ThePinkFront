@@ -571,8 +571,25 @@
 
   <!-- Toast Notification -->
   <div id="html-toast">Copied share link to clipboard!</div>
+
+  <!-- Vue trivia overlay mount point -->
+  <div id="trivia-app"></div>
   
   <script type="module" src="./Game/main.js"></script>
+
+  <script type="module">
+    import { createApp } from 'vue';
+    import TriviaOverlay from './Game/components/trivia-overlay.vue';
+    createApp(TriviaOverlay).mount('#trivia-app');
+  </script>
+
+  <script type="module">
+    import { trackEndLinkClicked } from './Game/analytics.js';
+    document.getElementById('popup-share-btn').addEventListener('click', () => trackEndLinkClicked('share'));
+    document.getElementById('popup-replay-btn').addEventListener('click', () => trackEndLinkClicked('replay'));
+    document.querySelector('a[href*="instagram"]').addEventListener('click', () => trackEndLinkClicked('instagram'));
+    document.querySelector('a[href*="ourknesset.org"]').addEventListener('click', () => trackEndLinkClicked('official_voting_info'));
+  </script>
 
   <script>
     document.getElementById('cta-btn').addEventListener('click', () => {

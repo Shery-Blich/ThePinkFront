@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { Character } from '../entities/character.js';
 import { startSceneMusic } from '../systems/bg-music.js';
+import { trackGameCompleted } from '../analytics.js';
 
 /**
  * FinalScene — The voting booth climax.
@@ -112,6 +113,7 @@ export class FinalScene extends Phaser.Scene {
    * Delegates the display of the final score screen to the responsive HTML overlay APIs.
    */
   showScorePopup() {
+    trackGameCompleted();
     if (typeof window.showScorePopup === 'function') {
       window.showScorePopup();
     }
