@@ -37,7 +37,7 @@ const config = {
   },
   scene: [
     BootScene,
-    Day1Scene,
+    //Day1Scene,
     Day2Scene,
     Day3Scene,
     Day4Scene,
@@ -51,7 +51,7 @@ const game = new Phaser.Game(config);
 
 // Connect all the stages in chronological order using the Orchestrator
 new SceneOrchestrator(game, [
-  Day1Scene,
+  //Day1Scene,
   Day2Scene,
   Day3Scene,
   Day4Scene,

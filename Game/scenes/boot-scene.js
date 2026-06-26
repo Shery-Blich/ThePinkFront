@@ -18,6 +18,19 @@ export class BootScene extends Phaser.Scene {
     this.load.image('kupaee', 'assets/Characters/kupaee.png');
     this.load.image('yuval', 'assets/Characters/Yuval.png');
     this.load.image('shiri', 'assets/Characters/Shiri.png');
+
+    const groceryFiles = [
+      'vegetable.png',
+      'bread.png',
+      'milk.png',
+      'proteins.png',
+      'snack.png',
+    ];
+
+    groceryFiles.forEach((file) => {
+      const key = `grocery-${file.replace(/\.[^/.]+$/, '')}`;
+      this.load.image(key, `assets/groceries/${file}`);
+    });
   }
 
   create() {
