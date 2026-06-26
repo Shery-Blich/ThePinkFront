@@ -47,7 +47,6 @@
 
 <script>
 import { trackQuestionShown, trackQuestionAnswered } from '../analytics.js';
-
 export default {
   name: 'TriviaOverlay',
   data() {
