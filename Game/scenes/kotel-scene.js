@@ -91,7 +91,9 @@ export class KotelScene extends Phaser.Scene {
     // --- President NPC (Dynamic body, starts far away to the right) ---
     const presStartX = startX + 450 * this.s;
     this.president = this.physics.add.sprite(presStartX, roadCenterY, 'nassi-2');
-    this.president.setScale(this.s);
+    const presidentTextureHeight = this.president.height || 100;
+    const presidentTargetHeight = 20 * this.s;
+    this.president.setScale(presidentTargetHeight / presidentTextureHeight);
     this.president.setOrigin(0.5, 1);
     this.president.body.setCollideWorldBounds(true);
     
