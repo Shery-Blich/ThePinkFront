@@ -11,6 +11,7 @@ RUN npm install
 
 COPY index.html vite.config.js ./
 COPY Game ./Game
+COPY assets ./assets
 
 RUN npm run build
 
@@ -40,6 +41,7 @@ FROM nginx:alpine AS web
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=game-build /app/dist /usr/share/nginx/html
+COPY --from=game-build /app/assets /usr/share/nginx/html/assets
 COPY --from=admin-build /app/dist /usr/share/nginx/html/admin
 
 EXPOSE 80
