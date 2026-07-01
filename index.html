@@ -738,9 +738,18 @@
     }
 
     function getScoreTitle(score, maxScore) {
-      if (maxScore > 0 && score === maxScore) return 'את המצביעה המושלמת!';
-      if (maxScore > 0 && score >= maxScore * 0.6) return 'כל הכבוד!';
-      return 'המשיכי ללמוד ולשחק';
+      if(score == 0) {
+        return "נשללת ממך זכות הבחירה, סתם לא, אבל כדאי שתקרא קצת";
+      }
+      if(score  == 1) {
+        return "מצביע פארש! אחרי שלוש שנים של מלחמה אתה צריך לדעת יותר טוב";
+      }
+      if(score == 2) 
+      {
+        return "כל הכבוד, אתה מצביע סבבה - תעקוב אחרינו להגיע כדאי להגיע למאה";
+      }
+
+      return 'מצביע מושלם ומוכן לעבוד בוועדת הבחירות המרכזית';
     }
 
     window.addEventListener('trivia-score-updated', (event) => {
