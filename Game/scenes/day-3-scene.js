@@ -6,7 +6,7 @@ import { DialogSystem } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
-import { runLevelTrivia } from '../systems/level-trivia.js';
+import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -480,15 +480,7 @@ export class Day3Scene extends Phaser.Scene {
     // Falling / grey out animation
     this.tweens.add(deathTweenOptions);
 
-    if (typeof window.showGameOver === 'function') {
-      window.showGameOver(titleText, messageText, () => {
-        this.scene.restart();
-      });
-    } else {
-      this.time.delayedCall(1000, () => {
-        this.scene.restart();
-      });
-    }
+    showGameOverHelper(this, titleText, messageText);
   }
 
   triggerSceneOver(roadCenterY, worldWidth) {
@@ -584,20 +576,11 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    if (typeof window.showVictoryScreen === 'function') {
-      window.showVictoryScreen(
-        "הדרך לירושלים נפתחה!",
-        "חמקת מהרחפנים ושרדת את קריסת אבני הדרך בעכו. הגיע הזמן להתקדם לירושלים!",
-        "למעבר לחידון",
-        async () => {
-          await runLevelTrivia(this, 'Day3Scene');
-          this.events.emit('complete');
-        }
-      );
-    } else {
-      runLevelTrivia(this, 'Day3Scene').then(() => {
-        this.events.emit('complete');
-      });
-    }
+    showVictoryHelper(
+      this,
+      'Day3Scene',
+      "הדרך לירושלים נפתחה!",
+      "חמקת מהרחפנים ושרדת את קריסת אבני הדרך בעכו. הגיע הזמן להתקדם לירושלים!"
+    );
   }
 }

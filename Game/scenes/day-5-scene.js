@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Player } from "../entities/player.js";
-import { runLevelTrivia } from "../systems/level-trivia.js";
+import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
 
 export class Day5Scene extends Phaser.Scene {
   constructor() {
@@ -749,19 +749,11 @@ export class Day5Scene extends Phaser.Scene {
     }
     this._cats = [];
 
-    if (typeof window.showGameOver === 'function') {
-      window.showGameOver(
-        "הלכו הלבבות!",
-        "פספסת יותר מדי חתולים... עם כמות כזו של פספוסים, אפילו קולות החיילים לא יצילו אותך מאחוז החסימה!",
-        () => {
-          this.scene.restart();
-        }
-      );
-    } else {
-      this.time.delayedCall(1000, () => {
-        this.scene.restart();
-      });
-    }
+    showGameOverHelper(
+      this,
+      "הלכו הלבבות!",
+      "פספסת יותר מדי חתולים... עם כמות כזו של פספוסים, אפילו קולות החיילים לא יצילו אותך מאחוז החסימה!"
+    );
   }
 
   // ─── End scene ────────────────────────────────────────────────
@@ -770,7 +762,6 @@ export class Day5Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._sceneEnded = true;
     this._gameActive = false;
-    this.sound.play("sfx-levelup", { volume: 0.6 });
     if (this._player) this._player.disable();
     for (const cat of this._cats) {
       this.tweens.killTweensOf(cat.img);
@@ -778,21 +769,13 @@ export class Day5Scene extends Phaser.Scene {
     }
     this._cats = [];
     this.cameras.main.fade(700, 0, 0, 0);
-    this.cameras.main.once("camerafadeoutcomplete", async () => {
-      if (typeof window.showVictoryScreen === "function") {
-        window.showVictoryScreen(
-          "השלב הושלם!",
-          "הצלחתם למצוא את כל החתולים המסתתרים בירושלים!",
-          "למעבר לחידון",
-          async () => {
-            await runLevelTrivia(this, "Day5Scene");
-            this.events.emit("complete");
-          }
-        );
-      } else {
-        await runLevelTrivia(this, "Day5Scene");
-        this.events.emit("complete");
-      }
+    this.cameras.main.once("camerafadeoutcomplete", () => {
+      showVictoryHelper(
+        this,
+        "Day5Scene",
+        "השלב הושלם!",
+        "הצלחתם למצוא את כל החתולים המסתתרים בירושלים!"
+      );
     });
   }
 

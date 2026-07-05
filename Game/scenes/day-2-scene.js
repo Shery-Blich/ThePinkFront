@@ -4,7 +4,7 @@ import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
-import { runLevelTrivia } from '../systems/level-trivia.js';
+import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -526,15 +526,7 @@ export class Day2Scene extends Phaser.Scene {
       messageText = `השארת עודף של ${this._formatPrice(this.score)}! ממתי משאירים עודף בתקציב המדינה? תחזיר הכל למשרד האוצר!`;
     }
 
-    if (typeof window.showGameOver === 'function') {
-      window.showGameOver(titleText, messageText, () => {
-        this.scene.restart();
-      });
-    } else {
-      this.time.delayedCall(1000, () => {
-        this.scene.restart();
-      });
-    }
+    showGameOverHelper(this, titleText, messageText);
   }
 
   triggerSceneOver() {
@@ -551,21 +543,12 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    if (typeof window.showVictoryScreen === 'function') {
-      window.showVictoryScreen(
-        "השלב הושלם!",
-        "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן.",
-        "למעבר לחידון",
-        async () => {
-          await runLevelTrivia(this, 'Day2Scene');
-          this.events.emit('complete');
-        }
-      );
-    } else {
-      runLevelTrivia(this, 'Day2Scene').then(() => {
-        this.events.emit('complete');
-      });
-    }
+    showVictoryHelper(
+      this,
+      'Day2Scene',
+      "השלב הושלם!",
+      "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן."
+    );
   }
 
   _setupSounds() {

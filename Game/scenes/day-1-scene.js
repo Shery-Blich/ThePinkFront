@@ -9,7 +9,7 @@ import {
   DAY_1_VICTORY_DIALOG,
 } from "../data/dialog-data.js";
 import { startSceneMusic } from "../systems/bg-music.js";
-import { runLevelTrivia } from "../systems/level-trivia.js";
+import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
 import {
   trackSceneStarted,
   trackFirstMove,
@@ -379,19 +379,11 @@ export class Day1Scene extends Phaser.Scene {
       ease: "Bounce.easeOut",
     });
 
-    if (typeof window.showGameOver === 'function') {
-      window.showGameOver(
-        "נפסלת!",
-        "רחפן פגע בך! עם רמת הניווט הזו, לא בטוח שתגיע לקלפי גם בעוד שלוש מערכות בחירות.",
-        () => {
-          this.scene.restart();
-        }
-      );
-    } else {
-      this.time.delayedCall(1000, () => {
-        this.scene.restart();
-      });
-    }
+    showGameOverHelper(
+      this,
+      "נפסלת!",
+      "רחפן פגע בך! עם רמת הניווט הזו, לא בטוח שתגיע לקלפי גם בעוד שלוש מערכות בחירות."
+    );
   }
 
   _buildSupermarket(x) {
@@ -500,21 +492,11 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    this.sound.play("sfx-levelup", { volume: 0.6 });
-    if (typeof window.showVictoryScreen === "function") {
-      window.showVictoryScreen(
-        "השלב הושלם!",
-        "הצלחת לחמוק מרחפני האויב בקריית שמונה ולהגיע בשלום.",
-        "למעבר לחידון",
-        async () => {
-          await runLevelTrivia(this, "Day1Scene");
-          this.events.emit("complete");
-        }
-      );
-    } else {
-      runLevelTrivia(this, "Day1Scene").then(() => {
-        this.events.emit("complete");
-      });
-    }
+    showVictoryHelper(
+      this,
+      "Day1Scene",
+      "השלב הושלם!",
+      "הצלחת לחמוק מרחפני האויב בקריית שמונה ולהגיע בשלום."
+    );
   }
 }

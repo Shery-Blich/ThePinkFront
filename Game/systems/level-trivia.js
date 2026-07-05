@@ -155,3 +155,7 @@ export function getTriviaScoreSummary() {
     pointsPerCorrect: getPointsPerCorrect(),
   };
 }
+
+export function hasLevelTrivia(sceneKey) {
+  return getSceneQuestionCount(sceneKey) > 0;
+}

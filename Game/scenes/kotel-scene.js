@@ -4,7 +4,7 @@ import { Player } from '../entities/player.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
-import { runLevelTrivia } from '../systems/level-trivia.js';
+import { showVictoryHelper } from '../systems/level-ui-helper.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -323,7 +323,7 @@ export class KotelScene extends Phaser.Scene {
    * Catches the President! Overlap handler.
    */
   catchPresident() {
-    if (this.isSceneOver) return;
+    if (!this.gameplayStarted || this.isSceneOver) return;
     this.isSceneOver = true;
     this.gameplayStarted = false;
 
@@ -362,21 +362,11 @@ export class KotelScene extends Phaser.Scene {
 
 
   showVictoryScreen() {
-    this.sound.play('sfx-levelup', { volume: 0.6 });
-    if (typeof window.showVictoryScreen === 'function') {
-      window.showVictoryScreen(
-        "ההגעה לכותל הושלמה!",
-        "תפסת את הנשיא לחיבוק חם - הוא היה זקוק לזה מאוד!",
-        "למעבר לחידון",
-        async () => {
-          await runLevelTrivia(this, 'KotelScene');
-          this.events.emit('complete');
-        }
-      );
-    } else {
-      runLevelTrivia(this, 'KotelScene').then(() => {
-        this.events.emit('complete');
-      });
-    }
+    showVictoryHelper(
+      this,
+      'KotelScene',
+      "ההגעה לכותל הושלמה!",
+      "תפסת את הנשיא לחיבוק חם - הוא היה זקוק לזה מאוד!"
+    );
   }
 }
