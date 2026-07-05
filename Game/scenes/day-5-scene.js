@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Player } from "../entities/player.js";
-import { runLevelTrivia } from "../systems/level-trivia.js";
+import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
 
 export class Day5Scene extends Phaser.Scene {
   constructor() {
@@ -749,53 +749,11 @@ export class Day5Scene extends Phaser.Scene {
     }
     this._cats = [];
 
-    const { width, height } = this.scale;
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.72);
-    overlay.fillRect(0, 0, width, height);
-    overlay.setDepth(10000).setScrollFactor(0).setAlpha(0);
-
-    const title = this.add.text(
-      width / 2,
-      height / 2 - height * 0.08,
-      "GAME OVER",
-      {
-        fontFamily: "Impact, sans-serif",
-        fontSize: `${Math.round(height * 0.12)}px`,
-        color: "#ff2a5f",
-        stroke: "#000000",
-        strokeThickness: 6,
-      },
+    showGameOverHelper(
+      this,
+      "הלכו הלבבות!",
+      "פספסת יותר מדי חתולים... עם כמות כזו של פספוסים, אפילו קולות החיילים לא יצילו אותך מאחוז החסימה!"
     );
-    title.setOrigin(0.5).setDepth(10001).setScrollFactor(0).setAlpha(0);
-
-    const sub = this.add.text(
-      width / 2,
-      height / 2 + height * 0.06,
-      "אין ייאוש בעולם, נסו שוב",
-      {
-        fontFamily: "monospace",
-        fontSize: `${Math.round(height * 0.042)}px`,
-        color: "#ffffff",
-      },
-    );
-    sub.setOrigin(0.5).setDepth(10001).setScrollFactor(0).setAlpha(0);
-
-    this.tweens.add({
-      targets: [overlay, title, sub],
-      alpha: 1,
-      duration: 700,
-      onComplete: () => {
-        this.tweens.add({
-          targets: sub,
-          alpha: 0.3,
-          duration: 600,
-          yoyo: true,
-          repeat: -1,
-        });
-        this.input.once("pointerdown", () => this.scene.restart());
-      },
-    });
   }
 
   // ─── End scene ────────────────────────────────────────────────
@@ -804,7 +762,6 @@ export class Day5Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._sceneEnded = true;
     this._gameActive = false;
-    this.sound.play("sfx-levelup", { volume: 0.6 });
     if (this._player) this._player.disable();
     for (const cat of this._cats) {
       this.tweens.killTweensOf(cat.img);
@@ -812,9 +769,13 @@ export class Day5Scene extends Phaser.Scene {
     }
     this._cats = [];
     this.cameras.main.fade(700, 0, 0, 0);
-    this.cameras.main.once("camerafadeoutcomplete", async () => {
-      await runLevelTrivia(this, "Day5Scene");
-      this.events.emit("complete");
+    this.cameras.main.once("camerafadeoutcomplete", () => {
+      showVictoryHelper(
+        this,
+        "Day5Scene",
+        "השלב הושלם!",
+        "הצלחתם למצוא את כל החתולים המסתתרים בירושלים!"
+      );
     });
   }
 

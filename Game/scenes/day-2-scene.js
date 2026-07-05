@@ -4,7 +4,7 @@ import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
-import { runLevelTrivia } from '../systems/level-trivia.js';
+import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -157,7 +157,7 @@ export class Day2Scene extends Phaser.Scene {
       const leftEdge = cam.scrollX;
       const loseMargin = 8;
       if (this.player.x < leftEdge + loseMargin) {
-        this.triggerGameOver();
+        this.triggerGameOver('LEFT_BEHIND');
         return;
       }
 
@@ -439,7 +439,7 @@ export class Day2Scene extends Phaser.Scene {
     }
 
     if (this.score > 0) {
-      this.triggerGameOver();
+      this.triggerGameOver('BUDGET_REMAINING');
       return;
     }
 
@@ -493,7 +493,7 @@ export class Day2Scene extends Phaser.Scene {
     return `₪${value.toFixed(2)}`;
   }
 
-  triggerGameOver() {
+  triggerGameOver(reason = 'LEFT_BEHIND') {
     if (this.isGameOver || this.isSceneOver) {
       return;
     }
@@ -518,48 +518,15 @@ export class Day2Scene extends Phaser.Scene {
       ease: 'Bounce.easeOut'
     });
 
-    // Screen darken overlay
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.75);
-    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
-    overlay.setScrollFactor(0);
-    overlay.setDepth(10000);
-    overlay.setAlpha(0);
+    let titleText = 'נפסלת!';
+    let messageText = 'הזמן עבר! מישהו פה זז בקצב של כנסת ישראל... הקופאית כבר יצאה לפנסיה!';
 
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 40, 'GAME OVER', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${Math.round(this.scale.height * 0.12)}px`,
-      color: '#ff2a5f',
-      stroke: '#000000',
-      strokeThickness: 6,
-      align: 'center'
-    });
-    title.setOrigin(0.5);
-    title.setScrollFactor(0);
-    title.setDepth(10001);
-    title.setAlpha(0);
+    if (reason === 'BUDGET_REMAINING') {
+      titleText = 'נשאר לך עודף!';
+      messageText = `השארת עודף של ${this._formatPrice(this.score)}! ממתי משאירים עודף בתקציב המדינה? תחזיר הכל למשרד האוצר!`;
+    }
 
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, 'הקישו בכל מקום כדי לנסות שוב', {
-      fontFamily: 'monospace',
-      fontSize: `${Math.round(this.scale.height * 0.045)}px`,
-      color: '#ffffff',
-      align: 'center'
-    });
-    subtitle.setOrigin(0.5);
-    subtitle.setScrollFactor(0);
-    subtitle.setDepth(10001);
-    subtitle.setAlpha(0);
-
-    this.tweens.add({
-      targets: [overlay, title, subtitle],
-      alpha: 1,
-      duration: 800,
-      onComplete: () => {
-        this.input.once('pointerdown', () => {
-          this.scene.restart();
-        });
-      }
-    });
+    showGameOverHelper(this, titleText, messageText);
   }
 
   triggerSceneOver() {
@@ -576,48 +543,12 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x0f0c1b, 0.85);
-    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
-    overlay.setScrollFactor(0);
-    overlay.setDepth(10000);
-    overlay.setAlpha(0);
-
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'השלב הושלם', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${Math.round(this.scale.height * 0.1)}px`,
-      color: '#00ffcc',
-      stroke: '#000000',
-      strokeThickness: 6,
-      align: 'center'
-    });
-    title.setOrigin(0.5);
-    title.setScrollFactor(0);
-    title.setDepth(10001);
-    title.setAlpha(0);
-
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
-      fontFamily: 'monospace',
-      fontSize: `${Math.round(this.scale.height * 0.04)}px`,
-      color: '#ffffff',
-      align: 'center'
-    });
-    subtitle.setOrigin(0.5);
-    subtitle.setScrollFactor(0);
-    subtitle.setDepth(10001);
-    subtitle.setAlpha(0);
-
-    this.tweens.add({
-      targets: [overlay, title, subtitle],
-      alpha: 1,
-      duration: 800,
-      onComplete: () => {
-        this.input.once('pointerdown', async () => {
-          await runLevelTrivia(this, 'Day2Scene');
-          this.events.emit('complete');
-        });
-      }
-    });
+    showVictoryHelper(
+      this,
+      'Day2Scene',
+      "השלב הושלם!",
+      "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן."
+    );
   }
 
   _setupSounds() {

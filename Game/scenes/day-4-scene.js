@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { startSceneMusic } from "../systems/bg-music.js";
-import { runLevelTrivia } from "../systems/level-trivia.js";
+import { showVictoryHelper } from "../systems/level-ui-helper.js";
 
 /**
  * Day4Scene — Cutscene: bus ride from Kiryat Shmona to Jerusalem.
@@ -544,9 +544,12 @@ export class Day4Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._sceneEnded = true;
     this._stopMusic();
-    runLevelTrivia(this, "Day4Scene").then(() => {
-      this.events.emit("complete");
-    });
+    showVictoryHelper(
+      this,
+      "Day4Scene",
+      "הגעתם לירושלים!",
+      "הנסיעה עברה בשלום ונכנסתם לעיר הבירה."
+    );
   }
 
   // ─────────────────────────────────────────────────────────────
