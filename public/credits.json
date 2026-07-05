@@ -1,0 +1,75 @@
+{
+  "title": "The Pink Front",
+  "subtitle": "A game by Our Knesset",
+  "roles": [
+    {
+      "role": "Project Lead",
+      "names": [
+        {
+          "name": "Amitai Cohen",
+          "link": "https://github.com/amitaicohen"
+        }
+      ]
+    },
+    {
+      "role": "Team Lead",
+      "names": [
+        "Noam Levi"
+      ]
+    },
+    {
+      "role": "Lead Programmers",
+      "names": [
+        {
+          "name": "Yael Mizrahi",
+          "link": "https://github.com/yaelmizrahi"
+        },
+        "Dan Shachar"
+      ]
+    },
+    {
+      "role": "Frontend Developers",
+      "names": [
+        "Maya Tal",
+        "Ron Bar-On"
+      ]
+    },
+    {
+      "role": "Game Designers",
+      "names": [
+        "Adi Golan",
+        "Tomer Katz"
+      ]
+    },
+    {
+      "role": "Pixel Artists",
+      "names": [
+        {
+          "name": "Shir Elbaz",
+          "link": "https://www.artstation.com"
+        },
+        "Lior Ashkenazi"
+      ]
+    },
+    {
+      "role": "Sound & Music",
+      "names": [
+        "Guy Hasson",
+        "Orly Shapira"
+      ]
+    },
+    {
+      "role": "QA Engineers",
+      "names": [
+        "Erez Green",
+        "Dana Vardi"
+      ]
+    },
+    {
+      "role": "Special Thanks",
+      "names": [
+        "The Pink Front Community"
+      ]
+    }
+  ]
+}
