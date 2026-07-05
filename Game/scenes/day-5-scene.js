@@ -52,10 +52,10 @@ export class Day5Scene extends Phaser.Scene {
     this._showIntro(width, height);
 
     this.events.once("shutdown", () => {
-      if (typeof window.hideHUD === 'function') {
-        window.hideHUD('html-stats-hud');
-        window.hideHUD('html-lives-hud');
-        window.hideHUD('html-speed-hud');
+      if (typeof window.hideHUD === "function") {
+        window.hideHUD("html-stats-hud");
+        window.hideHUD("html-lives-hud");
+        window.hideHUD("html-speed-hud");
       }
     });
   }
@@ -449,7 +449,7 @@ export class Day5Scene extends Phaser.Scene {
     this._player.setWorldBounds(0, this._roadY, width, this._roadH);
     this._player.setDepth(10);
     // High base speed for this catch game
-    this._player.movement.config.speed = this._player.baseSpeed * 8;
+    this._player.movement.config.speed = this._player.baseSpeed * 6;
     this._baseSpeed = this._player.movement.config.speed;
     // Joystick stays disabled until intro finishes
 
@@ -668,19 +668,25 @@ export class Day5Scene extends Phaser.Scene {
   // ─── HUD ──────────────────────────────────────────────────────
 
   _createHUD() {
-    if (typeof window.showHUD === 'function') {
-      window.showHUD('html-stats-hud', `חתולים: 0 / ${this._TARGET}`);
-      window.showHUD('html-lives-hud', '♥ ♥ ♥');
-      window.hideHUD('html-speed-hud');
+    if (typeof window.showHUD === "function") {
+      window.showHUD("html-stats-hud", `חתולים: 0 / ${this._TARGET}`);
+      window.showHUD("html-lives-hud", "♥ ♥ ♥");
+      window.hideHUD("html-speed-hud");
     }
   }
 
   _updateHUD() {
-    if (typeof window.updateHUDText === 'function') {
-      window.updateHUDText('html-stats-hud', `חתולים: ${this._score} / ${this._TARGET}`);
+    if (typeof window.updateHUDText === "function") {
+      window.updateHUDText(
+        "html-stats-hud",
+        `חתולים: ${this._score} / ${this._TARGET}`,
+      );
       const full = "♥ ".repeat(this._lives).trimEnd();
       const empty = "♡ ".repeat(3 - this._lives).trimEnd();
-      window.updateHUDText('html-lives-hud', [full, empty].filter(Boolean).join(" "));
+      window.updateHUDText(
+        "html-lives-hud",
+        [full, empty].filter(Boolean).join(" "),
+      );
     }
   }
 
@@ -720,12 +726,12 @@ export class Day5Scene extends Phaser.Scene {
     else if (this._tapCombo >= 2) this._player.setTint(0xffdd44);
     else this._player.clearTint();
 
-    if (typeof window.updateHUDText === 'function') {
+    if (typeof window.updateHUDText === "function") {
       if (this._tapCombo > 0) {
         const bars = ">>".repeat(this._tapCombo);
-        window.showHUD('html-speed-hud', `${bars} x${Math.round(mult * 100)}%`);
+        window.showHUD("html-speed-hud", `${bars} x${Math.round(mult * 100)}%`);
       } else {
-        window.hideHUD('html-speed-hud');
+        window.hideHUD("html-speed-hud");
       }
     }
   }
