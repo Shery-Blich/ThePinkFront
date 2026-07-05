@@ -544,9 +544,22 @@ export class Day4Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._sceneEnded = true;
     this._stopMusic();
-    runLevelTrivia(this, "Day4Scene").then(() => {
-      this.events.emit("complete");
-    });
+    this.sound.play("sfx-levelup", { volume: 0.6 });
+    if (typeof window.showVictoryScreen === "function") {
+      window.showVictoryScreen(
+        "הגעתם לירושלים!",
+        "הנסיעה עברה בשלום ונכנסתם לעיר הבירה.",
+        "למעבר לחידון",
+        async () => {
+          await runLevelTrivia(this, "Day4Scene");
+          this.events.emit("complete");
+        }
+      );
+    } else {
+      runLevelTrivia(this, "Day4Scene").then(() => {
+        this.events.emit("complete");
+      });
+    }
   }
 
   // ─────────────────────────────────────────────────────────────

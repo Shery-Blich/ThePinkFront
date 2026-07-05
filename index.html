@@ -335,6 +335,56 @@
       }
     }
 
+    /* Adjustments for low-height/landscape viewports (e.g. mobile landscape) */
+    @media (max-height: 480px) and (orientation: landscape) {
+      #html-menu .page-container {
+        padding: 0.55rem;
+        gap: 0.75rem;
+        max-height: 100%;
+        max-width: 900px;
+      }
+      #html-menu header {
+        padding: 0.25rem;
+      }
+      #html-menu .main-title {
+        font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+        margin-bottom: 0.2rem;
+      }
+      #html-menu .content-card {
+        padding: 0.75rem 1rem;
+        height: 96%;
+        max-height: 280px;
+      }
+      #html-menu .card-description {
+        font-size: clamp(0.72rem, 1.5vw, 0.85rem);
+        line-height: 1.35;
+        margin-bottom: 0.4rem;
+        max-height: 130px;
+        overflow-y: auto;
+        padding-left: 6px;
+      }
+      #html-menu .cta-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Custom retro scrollbar for the card description */
+    #html-menu .card-description::-webkit-scrollbar {
+      width: 6px;
+    }
+    #html-menu .card-description::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    #html-menu .card-description::-webkit-scrollbar-thumb {
+      background: #ff007f;
+      border-radius: 3px;
+    }
+    #html-menu .card-description {
+      scrollbar-width: thin;
+      scrollbar-color: #ff007f rgba(255, 255, 255, 0.05);
+    }
+
     /* HTML Score Popup Overlay Styling */
     #html-score-popup {
       position: fixed;
@@ -574,6 +624,164 @@
       100% { transform: translateY(-4px); }
     }
 
+    #html-gameover-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 15000;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      user-select: none;
+      direction: rtl;
+    }
+
+    #html-gameover-box {
+      background: rgba(242, 230, 207, 0.98);
+      border: 3.5px solid #6b5a43;
+      box-shadow: 4px 4px 0px #000000;
+      border-radius: 6px;
+      padding: 1.5rem 2rem;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      box-sizing: border-box;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #html-gameover-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 900;
+      color: #b91c1c;
+      margin-bottom: 0.8rem;
+      text-shadow: none;
+    }
+
+    #html-gameover-message {
+      font-size: clamp(1rem, 2.2vw, 1.2rem);
+      font-weight: 700;
+      color: #201c18;
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+    }
+
+    #html-gameover-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #6b5a43;
+      color: #f2e6cf;
+      font-family: 'Rubik', 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      padding: 0.75rem 1.75rem;
+      border: 3px solid #201c18;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px #000000;
+      transition: all 0.15s steps(4, end);
+      text-shadow: none;
+      width: 100%;
+      max-width: 250px;
+      margin-top: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    #html-gameover-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: #7e6b52;
+      border-color: #201c18;
+    }
+
+    #html-gameover-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
+    #html-victory-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 15000;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      user-select: none;
+      direction: rtl;
+    }
+
+    #html-victory-box {
+      background: rgba(242, 230, 207, 0.98);
+      border: 3.5px solid #6b5a43;
+      box-shadow: 4px 4px 0px #000000;
+      border-radius: 6px;
+      padding: 1.5rem 2rem;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      box-sizing: border-box;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #html-victory-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 900;
+      color: #166534;
+      margin-bottom: 0.8rem;
+      text-shadow: none;
+    }
+
+    #html-victory-message {
+      font-size: clamp(1rem, 2.2vw, 1.2rem);
+      font-weight: 700;
+      color: #201c18;
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+    }
+
+    #html-victory-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #6b5a43;
+      color: #f2e6cf;
+      font-family: 'Rubik', 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      padding: 0.75rem 1.75rem;
+      border: 3px solid #201c18;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px #000000;
+      transition: all 0.15s steps(4, end);
+      text-shadow: none;
+      width: 100%;
+      max-width: 250px;
+      margin-top: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    #html-victory-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: #7e6b52;
+      border-color: #201c18;
+    }
+
+    #html-victory-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
     #html-speed-hud {
       bottom: 90px;
       left: 50%;
@@ -662,7 +870,7 @@
   </div>
 
   <!-- Toast Notification -->
-  <div id="html-toast">Copied share link to clipboard!</div>
+  <div id="html-toast">הקישור לשיתוף הועתק ללוח!</div>
 
   <div id="html-score-hud" class="hud-chip">ניקוד: 0 / 0</div>
   <div id="html-lives-hud" class="hud-chip">♥ ♥ ♥</div>
@@ -675,6 +883,24 @@
       <div id="html-dialog-name"></div>
       <div id="html-dialog-body"></div>
       <div id="html-dialog-arrow">▼</div>
+    </div>
+  </div>
+
+  <!-- HTML Game Over overlay -->
+  <div id="html-gameover-container">
+    <div id="html-gameover-box">
+      <div id="html-gameover-title">פסלת!</div>
+      <div id="html-gameover-message"></div>
+      <button id="html-gameover-btn">שחקו שוב</button>
+    </div>
+  </div>
+
+  <!-- HTML Victory overlay -->
+  <div id="html-victory-container">
+    <div id="html-victory-box">
+      <div id="html-victory-title">השלב הושלם!</div>
+      <div id="html-victory-message"></div>
+      <button id="html-victory-btn">המשך</button>
     </div>
   </div>
 
@@ -731,20 +957,106 @@
       }
     };
 
+    // Global Game Over UI overlay
+    window.showGameOver = (title, message, onRetry) => {
+      const container = document.getElementById('html-gameover-container');
+      const titleEl = document.getElementById('html-gameover-title');
+      const msgEl = document.getElementById('html-gameover-message');
+      const retryBtn = document.getElementById('html-gameover-btn');
+      
+      if (container && titleEl && msgEl && retryBtn) {
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        container.style.display = 'flex';
+        
+        // Focus the retry button so screen readers and keyboards can access it easily
+        retryBtn.focus();
+        
+        const triggerRetry = () => {
+          container.style.display = 'none';
+          retryBtn.removeEventListener('click', triggerRetry);
+          window.removeEventListener('keydown', triggerRetryOnSpaceEnter);
+          if (typeof onRetry === 'function') {
+            onRetry();
+          }
+        };
+        
+        const triggerRetryOnSpaceEnter = (e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            triggerRetry();
+          }
+        };
+        
+        retryBtn.addEventListener('click', triggerRetry);
+        window.addEventListener('keydown', triggerRetryOnSpaceEnter);
+      }
+    };
+    
+    window.hideGameOver = () => {
+      const container = document.getElementById('html-gameover-container');
+      if (container) {
+        container.style.display = 'none';
+      }
+    };
+
+    // Global Victory/Level Complete UI overlay
+    window.showVictoryScreen = (title, message, buttonText, onContinue) => {
+      const container = document.getElementById('html-victory-container');
+      const titleEl = document.getElementById('html-victory-title');
+      const msgEl = document.getElementById('html-victory-message');
+      const continueBtn = document.getElementById('html-victory-btn');
+      
+      if (container && titleEl && msgEl && continueBtn) {
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        continueBtn.textContent = buttonText || 'המשך';
+        container.style.display = 'flex';
+        
+        continueBtn.focus();
+        
+        const triggerContinue = () => {
+          container.style.display = 'none';
+          continueBtn.removeEventListener('click', triggerContinue);
+          window.removeEventListener('keydown', triggerContinueOnSpaceEnter);
+          if (typeof onContinue === 'function') {
+            onContinue();
+          }
+        };
+        
+        const triggerContinueOnSpaceEnter = (e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            triggerContinue();
+          }
+        };
+        
+        continueBtn.addEventListener('click', triggerContinue);
+        window.addEventListener('keydown', triggerContinueOnSpaceEnter);
+      }
+    };
+    
+    window.hideVictoryScreen = () => {
+      const container = document.getElementById('html-victory-container');
+      if (container) {
+        container.style.display = 'none';
+      }
+    };
+
     function updateScoreHud(detail = {}) {
       const score = Math.round(detail.score ?? 0);
       const maxScore = detail.maxScore ?? 0;
       scoreHud.textContent = `ניקוד: ${score} / ${maxScore}`;
     }
 
-    function getScoreTitle(score, maxScore) {
-      if(score == 0) {
+    function getScoreTitle(correctAnswers) {
+      if(correctAnswers == 0) {
         return "נשללת ממך זכות הבחירה, סתם לא, אבל כדאי שתקרא קצת";
       }
-      if(score  == 1) {
+      if(correctAnswers == 1 || correctAnswers == 2) {
         return "מצביע פארש! אחרי שלוש שנים של מלחמה אתה צריך לדעת יותר טוב";
       }
-      if(score == 2) 
+      if(correctAnswers == 3) 
       {
         return "כל הכבוד, אתה מצביע סבבה - תעקוב אחרינו להגיע כדאי להגיע למאה";
       }
@@ -763,7 +1075,7 @@
       const totalQuestions = scoreSummary.totalQuestions ?? 0;
 
       popupScoreBadge.textContent = `★ ${score} / ${maxScore} ★`;
-      popupScoreTitle.textContent = getScoreTitle(score, maxScore);
+      popupScoreTitle.textContent = getScoreTitle(correctAnswers);
       popupScoreSubtitle.textContent = `${correctAnswers}/${totalQuestions} תשובות נכונות`;
 
       scoreHud.style.display = 'none';
@@ -797,7 +1109,7 @@
       } else {
         const shareStr = `${shareText} ${shareUrl}`;
         navigator.clipboard.writeText(shareStr).then(() => {
-          showToastNotification('Copied share link to clipboard!');
+          showToastNotification('הקישור לשיתוף הועתק ללוח!');
         }).catch(() => {
           alert(shareStr);
         });
@@ -808,7 +1120,7 @@
     document.getElementById('popup-replay-btn').addEventListener('click', () => {
       window.hideScorePopup();
       // Hide all HUDs
-      const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container'];
+      const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
       huds.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -817,7 +1129,7 @@
     });
 
     // Hide all HUDs initially
-    const initHuds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container'];
+    const initHuds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
     initHuds.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
@@ -825,6 +1137,21 @@
 
     window.addEventListener('start-game', () => {
       scoreHud.style.display = 'block';
+    });
+
+    // Handle dynamic orientation and window resizing
+    window.addEventListener('resize', () => {
+      if (window.game && window.game.scale) {
+        window.game.scale.refresh();
+      }
+    });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (window.game && window.game.scale) {
+          window.game.scale.refresh();
+        }
+      }, 300);
     });
 
     // Toast Notification helper

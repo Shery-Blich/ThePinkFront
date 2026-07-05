@@ -749,53 +749,19 @@ export class Day5Scene extends Phaser.Scene {
     }
     this._cats = [];
 
-    const { width, height } = this.scale;
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.72);
-    overlay.fillRect(0, 0, width, height);
-    overlay.setDepth(10000).setScrollFactor(0).setAlpha(0);
-
-    const title = this.add.text(
-      width / 2,
-      height / 2 - height * 0.08,
-      "GAME OVER",
-      {
-        fontFamily: "Impact, sans-serif",
-        fontSize: `${Math.round(height * 0.12)}px`,
-        color: "#ff2a5f",
-        stroke: "#000000",
-        strokeThickness: 6,
-      },
-    );
-    title.setOrigin(0.5).setDepth(10001).setScrollFactor(0).setAlpha(0);
-
-    const sub = this.add.text(
-      width / 2,
-      height / 2 + height * 0.06,
-      "אין ייאוש בעולם, נסו שוב",
-      {
-        fontFamily: "monospace",
-        fontSize: `${Math.round(height * 0.042)}px`,
-        color: "#ffffff",
-      },
-    );
-    sub.setOrigin(0.5).setDepth(10001).setScrollFactor(0).setAlpha(0);
-
-    this.tweens.add({
-      targets: [overlay, title, sub],
-      alpha: 1,
-      duration: 700,
-      onComplete: () => {
-        this.tweens.add({
-          targets: sub,
-          alpha: 0.3,
-          duration: 600,
-          yoyo: true,
-          repeat: -1,
-        });
-        this.input.once("pointerdown", () => this.scene.restart());
-      },
-    });
+    if (typeof window.showGameOver === 'function') {
+      window.showGameOver(
+        "הלכו הלבבות!",
+        "פספסת יותר מדי חתולים... עם כמות כזו של פספוסים, אפילו קולות החיילים לא יצילו אותך מאחוז החסימה!",
+        () => {
+          this.scene.restart();
+        }
+      );
+    } else {
+      this.time.delayedCall(1000, () => {
+        this.scene.restart();
+      });
+    }
   }
 
   // ─── End scene ────────────────────────────────────────────────
@@ -813,8 +779,20 @@ export class Day5Scene extends Phaser.Scene {
     this._cats = [];
     this.cameras.main.fade(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", async () => {
-      await runLevelTrivia(this, "Day5Scene");
-      this.events.emit("complete");
+      if (typeof window.showVictoryScreen === "function") {
+        window.showVictoryScreen(
+          "השלב הושלם!",
+          "הצלחתם למצוא את כל החתולים המסתתרים בירושלים!",
+          "למעבר לחידון",
+          async () => {
+            await runLevelTrivia(this, "Day5Scene");
+            this.events.emit("complete");
+          }
+        );
+      } else {
+        await runLevelTrivia(this, "Day5Scene");
+        this.events.emit("complete");
+      }
     });
   }
 

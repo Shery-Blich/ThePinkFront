@@ -363,48 +363,20 @@ export class KotelScene extends Phaser.Scene {
 
   showVictoryScreen() {
     this.sound.play('sfx-levelup', { volume: 0.6 });
-
-    const overlay = this.add.graphics();
-    overlay.fillStyle(0x0f0c1b, 0.85);
-    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
-    overlay.setScrollFactor(0);
-    overlay.setDepth(10000);
-    overlay.setAlpha(0);
-
-    const title = this.add.text(this.scale.width / 2, this.scale.height / 2 - 30, 'ההגעה לכותל הושלמה', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${Math.round(this.scale.height * 0.08)}px`,
-      color: '#00ffcc',
-      stroke: '#000000',
-      strokeThickness: 5,
-      align: 'center'
-    });
-    title.setOrigin(0.5);
-    title.setScrollFactor(0);
-    title.setDepth(10001);
-    title.setAlpha(0);
-
-    const subtitle = this.add.text(this.scale.width / 2, this.scale.height / 2 + 25, 'הקישו בכל מקום כדי להמשיך', {
-      fontFamily: 'monospace',
-      fontSize: `${Math.round(this.scale.height * 0.04)}px`,
-      color: '#ffffff',
-      align: 'center'
-    });
-    subtitle.setOrigin(0.5);
-    subtitle.setScrollFactor(0);
-    subtitle.setDepth(10001);
-    subtitle.setAlpha(0);
-
-    this.tweens.add({
-      targets: [overlay, title, subtitle],
-      alpha: 1,
-      duration: 800,
-      onComplete: () => {
-        this.input.once('pointerdown', async () => {
+    if (typeof window.showVictoryScreen === 'function') {
+      window.showVictoryScreen(
+        "ההגעה לכותל הושלמה!",
+        "תפסת את הנשיא לחיבוק חם - הוא היה זקוק לזה מאוד!",
+        "למעבר לחידון",
+        async () => {
           await runLevelTrivia(this, 'KotelScene');
           this.events.emit('complete');
-        });
-      }
-    });
+        }
+      );
+    } else {
+      runLevelTrivia(this, 'KotelScene').then(() => {
+        this.events.emit('complete');
+      });
+    }
   }
 }
