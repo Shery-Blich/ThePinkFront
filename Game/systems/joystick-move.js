@@ -314,6 +314,43 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
     base.fillStyle(this.config.baseStrokeColor, this.config.baseStrokeAlpha * 0.5);
     base.fillCircle(0, 0, 4);
 
+    // 3. Directional Arrow Triangles behind the knob
+    const arrowDist = this.config.maxRadius * 0.7;
+    const arrowSize = this.config.maxRadius * 0.18;
+    const arrowAlpha = Math.min(this.config.baseStrokeAlpha * 1.5, 1.0);
+    base.fillStyle(this.config.baseStrokeColor, arrowAlpha);
+
+    // Left Arrow
+    base.fillTriangle(
+      -arrowDist, 0,
+      -arrowDist + arrowSize, -arrowSize * 0.6,
+      -arrowDist + arrowSize, arrowSize * 0.6
+    );
+
+    // Right Arrow
+    base.fillTriangle(
+      arrowDist, 0,
+      arrowDist - arrowSize, -arrowSize * 0.6,
+      arrowDist - arrowSize, arrowSize * 0.6
+    );
+
+    // Up and Down Arrows (only if not horizontal-only)
+    if (!this.config.horizontalOnly) {
+      // Up Arrow
+      base.fillTriangle(
+        0, -arrowDist,
+        -arrowSize * 0.6, -arrowDist + arrowSize,
+        arrowSize * 0.6, -arrowDist + arrowSize
+      );
+
+      // Down Arrow
+      base.fillTriangle(
+        0, arrowDist,
+        -arrowSize * 0.6, arrowDist - arrowSize,
+        arrowSize * 0.6, arrowDist - arrowSize
+      );
+    }
+
     // 2. Create Thumb/Knob Graphics (centered at 0, 0 locally)
     const thumb = this.scene.add.graphics();
     thumb.setScrollFactor(0);
