@@ -13,6 +13,10 @@ console.log('Building game...');
 execSync('npm run build', { cwd: root, stdio: 'inherit' });
 cpSync(join(root, 'dist'), outputDir, { recursive: true });
 
+// Copy static game assets (images, sounds) that Phaser loads at runtime.
+// Vite doesn't bundle these automatically since they're not imported — only referenced by path.
+cpSync(join(root, 'assets'), join(outputDir, 'assets'), { recursive: true });
+
 console.log('Building admin panel...');
 execSync('npm run build', {
   cwd: join(root, 'frontend'),
