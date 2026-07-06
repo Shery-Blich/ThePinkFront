@@ -462,4 +462,114 @@ export default {
 .trivia-panel.theme-state .solberg-portrait-box {
   border: 3px solid #1e3a8a;
 }
+
+/* Responsive scaling for mobile devices in landscape mode */
+@media (max-height: 540px) {
+  .trivia-panel {
+    width: 90%;
+    gap: 4px;
+  }
+  .score-chip {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-width: 2px;
+  }
+  .solberg-portrait-box {
+    width: 60px;
+    height: 60px;
+    border-width: 2px;
+  }
+  .solberg-dialogue-box {
+    padding: 8px 12px;
+    border-width: 2px;
+  }
+  .dialogue-text {
+    font-size: clamp(12px, 3.2vh, 16px);
+    line-height: 1.25;
+  }
+  .options-grid {
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .option-box {
+    padding: 6px 12px;
+    min-height: 38px;
+    border-width: 1.5px;
+  }
+  .option-text {
+    font-size: clamp(11px, 2.8vh, 14px);
+    line-height: 1.2;
+  }
+
+  /* Override theme configurations to fit smaller sizes */
+  .trivia-panel.theme-stone .solberg-dialogue-box {
+    border-width: 2px;
+    box-shadow: 2px 2px 0px #000000;
+  }
+  .trivia-panel.theme-stone .option-box {
+    border-width: 1.5px;
+    box-shadow: 2px 2px 0px #000000;
+  }
+  .trivia-panel.theme-stone .score-chip {
+    border-width: 2px;
+    box-shadow: 2px 2px 0px #000000;
+  }
+  .trivia-panel.theme-stone .solberg-portrait-box {
+    border-width: 2px;
+    box-shadow: 2px 2px 0px #000000;
+  }
+  .trivia-panel.theme-stone .option-box.correct {
+    border-width: 2.5px !important;
+  }
+  .trivia-panel.theme-stone .option-box.incorrect {
+    border-width: 2.5px !important;
+  }
+
+  .trivia-panel.theme-state .solberg-dialogue-box {
+    border-width: 2px;
+  }
+  .trivia-panel.theme-state .option-box {
+    border-width: 1.5px;
+  }
+  .trivia-panel.theme-state .score-chip {
+    border-width: 2px;
+  }
+  .trivia-panel.theme-state .solberg-portrait-box {
+    border-width: 2px;
+  }
+}
+
+@media (max-height: 380px) {
+  .trivia-panel {
+    width: 95%;
+    gap: 3px;
+  }
+  .score-chip {
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+  .solberg-portrait-box {
+    width: 50px;
+    height: 50px;
+  }
+  .solberg-dialogue-box {
+    padding: 6px 10px;
+  }
+  .dialogue-text {
+    font-size: clamp(11px, 3.5vh, 14px);
+    line-height: 1.2;
+  }
+  .options-grid {
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .option-box {
+    padding: 4px 10px;
+    min-height: 32px;
+  }
+  .option-text {
+    font-size: clamp(10px, 3vh, 12px);
+    line-height: 1.15;
+  }
+}
 </style>
