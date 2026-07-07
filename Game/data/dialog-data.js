@@ -8,12 +8,19 @@ export const PLAYER_NAME = "רוי";
 export const DAY_1_INTRO_DIALOG = [
   {
     speaker: SPEAKER_NAME,
-    text: "זהירות! זוהו רחפני תקיפה של האויב בכביש בקריית שמונה.",
+    text: "רוי, אל תשכח שיש לך סידורים וקניות לעשות בדרך לקלפי!",
   },
-  { speaker: PLAYER_NAME, text: "אני צריך לחמוק מהם כדי להגיע לנקודת ההתכנסות." },
+  {
+    speaker: PLAYER_NAME,
+    text: "נכון, אבל הדרך מלאה ברחפנים שחייבים לחמוק מהם!",
+  },
   {
     speaker: SPEAKER_NAME,
-    text: "המשיך לזוז בשני הכיוונים כדי לבלבל את חיישני הכטב״ם. בהצלחה!",
+    text: "תיזהר מהם! בנוסף, על כל יעד או שלב שתשלים, השופט סולברג יציג שאלת טריוויה שתעניק לך נקודות אם תענה נכון.",
+  },
+  {
+    speaker: PLAYER_NAME,
+    text: "הבנתי, לחמוק מהרחפנים ולענות נכון בחידונים כדי לצבור נקודות. יוצאים לדרך!",
   },
 ];
 
@@ -31,6 +38,22 @@ export const DAY_1_VICTORY_DIALOG = [
   },
   { speaker: SPEAKER_NAME, text: "מצוין. החזית הוורודה מאובטחת. התכונני לחילוץ." },
 ];
+
+export const DAY_2_INTRO_DIALOG = [
+  {
+    speaker: SPEAKER_NAME,
+    text: "רוי, מהר! אתה חייב לזוז מהר לפני שתפספס את האוטובוס!",
+  },
+  {
+    speaker: PLAYER_NAME,
+    text: "נכון! ואני חייב לבזבז את כל 67 השקלים שנשארו לי על מצרכים לפני שאגיע לקופה!",
+  },
+  {
+    speaker: SPEAKER_NAME,
+    text: "בדיוק. קפוץ כדי לאסוף מצרכים מהמדפים. אל תשאיר אפילו שקל אחד עודף!",
+  },
+];
+
 
 export const DAY_3_INTRO_DIALOG = [
   { speaker: SPEAKER_NAME, text: "הגענו לעכו! רחפנים חגים מעלינו!" },

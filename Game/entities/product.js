@@ -47,6 +47,12 @@ export class Product extends Phaser.GameObjects.Image {
     return this.price;
   }
 
+  setPriceColor(color) {
+    if (this.priceLabel) {
+      this.priceLabel.setColor(color);
+    }
+  }
+
   preUpdate(time, delta) {
     if (this.priceLabel) {
       this.priceLabel.setPosition(this.x, this.y - this.displayHeight - 6);
