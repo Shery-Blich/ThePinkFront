@@ -983,7 +983,7 @@
   <!-- Toast Notification -->
   <div id="html-toast">הקישור לשיתוף הועתק ללוח!</div>
 
-  <div id="html-score-hud" class="hud-chip">ניקוד: 0 / 0</div>
+  <div id="html-score-hud" class="hud-chip">ניקוד: <span dir="ltr">0 / 100</span></div>
   <div id="html-lives-hud" class="hud-chip">♥ ♥ ♥</div>
   <div id="html-stats-hud" class="hud-chip"></div>
   <div id="html-speed-hud" class="hud-chip"></div>
@@ -1156,8 +1156,8 @@
 
     function updateScoreHud(detail = {}) {
       const score = Math.round(detail.score ?? 0);
-      const maxScore = detail.maxScore ?? 0;
-      scoreHud.textContent = `ניקוד: ${score} / ${maxScore}`;
+      const maxScore = detail.maxScore || 100;
+      scoreHud.innerHTML = `ניקוד: <span dir="ltr">${score} / ${maxScore}</span>`;
     }
 
     function getScoreTitle(correctAnswers) {
@@ -1181,7 +1181,7 @@
 
     window.showScorePopup = (scoreSummary = {}) => {
       const score = Math.round(scoreSummary.score ?? 0);
-      const maxScore = scoreSummary.maxScore ?? 0;
+      const maxScore = scoreSummary.maxScore || 100;
       const correctAnswers = scoreSummary.correctAnswers ?? 0;
       const totalQuestions = scoreSummary.totalQuestions ?? 0;
 
@@ -1248,6 +1248,7 @@
 
     window.addEventListener('start-game', () => {
       scoreHud.style.display = 'block';
+      updateScoreHud({ score: 0, maxScore: 100 });
     });
 
     // Handle dynamic orientation and window resizing
