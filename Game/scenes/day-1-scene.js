@@ -3,6 +3,7 @@ import { Character } from "../entities/character.js";
 import { Player } from "../entities/player.js";
 import { NPC } from "../entities/npc.js";
 import { DialogSystem } from "../systems/dialog-system.js";
+import { MovementTutorial } from "../systems/movement-tutorial.js";
 import { DroneManager } from "../systems/drone-manager.js";
 import {
   DAY_1_INTRO_DIALOG,
@@ -25,7 +26,7 @@ import {
  */
 
 // How many character-widths wide the world is
-const WORLD_CHARS_WIDE = 120;
+const WORLD_CHARS_WIDE = 300;
 
 export class Day1Scene extends Phaser.Scene {
   constructor() {
@@ -205,6 +206,7 @@ export class Day1Scene extends Phaser.Scene {
     const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
       this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←");
       this.player.enable();
+      MovementTutorial.showJoystickTutorial(this, this.player);
     }, 'stone');
     introDialog.start();
 
@@ -434,7 +436,7 @@ export class Day1Scene extends Phaser.Scene {
     const s = this.s;
 
     // 1. Spawn the supermarket outside of player view (right side)
-    const worldWidth = 120 * 12 * s; // WORLD_CHARS_WIDE (120) * charW (12 * s)
+    const worldWidth = WORLD_CHARS_WIDE * 12 * s; // WORLD_CHARS_WIDE * charW (12 * s)
     const cameraRightEdge = this.cameras.main.scrollX + this.cameras.main.width;
     // Spawn 80px (scaled) past the right edge of the screen, clamped to world bounds
     const superX = Math.min(cameraRightEdge + 80 * s, worldWidth - 50 * s);
