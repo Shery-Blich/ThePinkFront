@@ -59,6 +59,7 @@ export class Day2Scene extends Phaser.Scene {
     this.joystick = null;
     this._isScrollingStarted = false;
     this._dialogActive = true;
+    this._lastNoMoneyToastTime = 0;
 
     this._moveDirection = 0;
     this._collectedCount = 0; 
@@ -506,6 +507,7 @@ export class Day2Scene extends Phaser.Scene {
 
     // Block collection if budget is already at 0
     if (this.score <= 0) {
+      this._showNoMoneyToast();
       return;
     }
 
@@ -534,10 +536,56 @@ export class Day2Scene extends Phaser.Scene {
 
     this._collectedCount += 1;
     this._playSound('collect');
+
+    if (this.score <= 0) {
+      this.productGroup.getChildren().forEach((p) => {
+        const productObj = p && p.gameObject ? p.gameObject : p;
+        if (productObj && typeof productObj.setPriceColor === 'function') {
+          productObj.setPriceColor('#ef4444');
+        } else if (productObj && productObj.priceLabel) {
+          productObj.priceLabel.setColor('#ef4444');
+        }
+      });
+
+      if (typeof window.showToastNotification === 'function') {
+        window.showToastNotification('פיו! סיימתי את הקניות להיום!');
+      }
+    }
   }
 
   _formatPrice(value) {
     return `₪${value.toFixed(2)}`;
+  }
+
+  _showNoMoneyToast() {
+    const now = this.time.now;
+    if (this._lastNoMoneyToastTime && now - this._lastNoMoneyToastTime < 2500) {
+      return;
+    }
+    this._lastNoMoneyToastTime = now;
+
+    if (!this.player) return;
+
+    const bubbleX = this.player.x;
+    const bubbleY = this.player.y - (25 * this.s);
+
+    const toast = this.add.text(bubbleX, bubbleY, 'אין לי מספיק כסף!', {
+      fontFamily: 'Arial',
+      fontSize: '14px',
+      color: '#ffffff',
+      backgroundColor: '#ef4444',
+      padding: { x: 8, y: 4 },
+    }).setOrigin(0.5, 1).setDepth(2000);
+
+    this.tweens.add({
+      targets: toast,
+      y: bubbleY - 30,
+      alpha: 0,
+      duration: 1500,
+      onComplete: () => {
+        toast.destroy();
+      }
+    });
   }
 
   triggerGameOver(reason = 'LEFT_BEHIND') {

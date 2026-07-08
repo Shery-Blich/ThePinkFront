@@ -515,9 +515,9 @@
     /* HTML Toast Notification */
     #html-toast {
       position: fixed;
-      bottom: 24px;
+      top: 24px;
       left: 50%;
-      transform: translate(-50%, 15px);
+      transform: translate(-50%, -15px);
       background-color: #0f0c1b;
       border: 2px solid #00e6ff;
       color: #ffffff;
@@ -1276,12 +1276,13 @@
       
       setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translate(-50%, 15px)';
+        toast.style.transform = 'translate(-50%, -15px)';
         setTimeout(() => {
           toast.style.display = 'none';
         }, 300);
       }, 2000);
     }
+    window.showToastNotification = showToastNotification;
   </script>
 </body>
 </html>
