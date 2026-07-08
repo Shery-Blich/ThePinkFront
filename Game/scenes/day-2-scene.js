@@ -6,6 +6,8 @@ import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
+import { DialogSystem } from '../systems/dialog-system.js';
+import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -55,6 +57,8 @@ export class Day2Scene extends Phaser.Scene {
     this.player = null;
     this._debugText = null;
     this.joystick = null;
+    this._isScrollingStarted = false;
+    this._dialogActive = true;
 
     this._moveDirection = 0;
     this._collectedCount = 0; 
@@ -118,7 +122,15 @@ export class Day2Scene extends Phaser.Scene {
       bottomOffset: 60,
       horizontalOnly: true,
     });
-    this.joystick.enable();
+
+    // Destroy the player's default joystick to prevent duplicate joystick rendering
+    if (this.player && this.player.movement) {
+      this.player.movement.destroy();
+      this.player.movement = null;
+    }
+
+    // Start with joystick disabled for the intro dialogue
+    this.joystick.disable();
 
     this.physics.add.collider(this.player, this.platformGroup);
     this.physics.add.collider(this.player, this.ground);
@@ -129,7 +141,21 @@ export class Day2Scene extends Phaser.Scene {
     startSceneMusic(this, 'bg-middle');
     this._setupInput(width);
     this._createHUD();
-    MovementTutorial.showJumpTutorial(this);
+
+    // Play intro dialogue before starting gameplay
+    const introDialog = new DialogSystem(this, DAY_2_INTRO_DIALOG, () => {
+      this._dialogActive = false;
+      this.joystick.enable();
+
+      // Show the jump tutorial after dialogue finishes
+      MovementTutorial.showJumpTutorial(this);
+
+      // Start scrolling the screen only after the player fulfills the tutorial by jumping
+      this.events.once('player-jump', () => {
+        this._isScrollingStarted = true;
+      });
+    }, 'stone');
+    introDialog.start();
 
     this.events.once('shutdown', () => {
       if (this.joystick) this.joystick.destroy();
@@ -139,12 +165,13 @@ export class Day2Scene extends Phaser.Scene {
     });
   }
 
+
   update(time, delta) {
     if (this.isGameOver || this.isSceneOver) {
       return;
     }
 
-    if (this.backgroundImage) {
+    if (this._isScrollingStarted && this.backgroundImage) {
       const scrollSpeed = 10;
       this._backgroundScrollX += (scrollSpeed * delta) / 1000;
       const maxOffset = Math.max(0, this.backgroundImage.displayWidth - this.scale.width);
@@ -153,6 +180,7 @@ export class Day2Scene extends Phaser.Scene {
       }
       this.backgroundImage.x = -this._backgroundScrollX;
     }
+
 
     const cam = this.cameras && this.cameras.main;
     if (cam && this.player && typeof this.player.x === 'number') {
@@ -194,6 +222,15 @@ export class Day2Scene extends Phaser.Scene {
     if (this.joystick && this.player && this.player.body) {
       this.joystick.update();
       
+      // Limit player movement (prevent running horizontal) until they perform their tutorial jump
+      if (!this._isScrollingStarted) {
+        this.player.body.setVelocityX(0);
+        this.joystick.isMoving = false;
+        if (this.player.anims && typeof this.player.anims.stop === 'function') {
+          this.player.anims.stop();
+        }
+      }
+
       // Check if joystick is being dragged
       if (this.joystick.isMoving) {
         joystickActive = true;
@@ -216,6 +253,9 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _scrollCamera(delta) {
+    if (!this._isScrollingStarted) {
+      return;
+    }
     if (!this.cameras.main) {
       return;
     }
@@ -279,6 +319,9 @@ export class Day2Scene extends Phaser.Scene {
       if (this.isGameOver || this.isSceneOver) {
         return;
       }
+      if (this._dialogActive) {
+        return;
+      }
 
       // If they are tapping the screen to jump, make sure it's not on top of the joystick
       if (this._isPointerOnJoystick(pointer)) {
@@ -310,6 +353,7 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _doJump() {
+    if (this._dialogActive) return;
     if (!this.player || !this.player.body) return;
     this.events.emit('player-jump');
     const body = this.player.body;

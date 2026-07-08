@@ -39,6 +39,22 @@ export const DAY_1_VICTORY_DIALOG = [
   { speaker: SPEAKER_NAME, text: "מצוין. החזית הוורודה מאובטחת. התכונני לחילוץ." },
 ];
 
+export const DAY_2_INTRO_DIALOG = [
+  {
+    speaker: SPEAKER_NAME,
+    text: "רוי, מהר! אתה חייב לזוז מהר לפני שתפספס את האוטובוס!",
+  },
+  {
+    speaker: PLAYER_NAME,
+    text: "נכון! ואני חייב לבזבז את כל 67 השקלים שנשארו לי על מצרכים לפני שאגיע לקופה!",
+  },
+  {
+    speaker: SPEAKER_NAME,
+    text: "בדיוק. קפוץ כדי לאסוף מצרכים מהמדפים. אל תשאיר אפילו שקל אחד עודף!",
+  },
+];
+
+
 export const DAY_3_INTRO_DIALOG = [
   { speaker: SPEAKER_NAME, text: "הגענו לעכו! רחפנים חגים מעלינו!" },
   {
