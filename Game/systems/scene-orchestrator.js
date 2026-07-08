@@ -99,10 +99,23 @@ export class SceneOrchestrator {
 
           this.game.scene.start(targetSceneKey);
 
+          // Get the newly started scene instance
+          const sceneInstance = this.game.scene.getScene(targetSceneKey);
+          if (sceneInstance) {
+            // Pause the scene update/timers and pause all sounds
+            sceneInstance.scene.pause();
+            this.game.sound.pauseAll();
+          }
+
           // Wait a brief delay (300ms) to ensure Phaser has completed its synchronous initialization (create() method)
           setTimeout(() => {
             if (window.hideLoadingScreen) {
               window.hideLoadingScreen();
+            }
+            // Resume the scene and sounds
+            if (sceneInstance) {
+              sceneInstance.scene.resume();
+              this.game.sound.resumeAll();
             }
           }, 300);
         });

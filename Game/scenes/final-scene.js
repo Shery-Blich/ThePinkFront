@@ -23,7 +23,7 @@ export class FinalScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
 
-    this.cameras.main.fadeIn(600, 18, 18, 28);
+    startSceneMusic(this, 'bg-end');
 
     // --- Background Styling ---
     this.cameras.main.setBackgroundColor('#1a1a2e');
@@ -42,28 +42,15 @@ export class FinalScene extends Phaser.Scene {
     // --- Stylized Voting Booth Backdrop (Graphic Placeholder) ---
     this._createVotingBoothGraphic(width, height);
 
-    // --- Start Climax Dialogue --- (Deferred)
-    const startSceneLogic = () => {
-      startSceneMusic(this, 'bg-end');
-      const dialogueLines = [
-        { speaker: 'שלומי', text: 'וואו, סוף סוף הגעתי לתא ההצבעה!' }
-      ];
+    // --- Start Climax Dialogue ---
+    const dialogueLines = [
+      { speaker: 'שלומי', text: 'וואו, סוף סוף הגעתי לתא ההצבעה!' }
+    ];
 
-      const dialog = new DialogSystem(this, dialogueLines, () => {
-        this.showScorePopup();
-      });
-      dialog.start();
-    };
-
-    if (window.loadingScreenActive) {
-      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
-    } else {
-      startSceneLogic();
-    }
-
-    this.events.once('shutdown', () => {
-      window.removeEventListener('loading-screen-hidden', startSceneLogic);
+    const dialog = new DialogSystem(this, dialogueLines, () => {
+      this.showScorePopup();
     });
+    dialog.start();
   }
 
   /**

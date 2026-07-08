@@ -12,6 +12,14 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    // Dynamically update progress bar
+    this.load.on('progress', (value) => {
+      const progressFill = document.getElementById('loading-progress-fill');
+      if (progressFill) {
+        progressFill.style.width = `${value * 100}%`;
+      }
+    });
+
     this.load.image('player', 'assets/Shlomi.png');
     this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
     this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
@@ -65,6 +73,11 @@ export class BootScene extends Phaser.Scene {
     this._generateJerusalemBuildings();
     this._generateAsphaltTextures();
     this._generateSolbergPortrait();
+
+    // Hide the initial loading screen now that boot preloading is complete
+    if (typeof window.hideLoadingScreen === 'function') {
+      window.hideLoadingScreen();
+    }
 
     if (window.gameStarted) {
       this.events.emit('complete');

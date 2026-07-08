@@ -1052,7 +1052,7 @@
 <body>
 
   <!-- HTML Loading Screen Overlay -->
-  <div id="html-loading-screen">
+  <div id="html-loading-screen" class="visible">
     <div class="loading-header">
       <div id="loading-day-title">טוען...</div>
       <div id="loading-day-subtitle">הסבלנות משתלמת!</div>
@@ -1398,7 +1398,7 @@
     });
 
     // Global Loading Screen Overlay Logic
-    window.loadingScreenActive = false;
+    window.loadingScreenActive = true;
 
     const HEBREW_TIPS = [
       "תעודת זהות כחולה היא המפתח שלכן לקלפי! אל תשכחו אותה בבית.",
@@ -1410,6 +1410,14 @@
       "לכל אזרח קול אחד, וכל קול יכול להכריע את עתיד המדינה.",
       "קלפי נגישה מיועדת למי שמוגבל בניידות. שמרו להם על הזכות הזו!"
     ];
+
+    // Set initial random tip immediately on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const tipTextEl = document.getElementById('loading-tip-text');
+      if (tipTextEl) {
+        tipTextEl.textContent = HEBREW_TIPS[Math.floor(Math.random() * HEBREW_TIPS.length)];
+      }
+    });
 
     window.showLoadingScreen = function(title, subtitle, onComplete) {
       window.loadingScreenActive = true;

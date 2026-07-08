@@ -103,7 +103,6 @@ export class Day2Scene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x74b9ff);
     this.physics.world.setBounds(0, 0, this._levelWidth, height);
     this.cameras.main.setBounds(0, 0, this._levelWidth, height);
-    this.cameras.main.fadeIn(600, 18, 18, 28);
 
     this.physics.world.gravity.y = 900;
 
@@ -140,35 +139,26 @@ export class Day2Scene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.finishZone, this._reachCashier, null, this);
 
     this._setupSounds();
+    startSceneMusic(this, 'bg-middle');
     this._setupInput(width);
     this._createHUD();
 
-    // Play intro dialogue before starting gameplay (Deferred)
-    const startSceneLogic = () => {
-      startSceneMusic(this, 'bg-middle');
-      const introDialog = new DialogSystem(this, DAY_2_INTRO_DIALOG, () => {
-        this._dialogActive = false;
-        this.joystick.enable();
+    // Play intro dialogue before starting gameplay
+    const introDialog = new DialogSystem(this, DAY_2_INTRO_DIALOG, () => {
+      this._dialogActive = false;
+      this.joystick.enable();
 
-        // Show the jump tutorial after dialogue finishes
-        MovementTutorial.showJumpTutorial(this);
+      // Show the jump tutorial after dialogue finishes
+      MovementTutorial.showJumpTutorial(this);
 
-        // Start scrolling the screen only after the player fulfills the tutorial by jumping
-        this.events.once('player-jump', () => {
-          this._isScrollingStarted = true;
-        });
-      }, 'stone');
-      introDialog.start();
-    };
-
-    if (window.loadingScreenActive) {
-      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
-    } else {
-      startSceneLogic();
-    }
+      // Start scrolling the screen only after the player fulfills the tutorial by jumping
+      this.events.once('player-jump', () => {
+        this._isScrollingStarted = true;
+      });
+    }, 'stone');
+    introDialog.start();
 
     this.events.once('shutdown', () => {
-      window.removeEventListener('loading-screen-hidden', startSceneLogic);
       if (this.joystick) this.joystick.destroy();
       if (typeof window.hideHUD === 'function') {
         window.hideHUD('html-stats-hud');
