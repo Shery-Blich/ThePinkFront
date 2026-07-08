@@ -909,9 +909,167 @@
         font-size: 0.7rem;
       }
     }
+
+    /* HTML Loading Screen Overlay Styling */
+    #html-loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #12121c;
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 12000; /* Above HUD and dialogues, below orientation warning (99999) */
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s;
+      pointer-events: none;
+      direction: rtl;
+      text-align: center;
+      gap: 1.5rem;
+      padding: 2rem;
+    }
+
+    #html-loading-screen.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+    }
+
+    #html-loading-screen .loading-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    #loading-day-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900;
+      color: #ff007f;
+      text-shadow: 2px 2px 0px #000000;
+    }
+
+    #loading-day-subtitle {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      font-weight: 700;
+      color: #f48fb1;
+    }
+
+    .loading-icon-pixel {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      animation: loadingBounce 0.8s infinite alternate ease-in-out;
+      user-select: none;
+    }
+
+    .loading-progress-container {
+      width: 300px;
+      height: 16px;
+      border: 2px solid #ffffff;
+      background: #1e1e2f;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 4px 4px 0px #000000;
+    }
+
+    #loading-progress-fill {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(270deg, #ff007f, #f48fb1);
+      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .loading-tip-box {
+      max-width: 480px;
+      background: rgba(30, 30, 47, 0.6);
+      border: 2px dashed #ff007f;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 4px 4px 0px #000000;
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-tip-label {
+      font-size: 0.8rem;
+      font-weight: 900;
+      color: #ff007f;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      letter-spacing: 1px;
+    }
+
+    #loading-tip-text {
+      font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+      font-weight: 700;
+      color: #a0a0b0;
+      line-height: 1.4;
+    }
+
+    @keyframes loadingBounce {
+      0% {
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        transform: translateY(-10px) scale(0.95);
+      }
+    }
+
+    /* Responsive adjustments for landscape / low-height mobile viewports */
+    @media (max-height: 480px) and (orientation: landscape) {
+      #html-loading-screen {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        padding: 1rem;
+      }
+      #html-loading-screen .loading-header {
+        flex: 1;
+        text-align: right;
+      }
+      #html-loading-screen .loading-middle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      #html-loading-screen .loading-tip-box {
+        flex: 1.2;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- HTML Loading Screen Overlay -->
+  <div id="html-loading-screen">
+    <div class="loading-header">
+      <div id="loading-day-title">טוען...</div>
+      <div id="loading-day-subtitle">הסבלנות משתלמת!</div>
+    </div>
+    
+    <div class="loading-middle">
+      <div class="loading-icon-pixel">💖</div>
+      <div class="loading-progress-container">
+        <div id="loading-progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="loading-tip-box">
+      <div class="loading-tip-label">טיפ בחירות</div>
+      <div id="loading-tip-text">טוען טיפים מועילים...</div>
+    </div>
+  </div>
 
   <!-- HTML Menu Overlay -->
   <div id="html-menu">
@@ -1238,6 +1396,78 @@
       });
       window.dispatchEvent(new Event('replay-game-event'));
     });
+
+    // Global Loading Screen Overlay Logic
+    window.loadingScreenActive = false;
+
+    const HEBREW_TIPS = [
+      "תעודת זהות כחולה היא המפתח שלכן לקלפי! אל תשכחו אותה בבית.",
+      "מזכיר הקלפי קשוח, אבל חיוך רחב יכול לרכך את האווירה בקלפי.",
+      "החזית הוורודה לא מוותרת! המשיכו לרוץ גם כשירושלים נראית רחוקה.",
+      "רק מעבר דירה רשמי במשרד הפנים משנה את קלפי ההצבעה שלכם! תכננו מראש.",
+      "אל תתנו לקולות רקע להסיח את דעתכם בדרך למימוש זכות הבחירה שלכם.",
+      "רעש וצלצולים זה נחמד, אבל הצבעה בקלפי היא מה שבאמת משפיע!",
+      "לכל אזרח קול אחד, וכל קול יכול להכריע את עתיד המדינה.",
+      "קלפי נגישה מיועדת למי שמוגבל בניידות. שמרו להם על הזכות הזו!"
+    ];
+
+    window.showLoadingScreen = function(title, subtitle, onComplete) {
+      window.loadingScreenActive = true;
+      
+      const screen = document.getElementById('html-loading-screen');
+      const titleEl = document.getElementById('loading-day-title');
+      const subtitleEl = document.getElementById('loading-day-subtitle');
+      const progressFill = document.getElementById('loading-progress-fill');
+      const tipTextEl = document.getElementById('loading-tip-text');
+
+      if (screen && titleEl && subtitleEl && progressFill && tipTextEl) {
+        titleEl.textContent = title || 'טוען...';
+        subtitleEl.textContent = subtitle || 'הכנות אחרונות לשלב הבא';
+        
+        // Pick random tip
+        const randomTip = HEBREW_TIPS[Math.floor(Math.random() * HEBREW_TIPS.length)];
+        tipTextEl.textContent = randomTip;
+        
+        // Reset progress bar width
+        progressFill.style.transition = 'none';
+        progressFill.style.width = '0%';
+        progressFill.offsetHeight; // force reflow
+        
+        // Show loading screen
+        screen.classList.add('visible');
+        
+        // Start animation
+        setTimeout(() => {
+          progressFill.style.transition = 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+          progressFill.style.width = '100%';
+        }, 50);
+
+        // Call onComplete after 1.5 seconds
+        setTimeout(() => {
+          if (typeof onComplete === 'function') {
+            onComplete();
+          }
+        }, 1550);
+      } else {
+        if (typeof onComplete === 'function') {
+          onComplete();
+        }
+      }
+    };
+
+    window.hideLoadingScreen = function() {
+      const screen = document.getElementById('html-loading-screen');
+      if (screen) {
+        screen.classList.remove('visible');
+        setTimeout(() => {
+          window.loadingScreenActive = false;
+          window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
+        }, 400);
+      } else {
+        window.loadingScreenActive = false;
+        window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
+      }
+    };
 
     // Hide all HUDs initially
     const initHuds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];

@@ -71,7 +71,7 @@ export class Day1Scene extends Phaser.Scene {
     const { width, height } = this.scale;
 
     trackSceneStarted("kiryat_shmona");
-    startSceneMusic(this, "bg-sessions");
+    this.cameras.main.fadeIn(600, 18, 18, 28);
 
     // --- Scale from screen height ---
     this.s = Character.computeScale(height);
@@ -201,17 +201,27 @@ export class Day1Scene extends Phaser.Scene {
       this.droneManager.start();
     });
 
-    // --- Play Intro Cutscene Dialogue ---
-    this._updateHUD("שידור נכנס");
-    const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
-      this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←");
-      this.player.enable();
-      MovementTutorial.showJoystickTutorial(this, this.player);
-    }, 'stone');
-    introDialog.start();
+    // --- Play Intro Cutscene Dialogue (Deferred) ---
+    const startSceneLogic = () => {
+      startSceneMusic(this, "bg-sessions");
+      this._updateHUD("שידור נכנס");
+      const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
+        this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←");
+        this.player.enable();
+        MovementTutorial.showJoystickTutorial(this, this.player);
+      }, 'stone');
+      introDialog.start();
+    };
+
+    if (window.loadingScreenActive) {
+      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
+    } else {
+      startSceneLogic();
+    }
 
     // Cleanup on shutdown
     this.events.once("shutdown", () => {
+      window.removeEventListener('loading-screen-hidden', startSceneLogic);
       if (this.droneManager) this.droneManager.destroy();
       if (typeof window.hideHUD === 'function') {
         window.hideHUD('html-stats-hud');

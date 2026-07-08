@@ -18,6 +18,17 @@ export class SceneOrchestrator {
     this.sceneClasses = sceneClasses;
     this.sceneOrder = []; // Will store the resolved string keys of the scenes
 
+    // Define level titles and subtitles for the loading screens
+    this.levelInfo = [
+      { title: "יום 1: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
+      { title: "יום 2: מחסום בצפון", subtitle: "הוועדה לא מאשרת כל כך בקלות..." },
+      { title: "יום 3: הכביש המהיר", subtitle: "מתקדמים אל עבר הבירה!" },
+      { title: "יום 4: הכנסת", subtitle: "בלב מקבלת ההחלטות" },
+      { title: "יום 5: ועדת הבחירות המרכזית", subtitle: "מאבק על כל קול!" },
+      { title: "הכותל המערבי", subtitle: "רגע של תקווה ואחדות" },
+      { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
+    ];
+
     // Wait for the game instance to boot and be ready before initializing scene links
     this.game.events.once('ready', () => {
       this.init();
@@ -75,14 +86,35 @@ export class SceneOrchestrator {
       const targetSceneKey = this.sceneOrder[index];
       console.log(`SceneOrchestrator: Transitioning to stage "${targetSceneKey}" (index: ${index})`);
 
-      // Ensure BootScene or other scenes are stopped before starting the target
-      this.game.scene.scenes.forEach(scene => {
-        if (scene.scene.key !== targetSceneKey) {
-          this.game.scene.stop(scene.scene.key);
-        }
-      });
+      const info = this.levelInfo[index] || { title: "טוען...", subtitle: "הכנות אחרונות" };
 
-      this.game.scene.start(targetSceneKey);
+      if (window.showLoadingScreen) {
+        window.showLoadingScreen(info.title, info.subtitle, () => {
+          // Ensure BootScene or other scenes are stopped before starting the target
+          this.game.scene.scenes.forEach(scene => {
+            if (scene.scene.key !== targetSceneKey) {
+              this.game.scene.stop(scene.scene.key);
+            }
+          });
+
+          this.game.scene.start(targetSceneKey);
+
+          // Wait a brief delay (300ms) to ensure Phaser has completed its synchronous initialization (create() method)
+          setTimeout(() => {
+            if (window.hideLoadingScreen) {
+              window.hideLoadingScreen();
+            }
+          }, 300);
+        });
+      } else {
+        // Fallback without loading screen
+        this.game.scene.scenes.forEach(scene => {
+          if (scene.scene.key !== targetSceneKey) {
+            this.game.scene.stop(scene.scene.key);
+          }
+        });
+        this.game.scene.start(targetSceneKey);
+      }
     } else {
       console.error(`SceneOrchestrator: Attempted to start invalid scene index: ${index}`);
     }
@@ -100,8 +132,8 @@ export class SceneOrchestrator {
     const fadeDuration = 600;
 
     if (completedScene) {
-      // Play a premium camera fade out transition before stopping the scene
-      completedScene.cameras.main.fade(fadeDuration, 26, 26, 46);
+      // Play a premium camera fade out transition before stopping the scene (RGB 18, 18, 28 maps to #12121c)
+      completedScene.cameras.main.fade(fadeDuration, 18, 18, 28);
       completedScene.cameras.main.once('camerafadeoutcomplete', () => {
         this.game.scene.stop(completedSceneKey);
 

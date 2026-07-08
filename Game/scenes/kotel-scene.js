@@ -48,7 +48,7 @@ export class KotelScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    startSceneMusic(this, 'bg-end');
+    this.cameras.main.fadeIn(600, 18, 18, 28);
 
     // --- Reset states ---
     this.isSceneOver = false;
@@ -133,17 +133,26 @@ export class KotelScene extends Phaser.Scene {
 
 
 
-    // --- Start Intro Dialogue ---
-    this._updateHUD('שידור נכנס');
-    const introDialog = new DialogSystem(this, KOTEL_INTRO_DIALOG, () => {
-      this.player.enable();
-      this.gameplayStarted = true;
-      this._updateHUD('רדוף אחרי הנשיא! השתמש במקשים או בג׳ויסטיק כדי לזוז!');
-    });
-    introDialog.start();
+    // --- Start Intro Dialogue --- (Deferred)
+    const startSceneLogic = () => {
+      startSceneMusic(this, 'bg-end');
+      this._updateHUD('שידור נכנס');
+      const introDialog = new DialogSystem(this, KOTEL_INTRO_DIALOG, () => {
+        this.player.enable();
+        this.gameplayStarted = true;
+        this._updateHUD('רדוף אחרי הנשיא! השתמש במקשים או בג׳ויסטיק כדי לזוז!');
+      });
+      introDialog.start();
+    };
+
+    if (window.loadingScreenActive) {
+      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
+    } else {
+      startSceneLogic();
+    }
 
     this.events.once('shutdown', () => {
-      // Instructions HUD is removed
+      window.removeEventListener('loading-screen-hidden', startSceneLogic);
     });
   }
 

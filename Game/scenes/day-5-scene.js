@@ -45,13 +45,24 @@ export class Day5Scene extends Phaser.Scene {
     this._scrollLayers = [];
     this._midPool = [];
     const { width, height } = this.scale;
+    this.cameras.main.fadeIn(600, 18, 18, 28);
     this._genTextures(width, height);
     this._buildBackground(width, height);
     this._buildPlayer(width, height);
     this._createHUD(width, height);
-    this._showIntro(width, height);
+
+    const startSceneLogic = () => {
+      this._showIntro(width, height);
+    };
+
+    if (window.loadingScreenActive) {
+      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
+    } else {
+      startSceneLogic();
+    }
 
     this.events.once("shutdown", () => {
+      window.removeEventListener('loading-screen-hidden', startSceneLogic);
       if (typeof window.hideHUD === "function") {
         window.hideHUD("html-stats-hud");
         window.hideHUD("html-lives-hud");

@@ -38,12 +38,25 @@ export class Day4Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
-    this.cameras.main.fadeIn(700);
+    this.cameras.main.fadeIn(600, 18, 18, 28);
     this._genBackgroundTextures(width, height);
     this._buildScene(width, height);
-    this._startMusic();
-    this._scheduleTimeline(width, height);
-    this.events.once("shutdown", () => this._stopMusic());
+
+    const startSceneLogic = () => {
+      this._startMusic();
+      this._scheduleTimeline(width, height);
+    };
+
+    if (window.loadingScreenActive) {
+      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
+    } else {
+      startSceneLogic();
+    }
+
+    this.events.once("shutdown", () => {
+      window.removeEventListener('loading-screen-hidden', startSceneLogic);
+      this._stopMusic();
+    });
   }
 
   update(time, delta) {

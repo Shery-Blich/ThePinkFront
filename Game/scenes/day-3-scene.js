@@ -70,7 +70,7 @@ export class Day3Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    startSceneMusic(this, 'bg-sessions');
+    this.cameras.main.fadeIn(600, 18, 18, 28);
 
     // --- Reset states for scene restart ---
     this.warningTiles = [];
@@ -160,16 +160,26 @@ export class Day3Scene extends Phaser.Scene {
       });
     });
 
+    // Start Phase 1: Intro Dialogue Immediately (Deferred)
+    const startSceneLogic = () => {
+      startSceneMusic(this, 'bg-sessions');
+      this._startIntroDialogue(roadCenterY, worldWidth, charH);
+    };
+
+    if (window.loadingScreenActive) {
+      window.addEventListener('loading-screen-hidden', startSceneLogic, { once: true });
+    } else {
+      startSceneLogic();
+    }
+
     // Cleanup on shutdown
     this.events.once('shutdown', () => {
+      window.removeEventListener('loading-screen-hidden', startSceneLogic);
       if (this.droneManager) this.droneManager.destroy();
       if (typeof window.hideHUD === 'function') {
         window.hideHUD('html-stats-hud');
       }
     });
-
-    // Start Phase 1: Intro Dialogue Immediately
-    this._startIntroDialogue(roadCenterY, worldWidth, charH);
   }
 
   _buildSupermarket() {
