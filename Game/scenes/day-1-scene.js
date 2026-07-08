@@ -26,7 +26,7 @@ import {
  */
 
 // How many character-widths wide the world is
-const WORLD_CHARS_WIDE = 120;
+const WORLD_CHARS_WIDE = 300;
 
 export class Day1Scene extends Phaser.Scene {
   constructor() {
@@ -436,7 +436,7 @@ export class Day1Scene extends Phaser.Scene {
     const s = this.s;
 
     // 1. Spawn the supermarket outside of player view (right side)
-    const worldWidth = 120 * 12 * s; // WORLD_CHARS_WIDE (120) * charW (12 * s)
+    const worldWidth = WORLD_CHARS_WIDE * 12 * s; // WORLD_CHARS_WIDE * charW (12 * s)
     const cameraRightEdge = this.cameras.main.scrollX + this.cameras.main.width;
     // Spawn 80px (scaled) past the right edge of the screen, clamped to world bounds
     const superX = Math.min(cameraRightEdge + 80 * s, worldWidth - 50 * s);
