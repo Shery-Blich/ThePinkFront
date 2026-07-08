@@ -5,6 +5,7 @@ import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
+import { MovementTutorial } from '../systems/movement-tutorial.js';
 
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
@@ -128,6 +129,7 @@ export class Day2Scene extends Phaser.Scene {
     startSceneMusic(this, 'bg-middle');
     this._setupInput(width);
     this._createHUD();
+    MovementTutorial.showJumpTutorial(this);
 
     this.events.once('shutdown', () => {
       if (this.joystick) this.joystick.destroy();
@@ -309,6 +311,7 @@ export class Day2Scene extends Phaser.Scene {
 
   _doJump() {
     if (!this.player || !this.player.body) return;
+    this.events.emit('player-jump');
     const body = this.player.body;
     const onGround = !!(
       body.blocked && body.blocked.down ||
