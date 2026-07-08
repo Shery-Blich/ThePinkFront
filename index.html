@@ -983,7 +983,7 @@
   <!-- Toast Notification -->
   <div id="html-toast">הקישור לשיתוף הועתק ללוח!</div>
 
-  <div id="html-score-hud" class="hud-chip">ניקוד: 0 / 100</div>
+  <div id="html-score-hud" class="hud-chip">ניקוד: <span dir="ltr">0 / 100</span></div>
   <div id="html-lives-hud" class="hud-chip">♥ ♥ ♥</div>
   <div id="html-stats-hud" class="hud-chip"></div>
   <div id="html-speed-hud" class="hud-chip"></div>
@@ -1157,7 +1157,7 @@
     function updateScoreHud(detail = {}) {
       const score = Math.round(detail.score ?? 0);
       const maxScore = detail.maxScore || 100;
-      scoreHud.textContent = `ניקוד: ${score} / ${maxScore}`;
+      scoreHud.innerHTML = `ניקוד: <span dir="ltr">${score} / ${maxScore}</span>`;
     }
 
     function getScoreTitle(correctAnswers) {
