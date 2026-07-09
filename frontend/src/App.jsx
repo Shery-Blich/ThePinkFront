@@ -1,8 +1,11 @@
+/* eslint-disable react/prop-types */
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import LoginPage from './admin/pages/LoginPage.jsx';
 import QuestionsPage from './admin/pages/QuestionsPage.jsx';
 import AnalyticsPage from './admin/pages/AnalyticsPage.jsx';
+import NotFoundPage from './admin/pages/NotFoundPage.jsx';
+
 
 function ProtectedRoute({ children }) {
   const { admin } = useAuth();
@@ -64,7 +67,16 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/admin/questions" replace />} />
+          <Route
+            path="*"
+            element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <NotFoundPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
