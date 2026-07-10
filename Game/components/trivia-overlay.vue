@@ -57,6 +57,7 @@ export default {
     return {
       isActive: false,
       questionIndex: 0,
+      questionId: null,
       questionText: '',
       options: [],
       correctIndex: 0,
@@ -88,6 +89,7 @@ export default {
       const data = event.detail || {};
       
       this.questionIndex = data.questionIndex !== undefined ? data.questionIndex : 0;
+      this.questionId = data.questionId || null;
       this.questionText = data.questionText || '';
       this.options = data.options || [];
       this.correctIndex = data.correctIndex !== undefined ? data.correctIndex : 0;
@@ -130,13 +132,24 @@ export default {
       this.selectedIndex = index;
     },
 
-    confirmAnswer(index) {
+    async confirmAnswer(index) {
       if (this.isAnswered) return;
       this.isAnswered = true;
-      this.feedbackActive = true;
+      const timeSpentMs = Date.now() - this.questionStartTime;
 
-      const isCorrect = index === this.correctIndex;
-      trackQuestionAnswered(this.questionIndex, index, isCorrect, Date.now() - this.questionStartTime);
+      let isCorrect;
+      if (this.questionId) {
+        // API-sourced question — correctness is unknown until the server verifies it
+        const result = await trackQuestionAnswered(this.questionIndex, this.questionId, index, timeSpentMs);
+        isCorrect = result.isCorrect ?? false;
+        if (result.correctAnswerIndex !== undefined) this.correctIndex = result.correctAnswerIndex;
+      } else {
+        // Local fallback question — already known client-side, keep instant feedback
+        isCorrect = index === this.correctIndex;
+        trackQuestionAnswered(this.questionIndex, null, index, timeSpentMs, isCorrect);
+      }
+
+      this.feedbackActive = true;
 
       // Wait exactly 1 second before firing the event and hiding the overlay
       setTimeout(() => {
