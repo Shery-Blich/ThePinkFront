@@ -1,5 +1,3 @@
-import { TRIVIA_QUESTIONS } from './data/trivia-questions.js';
-
 const SESSION_KEY = 'dykeathon_session_id';
 const LOG_KEY = 'dykeathon_analytics_log';
 const MAX_EVENTS = 100;
@@ -9,9 +7,7 @@ let _currentSessionId = sessionStorage.getItem(SESSION_KEY) || null;
 let _mongoSessionId = null;
 let _registeredSessionId = null;
 let _registrationPromise = null;
-let _questionIdsPromise = null;
 let _endedSessionId = null;
-const _questionIds = {}; // local index → MongoDB ObjectId
 
 export function getSessionId() {
   if (!_currentSessionId) {
@@ -38,7 +34,6 @@ export async function trackGameStarted() {
   _startNewRun();
   trackEvent('game_started');
   await _ensureSessionRegistered();
-  await _ensureQuestionIdsLoaded();
 }
 
 export function trackSceneStarted(sceneId) {
@@ -60,8 +55,29 @@ export function trackQuestionShown(questionIndex, questionText) {
   });
 }
 
-export async function trackQuestionAnswered(questionIndex, chosenIndex, isCorrect, timeMs) {
+// questionId is the Mongo _id for API-sourced questions, or null for local
+// fallback ones. When null, knownIsCorrect (already computed client-side)
+// is used as-is and no server verification call is made.
+export async function trackQuestionAnswered(questionIndex, questionId, chosenIndex, timeMs, knownIsCorrect = null) {
   const sessionId = getSessionId();
+  let isCorrect = knownIsCorrect;
+  let correctAnswerIndex;
+
+  if (questionId) {
+    const mongoSessionId = await _ensureSessionRegistered(sessionId);
+    if (sessionId === getSessionId() && mongoSessionId) {
+      const result = await _postJson(`/game/sessions/${mongoSessionId}/answer`, {
+        questionId,
+        chosenAnswerIndex: chosenIndex,
+        timeSpentMs: timeMs,
+      });
+      if (result) {
+        isCorrect = result.isCorrect;
+        correctAnswerIndex = result.correctAnswerIndex;
+      }
+    }
+  }
+
   trackEvent('question_answered', {
     question_index: questionIndex,
     selected_answer_index: chosenIndex,
@@ -69,17 +85,7 @@ export async function trackQuestionAnswered(questionIndex, chosenIndex, isCorrec
     time_to_answer_ms: timeMs,
   });
 
-  const mongoSessionId = await _ensureSessionRegistered(sessionId);
-  const mongoQuestionId = await _getQuestionId(questionIndex);
-  if (sessionId !== getSessionId()) return;
-
-  if (mongoSessionId && mongoQuestionId) {
-    await _post(`/game/sessions/${mongoSessionId}/answer`, {
-      questionId: mongoQuestionId,
-      chosenAnswerIndex: chosenIndex,
-      timeSpentMs: timeMs,
-    });
-  }
+  return { isCorrect, correctAnswerIndex };
 }
 
 export function trackObstacleHit(obstacleType, sceneId, properties = {}) {
@@ -120,9 +126,7 @@ function _startNewRun() {
   _mongoSessionId = null;
   _registeredSessionId = null;
   _registrationPromise = null;
-  _questionIdsPromise = null;
   _endedSessionId = null;
-  Object.keys(_questionIds).forEach((key) => delete _questionIds[key]);
 }
 
 function _postToParent(event) {
@@ -143,6 +147,20 @@ async function _post(path, body) {
     return response.ok;
   } catch (_) {
     return false;
+  }
+}
+
+async function _postJson(path, body) {
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (_) {
+    return null;
   }
 }
 
@@ -190,36 +208,6 @@ async function _registerSession(sessionId) {
     }
     return null;
   }
-}
-
-async function _ensureQuestionIdsLoaded() {
-  if (_questionIdsPromise) return _questionIdsPromise;
-
-  _questionIdsPromise = (async () => {
-    try {
-      const res = await fetch(`${API_BASE}/game/questions`);
-      if (!res.ok) {
-        _questionIdsPromise = null;
-        return;
-      }
-      const backendQuestions = await res.json();
-
-      TRIVIA_QUESTIONS.forEach((localQ, idx) => {
-        const localText = localQ[0];
-        const match = backendQuestions.find((bq) => bq.text === localText);
-        if (match) _questionIds[idx] = match._id;
-      });
-    } catch (_) {
-      _questionIdsPromise = null;
-    }
-  })();
-
-  return _questionIdsPromise;
-}
-
-async function _getQuestionId(questionIndex) {
-  await _ensureQuestionIdsLoaded();
-  return _questionIds[questionIndex] ?? null;
 }
 
 async function _endSession(sessionId) {

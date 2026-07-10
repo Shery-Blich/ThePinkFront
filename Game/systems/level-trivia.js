@@ -1,4 +1,4 @@
-import { TRIVIA_QUESTIONS } from '../data/trivia-questions.js';
+import { loadTriviaQuestions, getTriviaQuestions } from '../data/trivia-questions.js';
 const TRIVIA_SCENE_ORDER = [
   'Day1Scene',
   'Day2Scene',
@@ -26,8 +26,9 @@ function getMaxScore() {
 }
 
 function getPointsPerCorrect() {
-  if (TRIVIA_QUESTIONS.length === 0) return 0;
-  return getMaxScore() / TRIVIA_QUESTIONS.length;
+  const total = getTriviaQuestions().length;
+  if (total === 0) return 0;
+  return getMaxScore() / total;
 }
 
 function dispatchScoreUpdate() {
@@ -39,7 +40,7 @@ function dispatchScoreUpdate() {
       maxScore: getMaxScore(),
       correctAnswers: state.correctAnswers,
       answeredQuestions: state.answeredQuestions,
-      totalQuestions: TRIVIA_QUESTIONS.length,
+      totalQuestions: getTriviaQuestions().length,
       pointsPerCorrect: getPointsPerCorrect(),
     },
   }));
@@ -53,7 +54,7 @@ function getSceneQuestionCount(sceneKey) {
   }
 
   const state = getTriviaState();
-  const questionsRemaining = TRIVIA_QUESTIONS.length - state.nextQuestionIndex;
+  const questionsRemaining = getTriviaQuestions().length - state.nextQuestionIndex;
   const levelsRemaining = TRIVIA_SCENE_ORDER.length - sceneIndex;
 
   console.log(`[Trivia Debug] getSceneQuestionCount: sceneKey=${sceneKey}, nextQuestionIndex=${state.nextQuestionIndex}, questionsRemaining=${questionsRemaining}, levelsRemaining=${levelsRemaining}`);
@@ -65,7 +66,7 @@ function getSceneQuestionCount(sceneKey) {
 
 function showTriviaQuestion(scene, questionIndex, totalQuestions) {
   return new Promise((resolve) => {
-    const qData = TRIVIA_QUESTIONS[questionIndex];
+    const qData = getTriviaQuestions()[questionIndex];
     if (!qData) {
       resolve();
       return;
@@ -97,9 +98,10 @@ function showTriviaQuestion(scene, questionIndex, totalQuestions) {
     window.dispatchEvent(new CustomEvent('show-trivia', {
       detail: {
         questionIndex,
-        questionText: qData[0],
-        options: qData[1],
-        correctIndex: qData[2],
+        questionId: qData.id,
+        questionText: qData.text,
+        options: qData.options,
+        correctIndex: qData.correctIndex,
         portraitDataUrl: portraitBase64,
         totalQuestions,
         score: scoreSummary.score,
@@ -111,6 +113,8 @@ function showTriviaQuestion(scene, questionIndex, totalQuestions) {
 }
 
 export async function runLevelTrivia(scene, sceneKey) {
+  await loadTriviaQuestions();
+
   const questionCount = getSceneQuestionCount(sceneKey);
   console.log(`[Trivia Debug] runLevelTrivia: starting trivia sequence for "${sceneKey}" with ${questionCount} questions`);
   if (questionCount === 0) return;
@@ -141,6 +145,7 @@ export function resetLevelTrivia() {
     correctAnswers: 0,
     answeredQuestions: 0,
   };
+  loadTriviaQuestions(); // kick off early so it's likely resolved by the first question
   dispatchScoreUpdate();
 }
 
@@ -151,7 +156,7 @@ export function getTriviaScoreSummary() {
     maxScore: getMaxScore(),
     correctAnswers: state.correctAnswers,
     answeredQuestions: state.answeredQuestions,
-    totalQuestions: TRIVIA_QUESTIONS.length,
+    totalQuestions: getTriviaQuestions().length,
     pointsPerCorrect: getPointsPerCorrect(),
   };
 }

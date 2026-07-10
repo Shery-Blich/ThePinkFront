@@ -9,6 +9,7 @@ const router = Router();
 // GET /api/game/questions — public, correctAnswerIndex is intentionally omitted
 router.get('/questions', async (_req, res) => {
   const questions = await Question.find({ isActive: true })
+    .sort({ createdAt: 1 })
     .select('_id text answers')
     .lean();
   res.json(questions);
@@ -56,7 +57,7 @@ router.post(
     if (isCorrect) session.correctCount += 1;
     await session.save();
 
-    res.json({ isCorrect });
+    res.json({ isCorrect, correctAnswerIndex: question.correctAnswerIndex });
   }
 );
 
