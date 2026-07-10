@@ -163,3 +163,21 @@ export class DialogSystem {
     }
   }
 }
+
+// Dialogs already shown once this session (survives scene.restart on a failed
+// attempt, resets on a fresh page load/game start).
+const seenDialogs = new Set();
+
+/**
+ * Plays a dialog only the first time `key` is seen; on later retries it skips
+ * straight to onComplete so the player isn't shown the same cutscene again.
+ * @param {string} key - Unique id for this dialog (e.g. scene key).
+ */
+export function playDialogOnce(key, scene, lines, onComplete, theme = 'stone') {
+  if (seenDialogs.has(key)) {
+    if (onComplete) onComplete();
+    return;
+  }
+  seenDialogs.add(key);
+  new DialogSystem(scene, lines, onComplete, theme).start();
+}

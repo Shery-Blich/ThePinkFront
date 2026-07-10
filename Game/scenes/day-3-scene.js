@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { NPC } from '../entities/npc.js';
-import { DialogSystem } from '../systems/dialog-system.js';
+import { DialogSystem, playDialogOnce } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
@@ -201,7 +201,7 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   _startIntroDialogue(roadCenterY, worldWidth, charH) {
-    const introDialog = new DialogSystem(this, DAY_3_INTRO_DIALOG, () => {
+    playDialogOnce('Day3Scene', this, DAY_3_INTRO_DIALOG, () => {
       // Dialogue ends -> Player character leaves the supermarket door
       this._updateHUD('יוצאת מהסופרמרקט...');
       const s = this.s;
@@ -237,8 +237,7 @@ export class Day3Scene extends Phaser.Scene {
           });
         }
       });
-    }, 'stone');
-    introDialog.start();
+    });
   }
 
   update(time, delta) {
