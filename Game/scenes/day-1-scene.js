@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { Character } from "../entities/character.js";
 import { Player } from "../entities/player.js";
 import { NPC } from "../entities/npc.js";
-import { DialogSystem } from "../systems/dialog-system.js";
+import { DialogSystem, playDialogOnce } from "../systems/dialog-system.js";
 import { MovementTutorial } from "../systems/movement-tutorial.js";
 import { DroneManager } from "../systems/drone-manager.js";
 import {
@@ -203,12 +203,11 @@ export class Day1Scene extends Phaser.Scene {
 
     // --- Play Intro Cutscene Dialogue ---
     this._updateHUD("שידור נכנס");
-    const introDialog = new DialogSystem(this, DAY_1_INTRO_DIALOG, () => {
+    playDialogOnce('Day1Scene', this, DAY_1_INTRO_DIALOG, () => {
       this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←");
       this.player.enable();
       MovementTutorial.showJoystickTutorial(this, this.player);
-    }, 'stone');
-    introDialog.start();
+    });
 
     // Cleanup on shutdown
     this.events.once("shutdown", () => {

@@ -6,7 +6,7 @@ import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
-import { DialogSystem } from '../systems/dialog-system.js';
+import { playDialogOnce } from '../systems/dialog-system.js';
 import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
 
 const WORLD_CHARS_WIDE = 120;
@@ -144,7 +144,7 @@ export class Day2Scene extends Phaser.Scene {
     this._createHUD();
 
     // Play intro dialogue before starting gameplay
-    const introDialog = new DialogSystem(this, DAY_2_INTRO_DIALOG, () => {
+    playDialogOnce('Day2Scene', this, DAY_2_INTRO_DIALOG, () => {
       this._dialogActive = false;
       this.joystick.enable();
 
@@ -155,8 +155,7 @@ export class Day2Scene extends Phaser.Scene {
       this.events.once('player-jump', () => {
         this._isScrollingStarted = true;
       });
-    }, 'stone');
-    introDialog.start();
+    });
 
     this.events.once('shutdown', () => {
       if (this.joystick) this.joystick.destroy();
