@@ -42,12 +42,12 @@ const config = {
   },
   scene: [
     BootScene,
-    // Day1Scene,
-    // Day2Scene,
-    // Day3Scene,
-    // Day4Scene,
-    // Day5Scene,
-    // KotelScene,
+    Day1Scene,
+    Day2Scene,
+    Day3Scene,
+    Day4Scene,
+    Day5Scene,
+    KotelScene,
     FinalScene,
   ],
 };
