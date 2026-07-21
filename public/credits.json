@@ -3,72 +3,61 @@
   "subtitle": "A game by Our Knesset",
   "roles": [
     {
-      "role": "Project Lead",
+      "role": "Lead Game Developer & Fullstack Developer",
       "names": [
         {
-          "name": "Amitai Cohen",
-          "link": "https://github.com/amitaicohen"
+          "name": "SheryB",
+          "link": "https://github.com/Shery-Blich"
         }
       ]
     },
     {
-      "role": "Team Lead",
+      "role": "Lead Full-Stack & Game Developer",
       "names": [
-        "Noam Levi"
+        "Shiran Steinberg"
       ]
     },
     {
-      "role": "Lead Programmers",
+      "role": "Technical Product Manager",
+      "names": [
+        "GuyNa"
+      ]
+    },
+    {
+      "role": "Product Manager",
+      "names": [
+        "Sharon David"
+      ]
+    },
+    {
+      "role": "DevOps",
       "names": [
         {
-          "name": "Yael Mizrahi",
-          "link": "https://github.com/yaelmizrahi"
-        },
-        "Dan Shachar"
+          "name": "Ella Halevy",
+          "link": "https://www.etzhaella.com"
+        }
       ]
     },
     {
-      "role": "Frontend Developers",
-      "names": [
-        "Maya Tal",
-        "Ron Bar-On"
-      ]
-    },
-    {
-      "role": "Game Designers",
-      "names": [
-        "Adi Golan",
-        "Tomer Katz"
-      ]
-    },
-    {
-      "role": "Pixel Artists",
+      "role": "Lead Concept Artist",
       "names": [
         {
-          "name": "Shir Elbaz",
-          "link": "https://www.artstation.com"
-        },
-        "Lior Ashkenazi"
+          "name": "Shira Noc",
+          "link": "https://shira-noc.com/"
+        }
       ]
     },
     {
-      "role": "Sound & Music",
+      "role": "Software Developers",
       "names": [
-        "Guy Hasson",
-        "Orly Shapira"
+        "Inbal Bolshinsky",
+        "Danielle Konfino"
       ]
     },
     {
-      "role": "QA Engineers",
+      "role": "Lead QA",
       "names": [
-        "Erez Green",
-        "Dana Vardi"
-      ]
-    },
-    {
-      "role": "Special Thanks",
-      "names": [
-        "The Pink Front Community"
+        "Hallel Marx"
       ]
     }
   ]

@@ -402,6 +402,11 @@
       color: #ffffff;
       opacity: 0;
       transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+      direction: ltr; /* Force Left-to-Right layout grid flow */
+    }
+
+    #html-score-popup.active {
+      display: flex;
     }
 
     #html-score-popup .popup-container {
@@ -419,6 +424,7 @@
       align-items: center;
       gap: 1rem;
       border-radius: 8px;
+      direction: rtl; /* Keep endgame menu RTL for Hebrew text layout support */
     }
 
     #html-score-popup .popup-container::before {
@@ -804,6 +810,7 @@
       mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
       -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
       z-index: 10;
+      direction: ltr; /* Keep credits LTR */
     }
 
     .credits-col-left {
@@ -959,16 +966,42 @@
       display: inline-block;
     }
 
-    /* Responsive rule for desktop/wider landscape */
-    @media (min-width: 821px) {
+    /* Responsive rule for desktop/wider landscape (min-width: 750px) */
+    @media (min-width: 750px) {
+      #html-score-popup.active {
+        display: grid;
+        grid-template-columns: 20% 60% 20%;
+        align-items: center;
+        justify-items: center;
+        padding: 0 40px;
+        gap: 30px;
+        box-sizing: border-box;
+      }
+
       #popup-credits-btn {
         display: none; /* Hide credits button on wide screen as columns are shown */
       }
+
+      .credits-column {
+        position: relative;
+        left: auto;
+        right: auto;
+        width: 100%;
+        max-width: 240px;
+      }
+
+      #html-score-popup .popup-container {
+        width: 100%;
+        max-width: 550px;
+      }
     }
 
-    @media (max-width: 820px) {
+    @media (max-width: 749px) {
       .credits-column {
         display: none; /* Hide left/right columns on narrow screens */
+      }
+      #popup-credits-btn {
+        display: inline-block;
       }
     }
 
@@ -1396,9 +1429,42 @@
       if (!creditsData || !creditsData.roles) return;
 
       const roles = creditsData.roles;
-      const mid = Math.ceil(roles.length / 2);
-      const leftRoles = roles.slice(0, mid);
-      const rightRoles = roles.slice(mid);
+
+      // Calculate total teammates
+      let teammateCount = 0;
+      roles.forEach(r => {
+        if (r.names && Array.isArray(r.names)) {
+          r.names.forEach(n => {
+            if (typeof n === 'string' && n.trim()) {
+              teammateCount++;
+            } else if (n && typeof n === 'object' && n.name && n.name.trim()) {
+              teammateCount++;
+            }
+          });
+        }
+      });
+
+      let leftRoles, rightRoles;
+      const rightCol = document.getElementById('credits-col-right');
+
+      if (teammateCount > 10) {
+        // Two columns layout (original code preserved)
+        const mid = Math.ceil(roles.length / 2);
+        leftRoles = roles.slice(0, mid);
+        rightRoles = roles.slice(mid);
+        if (rightCol) {
+          rightCol.style.display = '';
+          rightCol.style.visibility = 'visible';
+        }
+      } else {
+        // Single column layout from the left
+        leftRoles = roles;
+        rightRoles = [];
+        if (rightCol) {
+          rightCol.style.display = '';
+          rightCol.style.visibility = 'hidden';
+        }
+      }
 
       const escapeHtml = (str) => {
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1459,21 +1525,23 @@
 
       scoreHud.style.display = 'none';
 
-      const popup = document.getElementById('html-score-popup');
-      popup.style.display = 'flex';
-      popup.offsetHeight; // force reflow
-      popup.style.opacity = '1';
-
-      // Load/init credits automatically when score popup is displayed
-      initCredits();
-    };
-
-    window.hideScorePopup = () => {
-      const popup = document.getElementById('html-score-popup');
-      popup.style.opacity = '0';
-      setTimeout(() => {
-        popup.style.display = 'none';
-      }, 400);
+       const popup = document.getElementById('html-score-popup');
+       popup.classList.add('active');
+       popup.style.display = ''; // Clear inline 'none' display to let CSS take over
+       popup.offsetHeight; // force reflow
+       popup.style.opacity = '1';
+ 
+       // Load/init credits automatically when score popup is displayed
+       initCredits();
+     };
+ 
+     window.hideScorePopup = () => {
+       const popup = document.getElementById('html-score-popup');
+       popup.style.opacity = '0';
+       setTimeout(() => {
+         popup.classList.remove('active');
+         popup.style.display = 'none';
+       }, 400);
 
       // Hide mobile overlay if open
       const mobileOverlay = document.getElementById('credits-mobile-overlay');
@@ -1580,6 +1648,9 @@
         }, 300);
       }, 2000);
     }
+
+    // Load credits data immediately on page load to prevent delay/pop-in
+    initCredits();
     window.showToastNotification = showToastNotification;
   </script>
 </body>
