@@ -1,0 +1,64 @@
+{
+  "title": "The Pink Front",
+  "subtitle": "A game by Our Knesset",
+  "roles": [
+    {
+      "role": "Lead Game Developer & Fullstack Developer",
+      "names": [
+        {
+          "name": "SheryB",
+          "link": "https://github.com/Shery-Blich"
+        }
+      ]
+    },
+    {
+      "role": "Lead Full-Stack & Game Developer",
+      "names": [
+        "Shiran Steinberg"
+      ]
+    },
+    {
+      "role": "Technical Product Manager",
+      "names": [
+        "GuyNa"
+      ]
+    },
+    {
+      "role": "Product Manager",
+      "names": [
+        "Sharon David"
+      ]
+    },
+    {
+      "role": "DevOps",
+      "names": [
+        {
+          "name": "Ella Halevy",
+          "link": "https://www.etzhaella.com"
+        }
+      ]
+    },
+    {
+      "role": "Lead Concept Artist",
+      "names": [
+        {
+          "name": "Shira Noc",
+          "link": "https://shira-noc.com/"
+        }
+      ]
+    },
+    {
+      "role": "Software Developers",
+      "names": [
+        "Inbal Bolshinsky",
+        "Danielle Konfino"
+      ]
+    },
+    {
+      "role": "Lead QA",
+      "names": [
+        "Hallel Marx"
+      ]
+    }
+  ]
+}

@@ -402,6 +402,11 @@
       color: #ffffff;
       opacity: 0;
       transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+      direction: ltr; /* Force Left-to-Right layout grid flow */
+    }
+
+    #html-score-popup.active {
+      display: flex;
     }
 
     #html-score-popup .popup-container {
@@ -419,6 +424,7 @@
       align-items: center;
       gap: 1rem;
       border-radius: 8px;
+      direction: rtl; /* Keep endgame menu RTL for Hebrew text layout support */
     }
 
     #html-score-popup .popup-container::before {
@@ -790,6 +796,215 @@
       color: #d97706;
     }
 
+    /* Credits styles */
+    .credits-column {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 180px;
+      overflow: hidden;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
+      z-index: 10;
+      direction: ltr; /* Keep credits LTR */
+    }
+
+    .credits-col-left {
+      left: 40px;
+    }
+
+    .credits-col-right {
+      right: 40px;
+    }
+
+    .credits-scroll-track {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      animation: scrollCredits 25s linear infinite;
+    }
+
+    .credits-content-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding-bottom: 1.5rem;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .credits-role-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      width: 100%;
+      text-align: center;
+    }
+
+    .credits-role-title {
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #ff007f; /* Brand pink */
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .credits-name {
+      font-family: 'Rubik', sans-serif;
+      font-size: 0.85rem;
+      color: #f2e6cf; /* Warm cream */
+      font-weight: 600;
+      text-shadow: 1px 1px 2px #000000;
+    }
+
+    .credits-link {
+      color: #f2e6cf;
+      text-decoration: underline;
+      pointer-events: auto; /* Enable clicks inside pointer-events: none column parent */
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .credits-link:hover {
+      color: #ff007f; /* Neon pink on hover */
+      text-shadow: 0 0 5px rgba(255, 0, 127, 0.6);
+    }
+
+    #popup-credits-btn {
+      margin-top: 0.25rem;
+    }
+
+    /* Mobile credits overlay */
+    #credits-mobile-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10005; /* Above score popup */
+      background: rgba(15, 12, 27, 0.96);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      color: #ffffff;
+      font-family: 'Rubik', sans-serif;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #credits-mobile-overlay.active {
+      opacity: 1;
+    }
+
+    #credits-close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: #ff007f;
+      font-size: 2.2rem;
+      cursor: pointer;
+      z-index: 10006;
+      transition: transform 0.2s;
+      padding: 5px 15px;
+      font-family: system-ui, -apple-system;
+    }
+
+    #credits-close-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .credits-overlay-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 90%;
+      max-width: 400px;
+      height: 80vh;
+      gap: 1.5rem;
+    }
+
+    .credits-overlay-title {
+      font-family: 'Outfit', 'Rubik', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #ff007f;
+      text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+      margin: 0;
+      text-align: center;
+    }
+
+    .credits-mobile-column {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      overflow: hidden;
+      mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
+    }
+
+    @keyframes scrollCredits {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(-50%);
+      }
+    }
+
+    /* Show mobile button by default, hide side columns if screen is narrow */
+    #popup-credits-btn {
+      display: inline-block;
+    }
+
+    /* Responsive rule for desktop/wider landscape (min-width: 750px) */
+    @media (min-width: 750px) {
+      #html-score-popup.active {
+        display: grid;
+        grid-template-columns: 20% 60% 20%;
+        align-items: center;
+        justify-items: center;
+        padding: 0 40px;
+        gap: 30px;
+        box-sizing: border-box;
+      }
+
+      #popup-credits-btn {
+        display: none; /* Hide credits button on wide screen as columns are shown */
+      }
+
+      .credits-column {
+        position: relative;
+        left: auto;
+        right: auto;
+        width: 100%;
+        max-width: 240px;
+      }
+
+      #html-score-popup .popup-container {
+        width: 100%;
+        max-width: 550px;
+      }
+    }
+
+    @media (max-width: 749px) {
+      .credits-column {
+        display: none; /* Hide left/right columns on narrow screens */
+      }
+      #popup-credits-btn {
+        display: inline-block;
+      }
+    }
+
     @keyframes slowPulse {
       0% {
         transform: scale(1);
@@ -1123,6 +1338,11 @@
 
   <!-- Responsive Score UI Popup Overlay -->
   <div id="html-score-popup">
+    <!-- Desktop Left Credits Column -->
+    <div class="credits-column credits-col-left" id="credits-col-left">
+      <div class="credits-scroll-track" id="credits-track-left"></div>
+    </div>
+
     <div class="popup-container">
       <div class="star-badge" id="popup-score-badge">★ 0 / 0 ★</div>
       <h2 class="popup-title" id="popup-score-title">כל הכבוד!</h2>
@@ -1135,6 +1355,23 @@
       </div>
 
       <button class="play-again-link" id="popup-replay-btn">שחקו שוב</button>
+      <button class="play-again-link" id="popup-credits-btn">Meet the Team 🎬</button>
+    </div>
+
+    <!-- Desktop Right Credits Column -->
+    <div class="credits-column credits-col-right" id="credits-col-right">
+      <div class="credits-scroll-track" id="credits-track-right"></div>
+    </div>
+  </div>
+
+  <!-- Mobile Credits Overlay -->
+  <div id="credits-mobile-overlay">
+    <button id="credits-close-btn">✕</button>
+    <div class="credits-overlay-content">
+      <h2 class="credits-overlay-title">Meet the Team</h2>
+      <div class="credits-mobile-column">
+        <div class="credits-scroll-track" id="credits-track-mobile"></div>
+      </div>
     </div>
   </div>
 
@@ -1337,6 +1574,103 @@
       updateScoreHud(event.detail);
     });
 
+    let creditsInitialized = false;
+
+    async function initCredits() {
+      if (creditsInitialized) return;
+      const response = await fetch('./credits.json').catch(err => {
+        console.error('Failed to load credits.json:', err);
+        return null;
+      });
+      if (!response || !response.ok) return;
+      const creditsData = await response.json();
+      if (!creditsData || !creditsData.roles) return;
+
+      const roles = creditsData.roles;
+
+      // Calculate total teammates
+      let teammateCount = 0;
+      roles.forEach(r => {
+        if (r.names && Array.isArray(r.names)) {
+          r.names.forEach(n => {
+            if (typeof n === 'string' && n.trim()) {
+              teammateCount++;
+            } else if (n && typeof n === 'object' && n.name && n.name.trim()) {
+              teammateCount++;
+            }
+          });
+        }
+      });
+
+      let leftRoles, rightRoles;
+      const rightCol = document.getElementById('credits-col-right');
+
+      if (teammateCount > 10) {
+        // Two columns layout (original code preserved)
+        const mid = Math.ceil(roles.length / 2);
+        leftRoles = roles.slice(0, mid);
+        rightRoles = roles.slice(mid);
+        if (rightCol) {
+          rightCol.style.display = '';
+          rightCol.style.visibility = 'visible';
+        }
+      } else {
+        // Single column layout from the left
+        leftRoles = roles;
+        rightRoles = [];
+        if (rightCol) {
+          rightCol.style.display = '';
+          rightCol.style.visibility = 'hidden';
+        }
+      }
+
+      const escapeHtml = (str) => {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      };
+
+      const buildGroupHtml = (roleList) => {
+        let html = '<div class="credits-content-group">';
+        roleList.forEach(item => {
+          html += `
+            <div class="credits-role-block">
+              <span class="credits-role-title">${escapeHtml(item.role)}</span>
+              ${item.names.map(n => {
+                if (typeof n === 'string') {
+                  return `<span class="credits-name">${escapeHtml(n)}</span>`;
+                } else if (n && typeof n === 'object' && n.name) {
+                  const url = n.link ? escapeHtml(n.link) : '';
+                  if (url) {
+                    return `<a class="credits-name credits-link" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.name)} ↗</a>`;
+                  }
+                  return `<span class="credits-name">${escapeHtml(n.name)}</span>`;
+                }
+                return '';
+              }).join('')}
+            </div>
+          `;
+        });
+        html += '</div>';
+        return html;
+      };
+
+      const leftTrack = document.getElementById('credits-track-left');
+      if (leftTrack) {
+        leftTrack.innerHTML = buildGroupHtml(leftRoles) + buildGroupHtml(leftRoles);
+      }
+
+      const rightTrack = document.getElementById('credits-track-right');
+      if (rightTrack) {
+        rightTrack.innerHTML = buildGroupHtml(rightRoles) + buildGroupHtml(rightRoles);
+      }
+
+      const mobileTrack = document.getElementById('credits-track-mobile');
+      if (mobileTrack) {
+        mobileTrack.innerHTML = buildGroupHtml(roles) + buildGroupHtml(roles);
+      }
+
+      creditsInitialized = true;
+    }
+
     window.showScorePopup = (scoreSummary = {}) => {
       const score = Math.round(scoreSummary.score ?? 0);
       const maxScore = scoreSummary.maxScore || 100;
@@ -1349,19 +1683,51 @@
 
       scoreHud.style.display = 'none';
 
-      const popup = document.getElementById('html-score-popup');
-      popup.style.display = 'flex';
-      popup.offsetHeight; // force reflow
-      popup.style.opacity = '1';
+       const popup = document.getElementById('html-score-popup');
+       popup.classList.add('active');
+       popup.style.display = ''; // Clear inline 'none' display to let CSS take over
+       popup.offsetHeight; // force reflow
+       popup.style.opacity = '1';
+ 
+       // Load/init credits automatically when score popup is displayed
+       initCredits();
+     };
+ 
+     window.hideScorePopup = () => {
+       const popup = document.getElementById('html-score-popup');
+       popup.style.opacity = '0';
+       setTimeout(() => {
+         popup.classList.remove('active');
+         popup.style.display = 'none';
+       }, 400);
+
+      // Hide mobile overlay if open
+      const mobileOverlay = document.getElementById('credits-mobile-overlay');
+      if (mobileOverlay) {
+        mobileOverlay.classList.remove('active');
+        mobileOverlay.style.display = 'none';
+      }
     };
 
-    window.hideScorePopup = () => {
-      const popup = document.getElementById('html-score-popup');
-      popup.style.opacity = '0';
-      setTimeout(() => {
-        popup.style.display = 'none';
-      }, 400);
-    };
+    // Mobile Credits Overlay listeners
+    document.getElementById('popup-credits-btn').addEventListener('click', () => {
+      const overlay = document.getElementById('credits-mobile-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.offsetHeight; // force reflow
+        overlay.classList.add('active');
+      }
+    });
+
+    document.getElementById('credits-close-btn').addEventListener('click', () => {
+      const overlay = document.getElementById('credits-mobile-overlay');
+      if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+    });
 
     // Share action
     document.getElementById('popup-share-btn').addEventListener('click', () => {
@@ -1521,6 +1887,9 @@
         }, 300);
       }, 2000);
     }
+
+    // Load credits data immediately on page load to prevent delay/pop-in
+    initCredits();
     window.showToastNotification = showToastNotification;
   </script>
 </body>
