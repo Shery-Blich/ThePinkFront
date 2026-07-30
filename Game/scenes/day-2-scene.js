@@ -530,7 +530,7 @@ export class Day2Scene extends Phaser.Scene {
 
     this.time.delayedCall(2200, () => {
       const cashierTarget = this.finishZone;
-      this._showSpeechBubble(cashierTarget, 'יאללה לא מעניין! הבא בתור!', {
+      this._showSpeechBubble(cashierTarget, '!יאללה לא מעניין! הבא בתור', {
         offsetY: 55,
         duration: 1600,
       });
