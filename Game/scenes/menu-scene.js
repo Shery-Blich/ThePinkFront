@@ -19,8 +19,13 @@ export class MenuScene extends Phaser.Scene {
     // --- Background Color ---
     this.cameras.main.setBackgroundColor('#1a1a2e');
 
-    // --- Retro Decorative Backdrop (Cityscape Skyline) ---
-    this._buildSkyline(width, height, s);
+    // --- Background Image ---
+    if (this.textures.exists('menu-bg')) {
+      const bg = this.add.image(width / 2, height / 2, 'menu-bg');
+      const coverScale = Math.max(width / bg.width, height / bg.height);
+      bg.setScale(coverScale);
+      bg.setDepth(-10);
+    }
 
     // --- Title Text (Hebrew & English styling) ---
     const titleText = this.add.text(width / 2, height * 0.32, 'החזית הוורודה', {
@@ -119,49 +124,5 @@ export class MenuScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
     });
-  }
-
-  /**
-   * Helper to build a simplified static backdrop city skyline
-   * utilizing the dynamically generated buildings from BootScene.
-   */
-  _buildSkyline(width, height, s) {
-    const bldKeys = ['bld_a', 'bld_b', 'bld_c', 'bld_d', 'bld_e'];
-    const groundY = height * 0.95;
-
-    let seed = 123; // Static seed for menu reproducibility
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return seed / 2147483647;
-    };
-
-    // Draw back skyline layer
-    let x = -10 * s;
-    while (x < width + 50 * s) {
-      const key = bldKeys[Math.floor(rand() * bldKeys.length)];
-      const bScale = s * 0.8;
-
-      const b = this.add.image(x, groundY, key);
-      b.setOrigin(0, 1);
-      b.setScale(bScale);
-      b.setTint(0x2d1f47); // Dark purple silhouette tint
-      b.setAlpha(0.6);
-      
-      x += b.width * bScale - 2 * s;
-    }
-
-    // Draw front skyline layer
-    x = 10 * s;
-    while (x < width + 50 * s) {
-      const key = bldKeys[Math.floor(rand() * bldKeys.length)];
-
-      const b = this.add.image(x, groundY, key);
-      b.setOrigin(0, 1);
-      b.setScale(s);
-      b.setTint(0x3d2766); // Slightly lighter front silhouette
-      b.setAlpha(0.8);
-
-      x += b.width * s - 1 * s;
-    }
   }
 }

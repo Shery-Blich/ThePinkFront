@@ -93,15 +93,22 @@ export class Day1Scene extends Phaser.Scene {
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
-    if (this.textures.exists("day1-bg")) {
+    if (this.textures.exists("day1-bg-upper")) {
       this.add
-        .image(0, 0, "day1-bg")
+        .image(0, 0, "day1-bg-upper")
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDisplaySize(width, height)
         .setDepth(-10);
     }
-    this._buildSkyline(worldWidth, this.roadTop);
+    if (this.textures.exists("day1-bg-road")) {
+      this.add
+        .image(0, 0, "day1-bg-road")
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDisplaySize(width, height)
+        .setDepth(-9);
+    }
     this._buildRoad(worldWidth, roadHeight, roadCenterY);
 
     // --- NPCs ---
@@ -241,53 +248,6 @@ export class Day1Scene extends Phaser.Scene {
 
     for (const npc of this.npcList) {
       npc.update(time, delta);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Skyline
-  // ---------------------------------------------------------------------------
-
-  /** @private */
-  _buildSkyline(worldWidth, groundY) {
-    const bldKeys = ["bld_a", "bld_b", "bld_c", "bld_d", "bld_e"];
-    const s = this.s;
-
-    let seed = 42;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return seed / 2147483647;
-    };
-
-    // Back layer
-    let x = -10 * s;
-    while (x < worldWidth + 100 * s) {
-      const key = bldKeys[Math.floor(rand() * bldKeys.length)];
-      const frame = this.textures.get(key).getSourceImage();
-      const bScale = s * 0.85;
-
-      const b = this.add.image(x, groundY, key);
-      b.setOrigin(0, 1);
-      b.setScale(bScale);
-      b.setTint(0x444460);
-      b.setAlpha(0.5);
-      b.setDepth(1);
-
-      x += frame.width * bScale - 2 * s;
-    }
-
-    // Front layer
-    x = 5 * s;
-    while (x < worldWidth + 100 * s) {
-      const key = bldKeys[Math.floor(rand() * bldKeys.length)];
-      const frame = this.textures.get(key).getSourceImage();
-
-      const b = this.add.image(x, groundY, key);
-      b.setOrigin(0, 1);
-      b.setScale(s);
-      b.setDepth(2);
-
-      x += frame.width * s - 1 * s;
     }
   }
 

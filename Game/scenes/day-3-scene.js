@@ -98,8 +98,8 @@ export class Day3Scene extends Phaser.Scene {
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
-    this._buildBackground(worldWidth, this.roadTop);
-    
+    this._buildBackground(worldWidth, this.roadTop, roadHeight);
+
     // Draw crumbling asphalt road (uses asphalt_intact/asphalt_cracked)
     this._buildCrumblingRoad(worldWidth, roadHeight);
 
@@ -268,14 +268,26 @@ export class Day3Scene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   /** @private */
-  _buildBackground(worldWidth, groundY) {
-    const texture = this.textures.get('day3-bg').getSourceImage();
-    const scale = groundY / texture.height;
-    const displayWidth = texture.width * scale;
+  _buildBackground(worldWidth, groundY, roadHeight) {
+    // Sky/buildings backdrop, above the road
+    const upperTexture = this.textures.get('day3-bg-upper').getSourceImage();
+    const upperScale = groundY / upperTexture.height;
+    const upperDisplayWidth = upperTexture.width * upperScale;
 
-    for (let x = displayWidth / 2; x < worldWidth + displayWidth / 2; x += displayWidth) {
-      const bg = this.add.image(x, groundY / 2, 'day3-bg');
-      bg.setDisplaySize(displayWidth, groundY);
+    for (let x = upperDisplayWidth / 2; x < worldWidth + upperDisplayWidth / 2; x += upperDisplayWidth) {
+      const bg = this.add.image(x, groundY / 2, 'day3-bg-upper');
+      bg.setDisplaySize(upperDisplayWidth, groundY);
+      bg.setDepth(1);
+    }
+
+    // Road-art backdrop, behind the crumbling asphalt/stone tiles
+    const roadTexture = this.textures.get('day3-bg-road').getSourceImage();
+    const roadScale = roadHeight / roadTexture.height;
+    const roadDisplayWidth = roadTexture.width * roadScale;
+
+    for (let x = roadDisplayWidth / 2; x < worldWidth + roadDisplayWidth / 2; x += roadDisplayWidth) {
+      const bg = this.add.image(x, groundY + roadHeight / 2, 'day3-bg-road');
+      bg.setDisplaySize(roadDisplayWidth, roadHeight);
       bg.setDepth(1);
     }
   }
