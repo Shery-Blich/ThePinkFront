@@ -20,10 +20,12 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    this.load.image('player', 'assets/Shlomi.png');
-    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
+    this.load.image('player', 'assets/Characters/Shlomi.png');
+    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona-Road.png');
+    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona-No Road.png');
     this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
-    this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona.png');
+    this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona-Road.png');
+    this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona-No Road.png');
     this.load.image('cashier-character', 'assets/Characters/kupaee.png');
     this.load.image('npc-yuval', 'assets/Characters/Yuval.png');
     this.load.image('npc-shiri', 'assets/Characters/Shiri.png');
