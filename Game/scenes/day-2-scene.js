@@ -65,6 +65,7 @@ export class Day2Scene extends Phaser.Scene {
     this._isScrollingStarted = false;
     this._dialogActive = true;
     this._lastNoMoneyToastTime = 0;
+    this._cashierDialogStarted = false;
 
     this._moveDirection = 0;
     this._collectedCount = 0; 
@@ -505,7 +506,146 @@ export class Day2Scene extends Phaser.Scene {
     }
 
     this._playSound('cashier');
-    this.triggerSceneOver();
+    this._runCashierDialog();
+  }
+
+  _runCashierDialog() {
+    if (this._cashierDialogStarted) {
+      return;
+    }
+    this._cashierDialogStarted = true;
+
+    // Freeze the player in place while the closing dialogue plays out
+    this.joystick?.disable();
+    if (this.player && this.player.body) {
+      this.player.body.setVelocity(0, 0);
+      this.player.body.moves = false;
+    }
+
+    const playerLine = `איך יצא לי ${this._collectedCount} מוצרים ב67₪?!`;
+    this._showSpeechBubble(this.player, playerLine, {
+      offsetY: 18 * this.s,
+      duration: 2000,
+    });
+
+    this.time.delayedCall(2200, () => {
+      const cashierTarget = this.finishZone;
+      this._showSpeechBubble(cashierTarget, 'יאללה לא מעניין! הבא בתור!', {
+        offsetY: 55,
+        duration: 1600,
+      });
+
+      this.time.delayedCall(1800, () => {
+        this.triggerSceneOver();
+      });
+    });
+  }
+
+  /**
+   * Renders a literal cartoon-style speech bubble: a rounded white bubble
+   * with a black outline and a small triangular tail pointing at the
+   * speaker's head, with the text centered inside. Pops in, holds, then
+   * fades out and is destroyed.
+   */
+  _showSpeechBubble(target, text, options = {}) {
+    if (!target) {
+      return null;
+    }
+
+    const {
+      offsetY = 25,
+      duration = 1800,
+      fontSize = '15px',
+      textColor = '#1f2937',
+      fillColor = 0xffffff,
+      strokeColor = 0x1f2937,
+      maxWidth = 230,
+    } = options;
+
+    const anchorX = target.x;
+    const anchorY = target.y - offsetY;
+
+    // Build the label first so the bubble can be sized around it.
+    const label = this.add.text(0, 0, text, {
+      fontFamily: 'Arial',
+      fontSize,
+      color: textColor,
+      align: 'center',
+      wordWrap: { width: maxWidth - 28 },
+    }).setOrigin(0.5, 0.5);
+
+    const paddingX = 16;
+    const paddingY = 12;
+    const bubbleWidth = label.width + paddingX * 2;
+    const bubbleHeight = label.height + paddingY * 2;
+    const cornerRadius = 14;
+    const tailWidth = 16;
+    const tailHeight = 10;
+
+    // The tail tip sits at local (0,0) — i.e. right at the speaker's head —
+    // and the rounded bubble body floats above it.
+    const bubbleCenterY = -(bubbleHeight / 2) - tailHeight;
+    const rectX = -bubbleWidth / 2;
+    const rectY = bubbleCenterY - bubbleHeight / 2;
+
+    const graphics = this.add.graphics();
+
+    // Soft drop shadow for a bit of cartoon depth.
+    graphics.fillStyle(0x000000, 0.15);
+    graphics.fillRoundedRect(rectX + 3, rectY + 4, bubbleWidth, bubbleHeight, cornerRadius);
+
+    // Bubble body.
+    graphics.fillStyle(fillColor, 1);
+    graphics.fillRoundedRect(rectX, rectY, bubbleWidth, bubbleHeight, cornerRadius);
+    graphics.lineStyle(3, strokeColor, 1);
+    graphics.strokeRoundedRect(rectX, rectY, bubbleWidth, bubbleHeight, cornerRadius);
+
+    // Pointer tail from the bottom of the bubble down to the speaker.
+    const tailBaseY = rectY + bubbleHeight - 2;
+    graphics.fillStyle(fillColor, 1);
+    graphics.fillTriangle(
+      -tailWidth / 2, tailBaseY,
+      tailWidth / 2, tailBaseY,
+      0, 0,
+    );
+    graphics.lineStyle(3, strokeColor, 1);
+    graphics.beginPath();
+    graphics.moveTo(-tailWidth / 2, tailBaseY);
+    graphics.lineTo(0, 0);
+    graphics.moveTo(tailWidth / 2, tailBaseY);
+    graphics.lineTo(0, 0);
+    graphics.strokePath();
+
+    label.setPosition(0, bubbleCenterY);
+
+    const container = this.add.container(anchorX, anchorY, [graphics, label]);
+    container.setDepth(2000);
+    container.setScale(0.3);
+    container.setAlpha(0);
+
+    // Cartoon pop-in.
+    this.tweens.add({
+      targets: container,
+      scale: 1,
+      alpha: 1,
+      duration: 220,
+      ease: 'Back.easeOut',
+    });
+
+    // Hold, then float up and fade out.
+    this.tweens.add({
+      targets: container,
+      y: anchorY - 15,
+      alpha: 0,
+      delay: duration,
+      duration: 350,
+      ease: 'Cubic.easeIn',
+      onComplete: () => {
+        container.destroy();
+      },
+    });
+
+    return container;
   }
 
   collectProduct(player, product) {
