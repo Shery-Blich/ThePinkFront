@@ -57,7 +57,7 @@ const config = {
 const game = new Phaser.Game(config);
 window.game = game; // Expose globally for resize handling
 
-window.addEventListener('start-game', () => {
+window.addEventListener("start-game", () => {
   LivesManager.showHUD();
   resetLevelTrivia();
   resetGlobalScore();
@@ -66,13 +66,13 @@ window.addEventListener('start-game', () => {
 
 // Connect all the stages in chronological order using the Orchestrator
 new SceneOrchestrator(game, [
-  Day1Scene,
-  Day2Scene,
+  //   Day1Scene,
+  //   Day2Scene,
   Day3Scene,
   Day4Scene,
   Day5Scene,
-  KotelScene,
-  FinalScene,
+  //   KotelScene,
+  //   FinalScene,
 ]);
 
 // Mount the Vue trivia overlay component
