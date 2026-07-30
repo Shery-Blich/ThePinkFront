@@ -5,6 +5,7 @@ import { DialogSystem } from '../systems/dialog-system.js';
 import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper } from '../systems/level-ui-helper.js';
+import { LivesManager } from '../systems/lives-manager.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -352,7 +353,7 @@ export class KotelScene extends Phaser.Scene {
 
   /** @private */
   _createHUD() {
-    // Instructions HUD is removed
+    LivesManager.showHUD();
   }
 
   /** @private */

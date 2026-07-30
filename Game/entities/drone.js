@@ -160,12 +160,8 @@ export class Drone {
     // 3. Camera rumble
     this.scene.cameras.main.shake(150, 0.006);
 
-    // 4. Invoke general callback
-    if (this.config.onExplode) {
-      this.config.onExplode(this.tx, this.ty);
-    }
-
-    // 5. Collision check (distance to center-body)
+    // 4. Collision check (distance to center-body)
+    let wasHit = false;
     const player = this.config.player;
     if (player) {
       const distance = Phaser.Math.Distance.Between(
@@ -175,10 +171,16 @@ export class Drone {
         this.ty
       );
       if (distance < this.explosionRadius) {
+        wasHit = true;
         if (this.config.onPlayerHit) {
           this.config.onPlayerHit();
         }
       }
+    }
+
+    // 5. Invoke general callback with collision result
+    if (this.config.onExplode) {
+      this.config.onExplode(this.tx, this.ty, wasHit);
     }
   }
 

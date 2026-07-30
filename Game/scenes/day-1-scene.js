@@ -11,12 +11,15 @@ import {
 } from "../data/dialog-data.js";
 import { startSceneMusic } from "../systems/bg-music.js";
 import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
+import { LivesManager } from "../systems/lives-manager.js";
 import {
   trackSceneStarted,
   trackFirstMove,
   trackObstacleHit,
   trackGameFailed,
 } from "../analytics.js";
+
+import { addGlobalScore } from "../systems/score-manager.js";
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -102,15 +105,14 @@ export class Day1Scene extends Phaser.Scene {
     this._buildRoad(worldWidth, roadHeight, roadCenterY);
 
     // --- NPCs ---
-    const npcSpacing = worldWidth / 12;
+    const npcCount = 22;
+    const npcSpacing = worldWidth / (npcCount + 1);
     const npcPositions = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < npcCount; i++) {
+      const laneOffset = (i % 4) * 0.2 + 0.15;
       npcPositions.push({
         x: npcSpacing * (i + 1),
-        y:
-          i % 2 === 0
-            ? this.roadTop + roadHeight * 0.35
-            : this.roadTop + roadHeight * 0.7,
+        y: this.roadTop + roadHeight * laneOffset,
       });
     }
 
@@ -182,8 +184,22 @@ export class Day1Scene extends Phaser.Scene {
       trackObstacleHit("drone", "kiryat_shmona", { drones_dodged: count });
     });
 
+    this.droneManager.on("drone-dodged", () => {
+      if (this.player) {
+        addGlobalScore(this, 2, this.player.x, this.player.y);
+      }
+    });
+
     this.droneManager.on("player-hit", () => {
-      this.triggerGameOver();
+      if (this.isGameOver || this.isSceneOver) return;
+      if (this.player && this.player.isInvulnerable) return;
+
+      const remaining = LivesManager.deductLife();
+      if (remaining > 0) {
+        if (this.player) this.player.takeDamage();
+      } else {
+        this.triggerGameOver();
+      }
     });
 
     this.droneManager.on("all-drones-dodged", () => {
@@ -224,7 +240,7 @@ export class Day1Scene extends Phaser.Scene {
     }
 
     for (const npc of this.npcList) {
-      npc.depthSort();
+      npc.update(time, delta);
     }
   }
 
@@ -341,6 +357,7 @@ export class Day1Scene extends Phaser.Scene {
 
   /** @private */
   _createHUD() {
+    LivesManager.showHUD();
     if (typeof window.showHUD === 'function') {
       window.showHUD('html-stats-hud', "רחפנים שחמקת מהם: 0/10");
     }

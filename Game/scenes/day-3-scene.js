@@ -7,6 +7,8 @@ import { DroneManager } from '../systems/drone-manager.js';
 import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
+import { LivesManager } from '../systems/lives-manager.js';
+import { addGlobalScore } from '../systems/score-manager.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -149,7 +151,15 @@ export class Day3Scene extends Phaser.Scene {
     });
 
     this.droneManager.on('player-hit', () => {
-      this.triggerGameOver('DRONE_HIT');
+      if (this.isGameOver || this.isSceneOver) return;
+      if (this.player && this.player.isInvulnerable) return;
+
+      const remaining = LivesManager.deductLife();
+      if (remaining > 0) {
+        if (this.player) this.player.takeDamage();
+      } else {
+        this.triggerGameOver('DRONE_HIT');
+      }
     });
 
     this.droneManager.on('all-drones-dodged', () => {
@@ -340,10 +350,18 @@ export class Day3Scene extends Phaser.Scene {
     if (col >= 0 && col < this.colsCount && row >= 0 && row < this.rowsCount) {
       const tile = this.roadTiles[col][row];
 
-      // If the player walks onto an already crumbled tile -> fall and die!
+      // If the player walks onto an already crumbled tile -> fall and take damage!
       if (tile.state === 'CRUMBLED') {
-        this.triggerGameOver('FELL_THROUGH');
-        return;
+        if (!this.player.isInvulnerable) {
+          const remaining = LivesManager.deductLife();
+          if (remaining > 0) {
+            this.player.takeDamage();
+            this.player.x += 40 * this.s;
+          } else {
+            this.triggerGameOver('FELL_THROUGH');
+            return;
+          }
+        }
       }
 
       // If player touches a normal tile -> trigger the warning self-destruct sequence instantly
@@ -393,12 +411,20 @@ export class Day3Scene extends Phaser.Scene {
         // Remove from active warning list
         this.warningTiles.splice(i, 1);
 
-        // If the player is still standing on this tile when it crumbles -> fall and die!
+        // If the player is still standing on this tile when it crumbles -> fall and take damage!
         const pCol = Math.floor(this.player.x / this.tileW);
         const pRow = Math.floor((this.player.y - this.roadTop) / this.tileH);
         if (pCol === tile.col && pRow === tile.row) {
-          this.triggerGameOver('FELL_THROUGH');
-          return;
+          if (!this.player.isInvulnerable) {
+            const remaining = LivesManager.deductLife();
+            if (remaining > 0) {
+              this.player.takeDamage();
+              this.player.x += 40 * this.s;
+            } else {
+              this.triggerGameOver('FELL_THROUGH');
+              return;
+            }
+          }
         }
       }
     }
@@ -410,6 +436,7 @@ export class Day3Scene extends Phaser.Scene {
 
   /** @private */
   _createHUD() {
+    LivesManager.showHUD();
     if (typeof window.showHUD === 'function') {
       window.showHUD('html-stats-hud', 'רחפנים שחמקת מהם: 0/5');
     }
@@ -531,6 +558,9 @@ export class Day3Scene extends Phaser.Scene {
             y: doorY,
             duration: 1200,
             onComplete: () => {
+              // Award 10 points right as the player gets on the bus!
+              addGlobalScore(this, 10, doorX, doorY);
+
               // Player entered the bus! Make invisible
               this.player.setVisible(false);
 
