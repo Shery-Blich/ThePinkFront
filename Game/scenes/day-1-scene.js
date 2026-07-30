@@ -19,6 +19,8 @@ import {
   trackGameFailed,
 } from "../analytics.js";
 
+import { addGlobalScore } from "../systems/score-manager.js";
+
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
  *
@@ -180,6 +182,12 @@ export class Day1Scene extends Phaser.Scene {
     this.droneManager.on("drone-exploded", (count) => {
       this._updateDroneHUD(count);
       trackObstacleHit("drone", "kiryat_shmona", { drones_dodged: count });
+    });
+
+    this.droneManager.on("drone-dodged", () => {
+      if (this.player) {
+        addGlobalScore(this, 2, this.player.x, this.player.y);
+      }
     });
 
     this.droneManager.on("player-hit", () => {

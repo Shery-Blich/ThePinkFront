@@ -101,8 +101,8 @@ export class DroneManager extends Phaser.Events.EventEmitter {
     const drone = new Drone(this.scene, tx, ty, this.config.scale, {
       particles: this.config.particles,
       player: this.player,
-      onExplode: () => {
-        this.handleDroneExplode(drone);
+      onExplode: (tx, ty, wasHit) => {
+        this.handleDroneExplode(drone, wasHit);
       },
       onPlayerHit: () => {
         this.emit('player-hit');
@@ -115,9 +115,10 @@ export class DroneManager extends Phaser.Events.EventEmitter {
   /**
    * Internal handler when a drone finishes explosion.
    * @param {Drone} drone 
+   * @param {boolean} [wasHit=false]
    * @private
    */
-  handleDroneExplode(drone) {
+  handleDroneExplode(drone, wasHit = false) {
     // Remove from active list
     const index = this.activeDrones.indexOf(drone);
     if (index !== -1) {
@@ -125,7 +126,10 @@ export class DroneManager extends Phaser.Events.EventEmitter {
     }
 
     this.dronesExploded++;
-    this.emit('drone-exploded', this.dronesExploded);
+    this.emit('drone-exploded', this.dronesExploded, wasHit);
+    if (!wasHit) {
+      this.emit('drone-dodged', this.dronesExploded);
+    }
 
     if (this.dronesExploded === this.maxDrones) {
       this.stop();

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { Player } from "../entities/player.js";
 import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
 import { LivesManager } from "../systems/lives-manager.js";
+import { addGlobalScore } from "../systems/score-manager.js";
 
 export class Day5Scene extends Phaser.Scene {
   constructor() {
@@ -15,7 +16,7 @@ export class Day5Scene extends Phaser.Scene {
     this._score = 0;
     this._lives = 3;
     this._lastColors = [];
-    this._TARGET = 10;
+    this._TARGET = 5;
     this._gameActive = false;
     this._sceneEnded = false;
 
@@ -621,10 +622,21 @@ export class Day5Scene extends Phaser.Scene {
       duration: 180,
       onComplete: () => cat.img.destroy(),
     });
+    const px = this._player ? this._player.x : cat.img.x;
+    const py = this._player ? this._player.y : cat.img.y;
+
     this._cats.splice(i, 1);
     this._score++;
     this._updateHUD();
     this.sound.play("sfx-catbag", { volume: 0.6 });
+
+    // 3 points per item collected
+    addGlobalScore(this, 3, px, py);
+
+    // Bonus 5 points for collecting all 5 items
+    if (this._score >= this._TARGET) {
+      addGlobalScore(this, 5, px, py);
+    }
 
     const color = cat.img.texture.key.replace("day5_cat_", "");
     this._lastColors.push(color);

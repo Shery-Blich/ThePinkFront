@@ -10,6 +10,8 @@ import { MovementTutorial } from '../systems/movement-tutorial.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
 import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
 
+import { addGlobalScore } from '../systems/score-manager.js';
+
 const WORLD_CHARS_WIDE = 120;
 const PRODUCT_COUNT = 12;
 const BLOCK_HEIGHT = 50;
@@ -51,6 +53,8 @@ export class Day2Scene extends Phaser.Scene {
 
   create() {
     this.score = 67.0;
+    this._totalShekelsSpent = 0;
+    this._shekelPointsAwarded = 0;
     this.isGameOver = false;
     this.isSceneOver = false;
     this._errorMessages = [];
@@ -525,6 +529,17 @@ export class Day2Scene extends Phaser.Scene {
       : (typeof actualProduct.price === 'number' ? actualProduct.price : 0);
 
     this.score = Math.max(0, this.score - price);
+
+    // Track total shekels spent for global score (1 point per 3 shekels, capped at 20 points max for stage 2)
+    this._totalShekelsSpent = (this._totalShekelsSpent || 0) + price;
+    const totalShekelPoints = Math.min(20, Math.floor(this._totalShekelsSpent / 3));
+    const newPoints = totalShekelPoints - (this._shekelPointsAwarded || 0);
+    if (newPoints > 0) {
+      this._shekelPointsAwarded = totalShekelPoints;
+      const px = this.player ? this.player.x : actualProduct.x;
+      const py = this.player ? this.player.y : actualProduct.y;
+      addGlobalScore(this, newPoints, px, py);
+    }
 
     if (actualProduct.priceLabel) {
       actualProduct.priceLabel.destroy();

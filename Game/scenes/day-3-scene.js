@@ -8,6 +8,7 @@ import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
+import { addGlobalScore } from '../systems/score-manager.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -557,6 +558,9 @@ export class Day3Scene extends Phaser.Scene {
             y: doorY,
             duration: 1200,
             onComplete: () => {
+              // Award 10 points right as the player gets on the bus!
+              addGlobalScore(this, 10, doorX, doorY);
+
               // Player entered the bus! Make invisible
               this.player.setVisible(false);
 

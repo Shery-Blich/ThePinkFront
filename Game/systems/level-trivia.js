@@ -1,4 +1,6 @@
 import { loadTriviaQuestions, getTriviaQuestions } from '../data/trivia-questions.js';
+import { getGlobalScore } from './score-manager.js';
+
 const TRIVIA_SCENE_ORDER = [
   'Day1Scene',
   'Day2Scene',
@@ -36,7 +38,7 @@ function dispatchScoreUpdate() {
 
   window.dispatchEvent(new CustomEvent('trivia-score-updated', {
     detail: {
-      score: state.score,
+      score: getGlobalScore(),
       maxScore: getMaxScore(),
       correctAnswers: state.correctAnswers,
       answeredQuestions: state.answeredQuestions,
@@ -130,7 +132,6 @@ export async function runLevelTrivia(scene, sceneKey) {
     state.answeredQuestions += 1;
     if (result.isCorrect) {
       state.correctAnswers += 1;
-      state.score += getPointsPerCorrect();
     }
     dispatchScoreUpdate();
   }
@@ -151,8 +152,9 @@ export function resetLevelTrivia() {
 
 export function getTriviaScoreSummary() {
   const state = getTriviaState();
+  const globalScore = window.__globalScoreState ? window.__globalScoreState.score : 0;
   return {
-    score: state.score,
+    score: globalScore,
     maxScore: getMaxScore(),
     correctAnswers: state.correctAnswers,
     answeredQuestions: state.answeredQuestions,

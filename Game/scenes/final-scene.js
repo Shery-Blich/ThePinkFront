@@ -3,7 +3,7 @@ import { DialogSystem } from '../systems/dialog-system.js';
 import { Character } from '../entities/character.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { trackGameCompleted } from '../analytics.js';
-import { getTriviaScoreSummary } from '../systems/level-trivia.js';
+import { getGlobalScoreSummary } from '../systems/score-manager.js';
 
 /**
  * FinalScene — The voting booth climax.
@@ -114,7 +114,7 @@ export class FinalScene extends Phaser.Scene {
    * Delegates the display of the final score screen to the responsive HTML overlay APIs.
    */
   showScorePopup() {
-    const scoreSummary = getTriviaScoreSummary();
+    const scoreSummary = getGlobalScoreSummary();
     trackGameCompleted({
       score: scoreSummary.score,
       max_score: scoreSummary.maxScore,

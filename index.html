@@ -1672,34 +1672,35 @@
     }
 
     window.showScorePopup = (scoreSummary = {}) => {
+      window.__lastScoreSummary = scoreSummary;
       const score = Math.round(scoreSummary.score ?? 0);
       const maxScore = scoreSummary.maxScore || 100;
       const correctAnswers = scoreSummary.correctAnswers ?? 0;
-      const totalQuestions = scoreSummary.totalQuestions ?? 0;
+      const totalQuestions = scoreSummary.answeredQuestions || scoreSummary.totalQuestions || 0;
 
       popupScoreBadge.textContent = `★ ${score} / ${maxScore} ★`;
       popupScoreTitle.textContent = getScoreTitle(correctAnswers);
-      popupScoreSubtitle.textContent = `${correctAnswers}/${totalQuestions} תשובות נכונות`;
+      popupScoreSubtitle.textContent = `ענית נכון על ${correctAnswers}/${totalQuestions} שאלות!`;
 
       scoreHud.style.display = 'none';
 
-       const popup = document.getElementById('html-score-popup');
-       popup.classList.add('active');
-       popup.style.display = ''; // Clear inline 'none' display to let CSS take over
-       popup.offsetHeight; // force reflow
-       popup.style.opacity = '1';
- 
-       // Load/init credits automatically when score popup is displayed
-       initCredits();
-     };
- 
-     window.hideScorePopup = () => {
-       const popup = document.getElementById('html-score-popup');
-       popup.style.opacity = '0';
-       setTimeout(() => {
-         popup.classList.remove('active');
-         popup.style.display = 'none';
-       }, 400);
+      const popup = document.getElementById('html-score-popup');
+      popup.classList.add('active');
+      popup.style.display = ''; // Clear inline 'none' display to let CSS take over
+      popup.offsetHeight; // force reflow
+      popup.style.opacity = '1';
+
+      // Load/init credits automatically when score popup is displayed
+      initCredits();
+    };
+
+    window.hideScorePopup = () => {
+      const popup = document.getElementById('html-score-popup');
+      popup.style.opacity = '0';
+      setTimeout(() => {
+        popup.classList.remove('active');
+        popup.style.display = 'none';
+      }, 400);
 
       // Hide mobile overlay if open
       const mobileOverlay = document.getElementById('credits-mobile-overlay');
@@ -1731,8 +1732,13 @@
 
     // Share action
     document.getElementById('popup-share-btn').addEventListener('click', () => {
-      const scoreText = popupScoreBadge.textContent.replace(/★/g, '').trim();
-      const shareText = `קיבלתי ${scoreText}, נסו לנצח את הניקוד שלי!`;
+      const summary = window.__lastScoreSummary || window.__globalScoreSummary || {};
+      const score = Math.round(summary.score ?? 0);
+      const maxScore = summary.maxScore || 100;
+      const correctAnswers = summary.correctAnswers ?? 0;
+      const totalQuestions = summary.answeredQuestions || summary.totalQuestions || 0;
+
+      const shareText = `קיבלתי ${score}/${maxScore} ניקוד ועניתי נכון על ${correctAnswers}/${totalQuestions} שאלות! נסו לנצח אותי!`;
       const shareUrl = window.location.href;
 
       if (navigator.share) {
