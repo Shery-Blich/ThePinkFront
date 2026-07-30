@@ -102,15 +102,14 @@ export class Day1Scene extends Phaser.Scene {
     this._buildRoad(worldWidth, roadHeight, roadCenterY);
 
     // --- NPCs ---
-    const npcSpacing = worldWidth / 12;
+    const npcCount = 22;
+    const npcSpacing = worldWidth / (npcCount + 1);
     const npcPositions = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < npcCount; i++) {
+      const laneOffset = (i % 4) * 0.2 + 0.15;
       npcPositions.push({
         x: npcSpacing * (i + 1),
-        y:
-          i % 2 === 0
-            ? this.roadTop + roadHeight * 0.35
-            : this.roadTop + roadHeight * 0.7,
+        y: this.roadTop + roadHeight * laneOffset,
       });
     }
 
@@ -224,7 +223,7 @@ export class Day1Scene extends Phaser.Scene {
     }
 
     for (const npc of this.npcList) {
-      npc.depthSort();
+      npc.update(time, delta);
     }
   }
 
