@@ -51,10 +51,77 @@ export class Player extends Character {
       speed: this.baseSpeed,
     });
 
+    /** @type {boolean} Invulnerability status after taking damage */
+    this.isInvulnerable = false;
+
     // Forward movement events so external systems (like Day1Scene HUD) can listen directly on the player
     this.movement.on('move-start', (payload) => this.emit('move-start', payload));
     this.movement.on('move-end', (payload) => this.emit('move-end', payload));
     this.movement.on('move-blocked', (payload) => this.emit('move-blocked', payload));
+  }
+
+  /**
+   * Triggers visual/audio damage effect on the player:
+   * - Sets temporary invulnerability
+   * - Red tint flash + camera shake
+   * - Floating "-1 ♥" text
+   * - Sprite flicker/blink
+   * @param {number} [invulnerabilityMs=1500]
+   * @returns {boolean} Whether damage effect was applied
+   */
+  takeDamage(invulnerabilityMs = 1500) {
+    if (this.isInvulnerable) return false;
+
+    this.isInvulnerable = true;
+
+    // Red tint flash
+    this.setTint(0xff0000);
+
+    // Camera shake
+    if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+      this.scene.cameras.main.shake(200, 0.01);
+    }
+
+    // Play damage sound if available
+    if (this.scene && this.scene.sound && this.scene.cache && this.scene.cache.audio && this.scene.cache.audio.exists('sfx-gameover')) {
+      this.scene.sound.play('sfx-gameover', { volume: 0.3 });
+    }
+
+    // Floating damage indicator text
+    const s = this.s || 1;
+    const damageText = this.scene.add.text(this.x, this.y - 25 * s, '-1 ♥', {
+      fontFamily: 'Rubik, sans-serif',
+      fontSize: `${Math.max(14, Math.round(16 * s))}px`,
+      fontWeight: '900',
+      color: '#dc2626',
+      stroke: '#ffffff',
+      strokeThickness: 2 * s,
+    }).setOrigin(0.5, 1).setDepth(3000);
+
+    this.scene.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30 * s,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => damageText.destroy(),
+    });
+
+    // Sprite blink animation
+    const blinkRepeat = Math.max(2, Math.floor(invulnerabilityMs / 200));
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.3,
+      duration: 100,
+      yoyo: true,
+      repeat: blinkRepeat,
+      onComplete: () => {
+        this.setAlpha(1);
+        this.clearTint();
+        this.isInvulnerable = false;
+      },
+    });
+
+    return true;
   }
 
   /**

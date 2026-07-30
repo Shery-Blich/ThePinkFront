@@ -11,6 +11,7 @@ import {
 } from "../data/dialog-data.js";
 import { startSceneMusic } from "../systems/bg-music.js";
 import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
+import { LivesManager } from "../systems/lives-manager.js";
 import {
   trackSceneStarted,
   trackFirstMove,
@@ -182,7 +183,15 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     this.droneManager.on("player-hit", () => {
-      this.triggerGameOver();
+      if (this.isGameOver || this.isSceneOver) return;
+      if (this.player && this.player.isInvulnerable) return;
+
+      const remaining = LivesManager.deductLife();
+      if (remaining > 0) {
+        if (this.player) this.player.takeDamage();
+      } else {
+        this.triggerGameOver();
+      }
     });
 
     this.droneManager.on("all-drones-dodged", () => {
@@ -340,6 +349,7 @@ export class Day1Scene extends Phaser.Scene {
 
   /** @private */
   _createHUD() {
+    LivesManager.showHUD();
     if (typeof window.showHUD === 'function') {
       window.showHUD('html-stats-hud', "רחפנים שחמקת מהם: 0/10");
     }

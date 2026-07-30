@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { Player } from "../entities/player.js";
 import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
+import { LivesManager } from "../systems/lives-manager.js";
 
 export class Day5Scene extends Phaser.Scene {
   constructor() {
@@ -642,14 +643,18 @@ export class Day5Scene extends Phaser.Scene {
   }
 
   _missCat(i) {
-    if (this._lives <= 0) return;
+    if (LivesManager.getLives() <= 0) return;
     const cat = this._cats[i];
     this.tweens.killTweensOf(cat.img);
     cat.img.destroy();
     this._cats.splice(i, 1);
-    this._lives--;
-    this._updateHUD();
+    
+    const remaining = LivesManager.deductLife();
     this.sound.play("sfx-meow", { volume: 0.6 });
+
+    if (this._player) {
+      this._player.takeDamage();
+    }
 
     const flash = this.add.graphics();
     flash.fillStyle(0xff2222, 0.28);
@@ -662,30 +667,25 @@ export class Day5Scene extends Phaser.Scene {
       onComplete: () => flash.destroy(),
     });
 
-    if (this._lives <= 0) this._triggerGameOver();
+    if (remaining <= 0) this._triggerGameOver();
   }
 
   // ─── HUD ──────────────────────────────────────────────────────
 
   _createHUD() {
+    LivesManager.showHUD();
     if (typeof window.showHUD === "function") {
       window.showHUD("html-stats-hud", `חתולים: 0 / ${this._TARGET}`);
-      window.showHUD("html-lives-hud", "♥ ♥ ♥");
       window.hideHUD("html-speed-hud");
     }
   }
 
   _updateHUD() {
+    LivesManager.updateHUD();
     if (typeof window.updateHUDText === "function") {
       window.updateHUDText(
         "html-stats-hud",
         `חתולים: ${this._score} / ${this._TARGET}`,
-      );
-      const full = "♥ ".repeat(this._lives).trimEnd();
-      const empty = "♡ ".repeat(3 - this._lives).trimEnd();
-      window.updateHUDText(
-        "html-lives-hud",
-        [full, empty].filter(Boolean).join(" "),
       );
     }
   }

@@ -5,6 +5,7 @@ import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
+import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
 import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
@@ -187,8 +188,16 @@ export class Day2Scene extends Phaser.Scene {
       const leftEdge = cam.scrollX;
       const loseMargin = 8;
       if (this.player.x < leftEdge + loseMargin) {
-        this.triggerGameOver('LEFT_BEHIND');
-        return;
+        if (!this.player.isInvulnerable) {
+          const remaining = LivesManager.deductLife();
+          if (remaining > 0) {
+            this.player.takeDamage();
+            this.player.x = leftEdge + 60 * this.s;
+          } else {
+            this.triggerGameOver('LEFT_BEHIND');
+            return;
+          }
+        }
       }
 
       // Clamp player to prevent escaping the right screen border
@@ -469,6 +478,7 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   _createHUD() {
+    LivesManager.showHUD();
     if (typeof window.showHUD === 'function') {
       window.showHUD('html-stats-hud', `תקציב: ${this._formatPrice(this.score)}`);
     }

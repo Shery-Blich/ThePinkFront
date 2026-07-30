@@ -1,4 +1,5 @@
 import { runLevelTrivia, hasLevelTrivia } from './level-trivia.js';
+import { LivesManager } from './lives-manager.js';
 
 /**
  * Helper to show victory screen and handle the transition to the level trivia.

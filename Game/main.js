@@ -10,6 +10,7 @@ import { KotelScene } from "./scenes/kotel-scene.js";
 import { FinalScene } from "./scenes/final-scene.js";
 import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
 import { resetLevelTrivia } from "./systems/level-trivia.js";
+import { LivesManager } from "./systems/lives-manager.js";
 import { trackGameStarted } from "./analytics.js";
 import TriviaOverlay from "./components/trivia-overlay.vue";
 
@@ -56,6 +57,7 @@ const game = new Phaser.Game(config);
 window.game = game; // Expose globally for resize handling
 
 window.addEventListener('start-game', () => {
+  LivesManager.showHUD();
   resetLevelTrivia();
   trackGameStarted();
 });

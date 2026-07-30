@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { LivesManager } from './lives-manager.js';
 
 /**
  * SceneOrchestrator — Connects and manages scene flow.
@@ -174,6 +175,7 @@ export class SceneOrchestrator {
    */
   resetToMainMenu() {
     window.gameStarted = false;
+    LivesManager.hideHUD();
 
     // Display the HTML welcome/menu screen again with smooth transition
     const menu = document.getElementById('html-menu');

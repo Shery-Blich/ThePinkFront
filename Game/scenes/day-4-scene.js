@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { startSceneMusic } from "../systems/bg-music.js";
 import { showVictoryHelper } from "../systems/level-ui-helper.js";
+import { LivesManager } from "../systems/lives-manager.js";
 
 /**
  * Day4Scene — Cutscene: bus ride from Kiryat Shmona to Jerusalem.
@@ -37,6 +38,7 @@ export class Day4Scene extends Phaser.Scene {
   }
 
   create() {
+    LivesManager.showHUD();
     const { width, height } = this.scale;
     this.cameras.main.fadeIn(700);
     this._genBackgroundTextures(width, height);
