@@ -1,6 +1,19 @@
 import Phaser from "phaser";
 import { Player } from "../entities/player.js";
-import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
+import {
+  showVictoryHelper,
+  showGameOverHelper,
+} from "../systems/level-ui-helper.js";
+
+// Preloaded in boot-scene.js from assets/Characters/
+const CHARACTER_KEYS = [
+  "cashier-character",
+  "npc-yuval",
+  "npc-shiri",
+  "judge-portrait",
+  "nassi-1",
+  "nassi-2",
+];
 
 export class Day5Scene extends Phaser.Scene {
   constructor() {
@@ -90,163 +103,6 @@ export class Day5Scene extends Phaser.Scene {
     if (!this.textures.exists("bus_hills")) this._genHillTile(width, height);
     if (!this.textures.exists("bus_ground")) this._genGroundTile();
     if (!this.textures.exists("bus_road_tile")) this._genRoadTile(height);
-    for (const v of ["orange", "black", "white", "pink"]) {
-      if (!this.textures.exists(`day5_cat_${v}`))
-        this._genCatTexture(height, v);
-    }
-  }
-
-  _genCatTexture(height, variant) {
-    const palette = {
-      orange: {
-        body: 0xe07830,
-        stripe: 0xb05a18,
-        leg: 0xd06820,
-        ear: 0xff9999,
-      },
-      black: { body: 0x282828, stripe: 0x111111, leg: 0x1e1e1e, ear: 0xcc7777 },
-      white: { body: 0xf2f2f2, stripe: 0xcccccc, leg: 0xe0e0e0, ear: 0xffbbbb },
-      pink: { body: 0xff88cc, stripe: 0xdd55aa, leg: 0xee77bb, ear: 0xff99dd },
-    };
-    const c = palette[variant] ?? palette.orange;
-    const s = this._s(height);
-    const w = Math.round(18 * s);
-    const h = Math.round(20 * s);
-    const g = this.add.graphics();
-
-    // Body + head
-    g.fillStyle(c.body, 1);
-    g.fillEllipse(w / 2, h * 0.68, w * 0.82, h * 0.52);
-    g.fillCircle(w / 2, h * 0.28, h * 0.24);
-
-    // Ears
-    g.fillStyle(c.body, 1);
-    g.fillTriangle(
-      Math.round(w * 0.18),
-      Math.round(h * 0.18),
-      Math.round(w * 0.32),
-      Math.round(h * 0.04),
-      Math.round(w * 0.44),
-      Math.round(h * 0.18),
-    );
-    g.fillTriangle(
-      Math.round(w * 0.56),
-      Math.round(h * 0.18),
-      Math.round(w * 0.68),
-      Math.round(h * 0.04),
-      Math.round(w * 0.82),
-      Math.round(h * 0.18),
-    );
-    g.fillStyle(c.ear, 0.7);
-    g.fillTriangle(
-      Math.round(w * 0.22),
-      Math.round(h * 0.17),
-      Math.round(w * 0.32),
-      Math.round(h * 0.08),
-      Math.round(w * 0.42),
-      Math.round(h * 0.17),
-    );
-    g.fillTriangle(
-      Math.round(w * 0.58),
-      Math.round(h * 0.17),
-      Math.round(w * 0.68),
-      Math.round(h * 0.08),
-      Math.round(w * 0.78),
-      Math.round(h * 0.17),
-    );
-
-    // Eyes
-    g.fillStyle(0x1a1a2e, 1);
-    g.fillEllipse(
-      Math.round(w * 0.35),
-      Math.round(h * 0.26),
-      Math.round(w * 0.12),
-      Math.round(h * 0.1),
-    );
-    g.fillEllipse(
-      Math.round(w * 0.65),
-      Math.round(h * 0.26),
-      Math.round(w * 0.12),
-      Math.round(h * 0.1),
-    );
-    g.fillStyle(0x00dd77, 0.65);
-    g.fillEllipse(
-      Math.round(w * 0.35),
-      Math.round(h * 0.25),
-      Math.round(w * 0.07),
-      Math.round(h * 0.07),
-    );
-    g.fillEllipse(
-      Math.round(w * 0.65),
-      Math.round(h * 0.25),
-      Math.round(w * 0.07),
-      Math.round(h * 0.07),
-    );
-
-    // Nose
-    g.fillStyle(0xff6699, 1);
-    g.fillTriangle(
-      Math.round(w * 0.5),
-      Math.round(h * 0.34),
-      Math.round(w * 0.43),
-      Math.round(h * 0.37),
-      Math.round(w * 0.57),
-      Math.round(h * 0.37),
-    );
-
-    // Stripes
-    g.fillStyle(c.stripe, 0.5);
-    g.fillRect(
-      Math.round(w * 0.22),
-      Math.round(h * 0.52),
-      Math.round(w * 0.09),
-      Math.round(h * 0.2),
-    );
-    g.fillRect(
-      Math.round(w * 0.44),
-      Math.round(h * 0.5),
-      Math.round(w * 0.09),
-      Math.round(h * 0.22),
-    );
-    g.fillRect(
-      Math.round(w * 0.66),
-      Math.round(h * 0.52),
-      Math.round(w * 0.09),
-      Math.round(h * 0.2),
-    );
-
-    // Tail
-    g.fillStyle(c.body, 1);
-    g.fillEllipse(
-      Math.round(w * 0.88),
-      Math.round(h * 0.8),
-      Math.round(w * 0.22),
-      Math.round(h * 0.13),
-    );
-    g.fillEllipse(
-      Math.round(w * 0.96),
-      Math.round(h * 0.7),
-      Math.round(w * 0.14),
-      Math.round(h * 0.16),
-    );
-
-    // Legs
-    g.fillStyle(c.leg, 1);
-    g.fillRect(
-      Math.round(w * 0.22),
-      Math.round(h * 0.84),
-      Math.round(w * 0.16),
-      Math.round(h * 0.14),
-    );
-    g.fillRect(
-      Math.round(w * 0.6),
-      Math.round(h * 0.84),
-      Math.round(w * 0.16),
-      Math.round(h * 0.14),
-    );
-
-    g.generateTexture(`day5_cat_${variant}`, w, h);
-    g.destroy();
   }
 
   _genHillTile(width, height) {
@@ -505,7 +361,7 @@ export class Day5Scene extends Phaser.Scene {
   // ─── Intro ────────────────────────────────────────────────────
 
   _showIntro(width, height) {
-    const t = this.add.text(width / 2, height / 2, "תפסו את החתולים!", {
+    const t = this.add.text(width / 2, height / 2, "תפסו את הדמויות", {
       fontFamily: "system-ui, -apple-system, sans-serif",
       fontSize: `${Math.round(height * 0.075)}px`,
       fontWeight: "900",
@@ -549,10 +405,11 @@ export class Day5Scene extends Phaser.Scene {
       Math.round(width * 0.05),
       Math.round(width * 0.95),
     );
-    const variants = ["orange", "black", "white", "pink"];
-    const key = `day5_cat_${variants[Phaser.Math.Between(0, variants.length - 1)]}`;
+    const key =
+      CHARACTER_KEYS[Phaser.Math.Between(0, CHARACTER_KEYS.length - 1)];
+    const size = Math.round(26 * s);
     const img = this.add.image(x, -Math.round(22 * s), key);
-    img.setDepth(15).setScrollFactor(0);
+    img.setDisplaySize(size, size).setDepth(15).setScrollFactor(0);
 
     const baseVy = (90 + this._score * 10) * s;
     const vy = Phaser.Math.FloatBetween(baseVy * 0.8, baseVy * 1.2);
@@ -625,7 +482,7 @@ export class Day5Scene extends Phaser.Scene {
     this._updateHUD();
     this.sound.play("sfx-catbag", { volume: 0.6 });
 
-    const color = cat.img.texture.key.replace("day5_cat_", "");
+    const color = cat.img.texture.key;
     this._lastColors.push(color);
     if (this._lastColors.length > 3) this._lastColors.shift();
     if (
@@ -669,7 +526,7 @@ export class Day5Scene extends Phaser.Scene {
 
   _createHUD() {
     if (typeof window.showHUD === "function") {
-      window.showHUD("html-stats-hud", `חתולים: 0 / ${this._TARGET}`);
+      window.showHUD("html-stats-hud", `דמויות: 0 / ${this._TARGET}`);
       window.showHUD("html-lives-hud", "♥ ♥ ♥");
       window.hideHUD("html-speed-hud");
     }
@@ -679,7 +536,7 @@ export class Day5Scene extends Phaser.Scene {
     if (typeof window.updateHUDText === "function") {
       window.updateHUDText(
         "html-stats-hud",
-        `חתולים: ${this._score} / ${this._TARGET}`,
+        `דמויות: ${this._score} / ${this._TARGET}`,
       );
       const full = "♥ ".repeat(this._lives).trimEnd();
       const empty = "♡ ".repeat(3 - this._lives).trimEnd();
@@ -752,7 +609,7 @@ export class Day5Scene extends Phaser.Scene {
     showGameOverHelper(
       this,
       "הלכו הלבבות!",
-      "פספסת יותר מדי חתולים... עם כמות כזו של פספוסים, אפילו קולות החיילים לא יצילו אותך מאחוז החסימה!"
+      "פספסת יותר מדי דמויות... עם כמות כזו של פספוסים, אפילו קולות החיילים לא יצילו אותך מאחוז החסימה!",
     );
   }
 
@@ -774,7 +631,7 @@ export class Day5Scene extends Phaser.Scene {
         this,
         "Day5Scene",
         "השלב הושלם!",
-        "הצלחתם למצוא את כל החתולים המסתתרים בירושלים!"
+        "הצלחתם למצוא את כל הדמויות המסתתרות בירושלים!",
       );
     });
   }
