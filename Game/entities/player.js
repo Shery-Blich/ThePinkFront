@@ -125,6 +125,69 @@ export class Player extends Character {
   }
 
   /**
+   * Triggers cartoon slide effect on banana peel:
+   * - Locks player input
+   * - Propels player in slide direction
+   * - Plays cartoon spin/wobble animation and floating "אופס! 🍌" text
+   * - Re-enables input after duration
+   * 
+   * @param {number} [durationMs=300] - Duration of slide in ms
+   */
+  slide(durationMs = 300) {
+    if (this.isSliding) return;
+    this.isSliding = true;
+
+    // Temporarily disable input
+    this.disable();
+
+    const s = this.s || 1;
+    // Determine slide direction (current velocity or default forward)
+    let vx = (this.body && this.body.velocity.x) || 160 * s;
+    let vy = (this.body && this.body.velocity.y) || 0;
+    const currentVel = Math.hypot(vx, vy);
+    const speed = currentVel > 10 ? currentVel : 160 * s;
+    const slideSpeed = 220 * s;
+
+    if (this.body) {
+      this.body.setVelocity((vx / speed) * slideSpeed, (vy / speed) * slideSpeed);
+    }
+
+    // Floating cartoon text
+    const slipText = this.scene.add.text(this.x, this.y - 25 * s, 'אופס! 🍌', {
+      fontFamily: 'Rubik, sans-serif',
+      fontSize: `${Math.max(14, Math.round(16 * s))}px`,
+      fontWeight: '900',
+      color: '#facc15',
+      stroke: '#000000',
+      strokeThickness: 3 * s,
+    }).setOrigin(0.5, 1).setDepth(3500);
+
+    this.scene.tweens.add({
+      targets: slipText,
+      y: slipText.y - 30 * s,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => slipText.destroy()
+    });
+
+    // Cartoon wobble/spin tween
+    this.scene.tweens.add({
+      targets: this,
+      angle: 360,
+      duration: durationMs,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        this.angle = 0;
+        this.isSliding = false;
+        if (this.body) {
+          this.body.setVelocity(0, 0);
+        }
+        this.enable();
+      }
+    });
+  }
+
+  /**
    * Reset speed back to base.
    */
   resetSpeed() {
