@@ -73,6 +73,8 @@ export class BootScene extends Phaser.Scene {
     this._generateJerusalemBuildings();
     this._generateAsphaltTextures();
     this._generateSolbergPortrait();
+    this._generateBananaTexture();
+    this._generateMineTexture();
 
     // Hide the initial loading screen now that boot preloading is complete
     if (typeof window.hideLoadingScreen === 'function') {
@@ -256,6 +258,59 @@ export class BootScene extends Phaser.Scene {
     gfx.fillStyle(0xffffff, 1);
     gfx.fillRect(0, 0, 4, 4);
     gfx.generateTexture('particle', 4, 4);
+    gfx.destroy();
+  }
+
+  /** Banana: 16×16 yellow pixel art banana */
+  _generateBananaTexture() {
+    const gfx = this.add.graphics();
+
+    // Curved banana body (vibrant yellow)
+    gfx.fillStyle(0xffe135, 1);
+    gfx.fillRect(4, 3, 6, 2);
+    gfx.fillRect(2, 5, 8, 4);
+    gfx.fillRect(3, 9, 8, 3);
+    gfx.fillRect(5, 12, 5, 2);
+
+    // Inner shadow curve (golden orange)
+    gfx.fillStyle(0xd4af37, 1);
+    gfx.fillRect(3, 7, 3, 4);
+
+    // Stem and tip (dark olive green)
+    gfx.fillStyle(0x4a5d23, 1);
+    gfx.fillRect(8, 2, 2, 2);
+    gfx.fillRect(9, 13, 2, 2);
+
+    gfx.generateTexture('banana', 16, 16);
+    gfx.destroy();
+  }
+
+  /** Mine: 20×20 metallic landmine with spikes and red LED */
+  _generateMineTexture() {
+    const gfx = this.add.graphics();
+
+    // Dark grey circular metallic body
+    gfx.fillStyle(0x374151, 1);
+    gfx.fillCircle(10, 10, 8);
+
+    // Darker outer rim
+    gfx.lineStyle(2, 0x1f2937, 1);
+    gfx.strokeCircle(10, 10, 8);
+
+    // Spikes/studs on sides
+    gfx.fillStyle(0x4b5563, 1);
+    gfx.fillRect(2, 9, 2, 2);
+    gfx.fillRect(16, 9, 2, 2);
+    gfx.fillRect(9, 2, 2, 2);
+    gfx.fillRect(9, 16, 2, 2);
+
+    // Red warning blinking LED center
+    gfx.fillStyle(0xef4444, 1);
+    gfx.fillCircle(10, 10, 3);
+    gfx.fillStyle(0xf87171, 1);
+    gfx.fillCircle(9, 9, 1);
+
+    gfx.generateTexture('mine', 20, 20);
     gfx.destroy();
   }
 
