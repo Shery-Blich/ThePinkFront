@@ -7,7 +7,10 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY index.html vite.config.js ./
 COPY Game ./Game
-RUN npm run build
+COPY public ./public
+COPY assets ./assets
+RUN npm run build \
+  && cp -r assets/. dist/assets/
 
 # --- Build React admin panel ---
 FROM node:20-alpine AS admin-build
@@ -30,8 +33,9 @@ EXPOSE 80
 FROM node:20-alpine AS backend
 WORKDIR /app
 COPY backend/package.json backend/package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 COPY backend/src ./src
 ENV NODE_ENV=production
-EXPOSE 3001
+ENV PORT=8080
+EXPOSE 8080
 CMD ["node", "src/server.js"]

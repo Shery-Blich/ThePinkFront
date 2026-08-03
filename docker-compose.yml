@@ -1,7 +1,16 @@
+# Local production stack — deploy and connect via localhost (instead of Firebase Hosting).
+# Setup:
+#   cp .env.docker.example .env
+#   npm run docker:up
+# Open: http://localhost:8080  (game)  |  http://localhost:8080/admin
+
 services:
   mongodb:
     image: mongo:7
     restart: unless-stopped
+    ports:
+      # Optional: connect from host tools (Compass, mongosh) via localhost
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -19,11 +28,30 @@ services:
     env_file:
       - .env
     environment:
+      NODE_ENV: production
       MONGODB_URI: mongodb://mongodb:27017/dykehaton
       PORT: 3001
+      # Force localhost-friendly cookie + CORS for this stack
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+      CLIENT_ORIGIN: "${CLIENT_ORIGIN:-http://localhost:8080}"
+    ports:
+      # Direct API access from host: http://localhost:3001/api/health
+      - "${BACKEND_PORT:-3001}:3001"
     depends_on:
       mongodb:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   web:
     build:
@@ -31,9 +59,10 @@ services:
       target: web
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-80}:80"
+      - "${WEB_PORT:-8080}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   mongo_data:

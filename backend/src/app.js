@@ -12,28 +12,72 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+/**
+ * Build the allowed CORS origin list from CLIENT_ORIGIN.
+ * Supports a single origin or a comma-separated list.
+ * For localhost / 127.0.0.1, both hostnames are accepted on the same port
+ * so local Docker deploys work either way.
+ * @returns {string[]|boolean}
+ */
+function resolveCorsOrigins() {
+  const raw = process.env.CLIENT_ORIGIN?.trim();
+  if (!raw || raw === '*') return true;
+
+  const origins = new Set(
+    raw
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+  );
+
+  for (const origin of [...origins]) {
+    try {
+      const url = new URL(origin);
+      if (url.hostname === 'localhost') {
+        origins.add(`${url.protocol}//127.0.0.1${url.port ? `:${url.port}` : ''}`);
+      } else if (url.hostname === '127.0.0.1') {
+        origins.add(`${url.protocol}//localhost${url.port ? `:${url.port}` : ''}`);
+      }
+    } catch {
+      // Keep the raw value if it is not a valid URL.
+    }
+  }
+
+  return [...origins];
+}
+
+const corsOrigins = resolveCorsOrigins();
+
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN,
-    credentials: true, // required for httpOnly cookie to be sent cross-origin
+    origin: corsOrigins,
+    credentials: true,
   })
 );
-app.use(express.json({ limit: '10kb' })); // prevent large payload attacks
+app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-// Rate limiters
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: process.env.NODE_ENV === 'production' ? 20 : 1000, standardHeaders: true, legacyHeaders: false });
-const gameLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 20 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const gameLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/questions', questionsRouter);
 app.use('/api/game', gameLimiter, gameRouter);
 app.use('/api/analytics', analyticsRouter);
 
-// Global error handler
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
