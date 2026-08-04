@@ -20,9 +20,9 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    // Relative paths for Vite base `./` (local + GitHub Pages).
+    // Relative paths for Vite base `./` (local + GitHub Pages / Firebase).
     // Day 2 panoramic bg must stay ≤4096px wide (WebGL max texture size on many phones).
-    this.load.image('player', 'assets/Characters/Shlomi.png');
+    this.load.image('player', 'assets/Characters/Shiri-front.png');
     this.load.image('day1-bg', 'assets/backgrounds/Kiryat%20shmona.png');
     this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
     this.load.image('day3-bg', 'assets/backgrounds/Kiryat%20shmona.png');
@@ -64,7 +64,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Player texture is now preloaded from assets/Characters/Shlomi.png
+    // Player texture is preloaded from assets/Characters/Shiri-front.png
     this._generateNpcTexture();
     this._generateBuildingTextures();
     this._generateRoadTexture();
