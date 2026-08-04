@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Dialogue transcript data for game scenes.
  */
 
@@ -8,35 +8,15 @@ export const PLAYER_NAME = "רוי";
 export const DAY_1_INTRO_DIALOG = [
   {
     speaker: SPEAKER_NAME,
-    text: "רוי, אל תשכח שיש לך סידורים וקניות לעשות בדרך לקלפי!",
-  },
-  {
-    speaker: PLAYER_NAME,
-    text: "נכון, אבל הדרך מלאה ברחפנים שחייבים לחמוק מהם!",
-  },
-  {
-    speaker: SPEAKER_NAME,
-    text: "תיזהר מהם! בנוסף, על כל יעד או שלב שתשלים, השופט סולברג יציג שאלת טריוויה שתעניק לך נקודות אם תענה נכון.",
-  },
-  {
-    speaker: PLAYER_NAME,
-    text: "הבנתי, לחמוק מהרחפנים ולענות נכון בחידונים כדי לצבור נקודות. יוצאים לדרך!",
+    text: "השתמשו בג'ויסטיק כדי לזוז וברחו מהר מהכטב"מים!",
   },
 ];
 
-// NOTE: currently unused — the live Day-1 ending shows the inline "great time for shopping!"
-// dialog in day-1-scene.js. Kept (translated) in case it's re-enabled.
 export const DAY_1_VICTORY_DIALOG = [
   {
-    speaker: PLAYER_NAME,
-    text: "אוף! זה היה קרוב. כל 10 הרחפנים כיוונו אליי — ומכולם חמקתי!",
+    speaker: SPEAKER_NAME,
+    text: "צריך נשנושים לדרך, יש לנו נצח של פקקים לעבור..",
   },
-  { speaker: SPEAKER_NAME, text: "תנועה מדהימה! התחמקת מהם בצורה מושלמת." },
-  {
-    speaker: PLAYER_NAME,
-    text: "מתקדם אני רואה את נקודת ההתכנסות בקריית שמונה ממש מקדימה. מתקדם.",
-  },
-  { speaker: SPEAKER_NAME, text: "מצוין. החזית הוורודה מאובטחת. התכונני לחילוץ." },
 ];
 
 export const DAY_2_INTRO_DIALOG = [
