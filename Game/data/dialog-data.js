@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dialogue transcript data for game scenes.
  */
 
@@ -54,6 +54,12 @@ export const DAY_2_INTRO_DIALOG = [
   },
 ];
 
+export const DAY_2_VICTORY_DIALOG = [
+  {
+    speaker: "דמות",
+    text: "מה? זה בקושי הספיק למשהו 🙁",
+  },
+];
 
 export const DAY_3_INTRO_DIALOG = [
   { speaker: SPEAKER_NAME, text: "הגענו לעכו! רחפנים חגים מעלינו!" },
@@ -75,9 +81,38 @@ export const DAY_3_VICTORY_DIALOG = [
   { speaker: SPEAKER_NAME, text: "המשימה הושלמה. הניצחון שלנו!" },
 ];
 
+export const DAY_4_INTRO_DIALOG = [
+  {
+    speaker: SPEAKER_NAME,
+    text: "איזה כיף, הגענו!",
+  },
+  {
+    speaker: SPEAKER_NAME,
+    text: "במצבי לחץ כאלה הנשיא הולך לישון. תוודאו שהוא נשאר ער כדי שנוכל לסיים את הבחירות.",
+  },
+  {
+    speaker: SPEAKER_NAME,
+    text: "רק תיזהרו מהבננות.",
+  },
+];
+
+export const DAY_4_VICTORY_DIALOG = [
+  {
+    speaker: "הנשיא",
+    text: "ישראל זאת לא רפובליקת בננות!",
+  },
+];
+
 export const DAY_5_INTRO_DIALOG = [
   { speaker: PLAYER_NAME, text: "ירושליםםםם אני מגיע" },
   { speaker: SPEAKER_NAME, text: "תבחר בחכמה את הא.נשים שאתה רוצה להכניס לרשימה" },
+];
+
+export const DAY_5_VICTORY_DIALOG = [
+  {
+    speaker: SPEAKER_NAME,
+    text: "סיימתם! יש עוד יום חופש שלם, אפשר לנסוע לים!",
+  },
 ];
 
 export const KOTEL_INTRO_DIALOG = [
