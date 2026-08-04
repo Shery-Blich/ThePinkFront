@@ -7,11 +7,11 @@ import { LivesManager } from '../systems/lives-manager.js';
 import { DialogSystem } from '../systems/dialog-system.js';
 
 /**
- * Day3Scene — Bus Cutscene: Refusal and Acceptance
+ * Day3Scene — Bus Cutscene: Supermarket Exit, Bus Stop, Refusal and Acceptance
  *
- * Player walks from supermarket to bus stop.
+ * Player walks from supermarket exit to bottom sidewalk bus stop.
  * First bus arrives and refuses women passengers.
- * Second bus arrives and accepts all passengers.
+ * Second bus arrives, opens doors, and accepts all passengers.
  * Player boards second bus and transitions to Day4Scene (catching game).
  */
 export class Day3Scene extends Phaser.Scene {
@@ -26,6 +26,7 @@ export class Day3Scene extends Phaser.Scene {
     this.bus1 = null;
     this.bus2 = null;
     this.player = null;
+    this.supermarketX = 0;
   }
 
   create() {
@@ -35,8 +36,8 @@ export class Day3Scene extends Phaser.Scene {
     startSceneMusic(this, 'bg-sessions');
 
     this.s = Character.computeScale(height);
-    this.roadTop = Math.round(height * 0.60);
-    this.roadBottom = Math.round(height * 0.92);
+    this.roadTop = Math.round(height * 0.55);
+    this.roadBottom = Math.round(height * 0.82);
     const roadHeight = this.roadBottom - this.roadTop;
     this.roadCenterY = this.roadTop + roadHeight / 2;
 
@@ -50,24 +51,32 @@ export class Day3Scene extends Phaser.Scene {
         .setDepth(-10);
     }
 
-    // Add road band
-    this._buildRoadBand(width, roadHeight);
+    // Add road band & sidewalk
+    this._buildRoadBand(width, height, roadHeight);
+
+    // Build Supermarket building at top-left
+    this.supermarketX = 90 * this.s;
+    this._buildSupermarket(this.supermarketX);
+
+    // Build Bus Stop on bottom sidewalk
+    const busStopX = width / 2;
+    const busStopY = this.roadBottom + 12 * this.s;
+    this._buildBusStop(busStopX, busStopY);
 
     // Setup physics world
     this.physics.world.setBounds(0, 0, width, height);
 
-    // Create player at supermarket entrance (inside building initially)
-    const supermarketX = 80;
-    const playerStartX = supermarketX;
-    const playerStartY = this.roadTop - 30 * this.s; // Start above road (inside supermarket)
-    this.player = new Player(this, playerStartX, playerStartY, this.s);
-    this.player.disable(); // Start with disabled movement
+    // Create player emerging from supermarket door
+    const doorX = this.supermarketX;
+    const doorY = this.roadTop - 8 * this.s;
+    this.player = new Player(this, doorX, doorY, this.s);
+    this.player.disable();
     this.player.setDepth(this.player.y);
 
     this.cameras.main.fadeIn(500);
 
-    // Start the cutscene timeline
-    this._startCutscene(width);
+    // Start cutscene timeline
+    this._startCutscene(width, busStopX, busStopY);
   }
 
   update() {
@@ -77,98 +86,146 @@ export class Day3Scene extends Phaser.Scene {
     }
   }
 
-  _buildRoadBand(width, roadHeight) {
-    // Road band graphics
+  _buildSupermarket(x) {
+    const s = this.s;
+    const w = 70 * s;
+    const h = 85 * s;
+    const doorW = 18 * s;
+    const doorH = 30 * s;
+
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(x - w / 2, this.roadTop - h, w, h);
+
+    gfx.fillStyle(0xe11d48, 1);
+    gfx.fillRect(x - w / 2, this.roadTop - h, w, 8 * s);
+
+    gfx.fillStyle(0x110e1a, 1);
+    gfx.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
+    gfx.setDepth(4);
+
+    this.add.text(x, this.roadTop - h + 12 * s, 'סופרמרקט', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: `${Math.max(10, Math.round(10 * s))}px`,
+      fontWeight: 'bold',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0).setDepth(5);
+  }
+
+  _buildBusStop(x, y) {
+    const s = this.s;
+
+    if (this.textures.exists('bus-stop')) {
+      const busStopSprite = this.add.image(x, y, 'bus-stop');
+      busStopSprite.setOrigin(0.5, 1);
+      const targetH = 55 * s;
+      const tex = this.textures.get('bus-stop').getSourceImage();
+      if (tex) {
+        const aspect = tex.width / tex.height;
+        busStopSprite.setDisplaySize(targetH * aspect, targetH);
+      } else {
+        busStopSprite.setDisplaySize(32 * s, 55 * s);
+      }
+      busStopSprite.setDepth(y);
+    } else {
+      const gfx = this.add.graphics();
+      gfx.fillStyle(0x64748b, 1);
+      gfx.fillRect(x - 2 * s, y - 45 * s, 4 * s, 45 * s);
+      gfx.fillStyle(0x0284c7, 1);
+      gfx.fillRect(x - 16 * s, y - 55 * s, 32 * s, 16 * s);
+      gfx.fillStyle(0xfacc15, 1);
+      gfx.fillRect(x - 12 * s, y - 52 * s, 24 * s, 10 * s);
+      gfx.setDepth(y);
+    }
+  }
+
+  _buildRoadBand(width, height, roadHeight) {
     const roadGfx = this.add.graphics();
     roadGfx.fillStyle(0x333333, 1);
     roadGfx.fillRect(0, this.roadTop, width, roadHeight);
-    roadGfx.setScrollFactor(0).setDepth(5);
+    roadGfx.setScrollFactor(0).setDepth(2);
 
-    // Road center line
     const lineGfx = this.add.graphics();
     lineGfx.fillStyle(0xffff00, 0.7);
     lineGfx.fillRect(0, this.roadCenterY - 2, width, 4);
-    lineGfx.setScrollFactor(0).setDepth(5);
+    lineGfx.setScrollFactor(0).setDepth(2);
+
+    const swGfx = this.add.graphics();
+    swGfx.fillStyle(0x555555, 1);
+    swGfx.fillRect(0, this.roadBottom, width, height - this.roadBottom);
+    swGfx.lineStyle(2, 0x444444, 1);
+    swGfx.strokeRect(0, this.roadBottom, width, height - this.roadBottom);
+    swGfx.setScrollFactor(0).setDepth(3);
   }
 
-  _startCutscene(width) {
-    // Start with player exiting supermarket, then walking to bus stop
-    this._playerExitsSupermarket(width);
+  _startCutscene(width, busStopX, busStopY) {
+    this._playerExitsSupermarket(width, busStopX, busStopY);
   }
 
-  _playerExitsSupermarket(width) {
-    // Player exits supermarket - moves down from inside building to road level
-    const roadCenterY = this.roadCenterY;
-
+  _playerExitsSupermarket(width, busStopX, busStopY) {
     this.tweens.add({
       targets: this.player,
-      y: roadCenterY,
-      duration: 800,
+      y: this.roadCenterY,
+      duration: 1000,
       ease: 'Quad.easeOut',
       onComplete: () => {
-        // Player has exited supermarket, now walks to bus stop
         this.time.delayedCall(300, () => {
-          this._playerWalksToBusStop(width);
+          this._playerWalksToBusStop(width, busStopX, busStopY);
         });
       }
     });
   }
 
-  _playerWalksToBusStop(width) {
-    // Player walks from supermarket (left) to center (bus stop)
-    const targetX = width / 2;
+  _playerWalksToBusStop(width, busStopX, busStopY) {
+    const targetX = busStopX - 25 * this.s;
+    const targetY = busStopY;
 
     this.tweens.add({
       targets: this.player,
       x: targetX,
-      duration: 2500,
+      y: targetY,
+      duration: 2200,
       ease: 'Linear',
       onComplete: () => {
-        // Wait 1 second, then first bus arrives
         this.time.delayedCall(1000, () => {
-          this._spawnFirstBus(width);
+          this._spawnFirstBus(width, busStopX);
         });
       }
     });
   }
 
-  _spawnFirstBus(width) {
-    // First bus enters from left
+  _spawnFirstBus(width, busStopX) {
     this.bus1 = this.add.image(-100 * this.s, this.roadCenterY, 'egged_bus');
     this.bus1.setScale(this.s).setDepth(100);
 
     this.tweens.add({
       targets: this.bus1,
-      x: width / 2 - 50 * this.s,
+      x: busStopX - 40 * this.s,
       duration: 2500,
       ease: 'Quad.easeOut',
       onComplete: () => {
-        // Bus settled - show refusal dialog
-        this.time.delayedCall(500, () => {
-          this._showRefusalDialog(width);
+        this.time.delayedCall(300, () => {
+          this._showRefusalDialog(width, busStopX);
         });
       }
     });
   }
 
-  _showRefusalDialog(width) {
-    // Show refusal dialog
+  _showRefusalDialog(width, busStopX) {
     const refusalDialog = [
-      { speaker: 'Bus Driver', text: 'סליחה גברת, זה אוטובוס לגברים בלבד' },
-      { speaker: 'Player', text: 'אבל זה לא חוקי!' },
+      { speaker: 'נהג האוטובוס', text: 'סליחה גברת, זה אוטובוס לגברים בלבד!' },
+      { speaker: 'שירי', text: 'מה?! אבל זה לא חוקי!' },
     ];
 
     const dialog = new DialogSystem(this, refusalDialog, () => {
-      // Dialog complete - bus leaves after 1 second
-      this.time.delayedCall(1000, () => {
-        this._firstBusLeaves(width);
+      this.time.delayedCall(500, () => {
+        this._firstBusLeaves(width, busStopX);
       });
     });
     dialog.start();
   }
 
-  _firstBusLeaves(width) {
-    // First bus drives away to the right
+  _firstBusLeaves(width, busStopX) {
     this.tweens.add({
       targets: this.bus1,
       x: width + 100 * this.s,
@@ -177,82 +234,74 @@ export class Day3Scene extends Phaser.Scene {
       onComplete: () => {
         if (this.bus1) this.bus1.destroy();
 
-        // Wait 1 second, then second bus arrives
-        this.time.delayedCall(1000, () => {
-          this._spawnSecondBus(width);
+        this.time.delayedCall(800, () => {
+          this._spawnSecondBus(width, busStopX);
         });
       }
     });
   }
 
-  _spawnSecondBus(width) {
-    // Second bus enters from left
+  _spawnSecondBus(width, busStopX) {
     this.bus2 = this.add.image(-100 * this.s, this.roadCenterY, 'egged_bus');
     this.bus2.setScale(this.s).setDepth(100);
 
     this.tweens.add({
       targets: this.bus2,
-      x: width / 2 - 50 * this.s,
+      x: busStopX - 40 * this.s,
       duration: 2500,
       ease: 'Quad.easeOut',
       onComplete: () => {
-        // Bus settled - show acceptance dialog
-        this.time.delayedCall(500, () => {
-          this._showAcceptanceDialog(width);
+        // Open bus doors!
+        if (this.textures.exists('egged_bus_open')) {
+          this.bus2.setTexture('egged_bus_open');
+        }
+
+        this.time.delayedCall(300, () => {
+          this._playerBoardsBus();
         });
       }
     });
   }
 
-  _showAcceptanceDialog(width) {
-    // Show acceptance dialog
-    const acceptanceDialog = [
-      { speaker: 'Bus Driver', text: 'תכניסו כמה שיותר אנשים לאוטובוס, כדי שכל מי שיש לו זכות הצבעה יוכל להגיע לקלפי.' },
-      { speaker: 'Narrator', text: 'סוף הסצנה - יאללה לירושלים!' },
-    ];
-
-    const dialog = new DialogSystem(this, acceptanceDialog, () => {
-      // Dialog complete - player boards bus
-      this.time.delayedCall(1000, () => {
-        this._playerBoardsBus();
-      });
-    });
-    dialog.start();
-  }
-
   _playerBoardsBus() {
-    // Player walks to bus door and boards
+    // Door entrance coordinate on bus2
     const doorX = this.bus2.x + 24 * this.s;
     const doorY = this.bus2.y + 6 * this.s;
 
+    // Player walks up from sidewalk to bus open door and fades inside
     this.tweens.add({
       targets: this.player,
       x: doorX,
       y: doorY,
-      duration: 1200,
+      duration: 600,
       ease: 'Linear',
       onComplete: () => {
-        // Player enters bus - make invisible
-        this.player.setVisible(false);
+        this.tweens.add({
+          targets: this.player,
+          alpha: 0,
+          scaleX: 0.1,
+          scaleY: 0.1,
+          duration: 200,
+          ease: 'Quad.easeIn',
+          onComplete: () => {
+            this.player.setVisible(false);
 
-        // Wait for bus doors to close and depart
-        this.time.delayedCall(800, () => {
-          this.bus2.setTexture('egged_bus');
-        });
-
-        this.time.delayedCall(1200, () => {
-          // Bus departs
-          const { width } = this.scale;
-          this.tweens.add({
-            targets: this.bus2,
-            x: width + 100 * this.s,
-            duration: 2000,
-            ease: 'Quad.easeIn',
-            onComplete: () => {
-              if (this.bus2) this.bus2.destroy();
-              this._endScene();
+            if (this.textures.exists('egged_bus')) {
+              this.bus2.setTexture('egged_bus');
             }
-          });
+
+            const { width } = this.scale;
+            this.tweens.add({
+              targets: this.bus2,
+              x: width + 120 * this.s,
+              duration: 1000,
+              ease: 'Quad.easeIn',
+              onComplete: () => {
+                if (this.bus2) this.bus2.destroy();
+                this._endScene();
+              }
+            });
+          }
         });
       }
     });
@@ -265,8 +314,8 @@ export class Day3Scene extends Phaser.Scene {
     showVictoryHelper(
       this,
       'Day3Scene',
-      'נמשיך לירושלים!',
-      'האוטובוס קיבל את כולנו וממשיך לדרך. הגיע הזמן לעזור לאנשים שנופלים!'
+      'לירושלים!',
+      'לירושלים!'
     );
   }
 }
