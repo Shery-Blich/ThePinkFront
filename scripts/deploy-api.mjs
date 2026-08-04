@@ -4,10 +4,10 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const envFile = join(root, '.env.firebase');
+const envFile = join(root, '.env.production');
 
 if (!existsSync(envFile)) {
-  console.error('Missing .env.firebase — copy .env.firebase.example and fill in values.');
+  console.error('Missing .env.production — copy .env.production.example and fill in values.');
   process.exit(1);
 }
 
@@ -22,9 +22,8 @@ const env = Object.fromEntries(
 );
 
 const {
-  FIREBASE_PROJECT_ID,
-  CLOUD_RUN_REGION = 'me-west1',
-  CLOUD_RUN_SERVICE = 'thepinkfront-api',
+  GCP_PROJECT_ID,
+  GCP_REGION = 'me-west1',
   MONGODB_URI,
   JWT_SECRET,
   JWT_EXPIRES_IN = '1h',
@@ -35,7 +34,7 @@ const {
 } = env;
 
 const required = {
-  FIREBASE_PROJECT_ID,
+  GCP_PROJECT_ID,
   MONGODB_URI,
   JWT_SECRET,
   GOOGLE_CLIENT_ID,
@@ -45,7 +44,7 @@ const required = {
 
 for (const [key, value] of Object.entries(required)) {
   if (!value) {
-    console.error(`Missing required value in .env.firebase: ${key}`);
+    console.error(`Missing required value in .env.production: ${key}`);
     process.exit(1);
   }
 }
@@ -67,16 +66,16 @@ writeFileSync(cloudRunEnvFile, yaml);
 try {
   const cmd = [
     'gcloud run deploy',
-    CLOUD_RUN_SERVICE,
+    'thepinkfront-api',
     '--source backend',
-    `--region ${CLOUD_RUN_REGION}`,
-    `--project ${FIREBASE_PROJECT_ID}`,
+    `--region ${GCP_REGION}`,
+    `--project ${GCP_PROJECT_ID}`,
     '--allow-unauthenticated',
     '--port 8080',
     `--env-vars-file "${cloudRunEnvFile}"`,
   ].join(' ');
 
-  console.log(`Deploying API to Cloud Run (${CLOUD_RUN_SERVICE}, ${CLOUD_RUN_REGION})...`);
+  console.log(`Deploying API to Cloud Run (thepinkfront-api, ${GCP_REGION})...`);
   execSync(cmd, { cwd: root, stdio: 'inherit', shell: true });
 } finally {
   rmSync(cloudRunEnvFile, { force: true });

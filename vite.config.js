@@ -10,7 +10,9 @@ export default defineConfig({
     assetsDir: 'assets',
   },
   server: {
+    // Fixed port prevents Vite randomly changing the local port
     port: 3000,
+    strictPort: true,
     open: true,
     proxy: {
       '/api': {
@@ -18,5 +20,9 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    port: 3000,
+    strictPort: true,
   },
 });

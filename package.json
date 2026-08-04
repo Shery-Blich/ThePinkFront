@@ -13,19 +13,15 @@
   "license": "ISC",
   "author": "",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000 --strictPort",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --port 3000 --strictPort",
     "dev:admin": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
     "build:firebase": "node scripts/build-firebase.mjs",
     "deploy:hosting": "npm run build:firebase && firebase deploy --only hosting",
-    "deploy:api": "node scripts/deploy-api.mjs",
-    "deploy": "npm run deploy:api && npm run deploy:hosting",
-    "docker:up": "docker compose up --build -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f"
+    "deploy": "npm run deploy:hosting"
   },
   "dependencies": {
     "phaser": "^3.88.2",

@@ -1,20 +1,41 @@
-# Local production stack — deploy and connect via localhost (instead of Firebase Hosting).
+# Local production-like stack (game + admin + API + Mongo).
+# For Google Cloud deploy use: npm run deploy  (see MIGRATION_TO_GCP.md)
+#
 # Setup:
 #   cp .env.docker.example .env
-#   npm run docker:up
-# Open: http://localhost:8080  (game)  |  http://localhost:8080/admin
+#   docker compose up --build -d
+#
+# Open:
+#   http://localhost:8080       (game)
+#   http://localhost:8080/admin (admin)
+#   http://localhost:8080/api/health (API via nginx)
 
 services:
   mongodb:
     image: mongo:7
     restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ChangeMe123!
+      MONGO_INITDB_DATABASE: dykehaton
     ports:
-      # Optional: connect from host tools (Compass, mongosh) via localhost
       - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "-u",
+          "admin",
+          "-p",
+          "ChangeMe123!",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping')"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,20 +43,17 @@ services:
 
   backend:
     build:
-      context: .
-      target: backend
+      context: ./backend
     restart: unless-stopped
     env_file:
       - .env
     environment:
       NODE_ENV: production
-      MONGODB_URI: mongodb://mongodb:27017/dykehaton
+      MONGODB_URI: "mongodb://admin:ChangeMe123!@mongodb:27017/dykehaton?authSource=admin"
       PORT: 3001
-      # Force localhost-friendly cookie + CORS for this stack
       COOKIE_SECURE: "${COOKIE_SECURE:-false}"
       CLIENT_ORIGIN: "${CLIENT_ORIGIN:-http://localhost:8080}"
     ports:
-      # Direct API access from host: http://localhost:3001/api/health
       - "${BACKEND_PORT:-3001}:3001"
     depends_on:
       mongodb:
@@ -46,7 +64,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
         ]
       interval: 15s
       timeout: 5s
