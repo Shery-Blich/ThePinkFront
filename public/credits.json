@@ -3,11 +3,11 @@
   "subtitle": "A game by Our Knesset",
   "roles": [
     {
-      "role": "Lead Game Developer & Fullstack Developer",
+      "role": "Lead Game Developer & Game Designer",
       "names": [
         {
-          "name": "SheryB",
-          "link": "https://github.com/Shery-Blich"
+          "name": "SheryB\nWant to play more games?",
+          "link": "https://sheryb.itch.io/"
         }
       ]
     },
@@ -18,19 +18,7 @@
       ]
     },
     {
-      "role": "Technical Product Manager",
-      "names": [
-        "GuyNa"
-      ]
-    },
-    {
-      "role": "Product Manager",
-      "names": [
-        "Sharon David"
-      ]
-    },
-    {
-      "role": "DevOps",
+      "role": "Lead DevOps",
       "names": [
         {
           "name": "Ella Halevy",
@@ -50,12 +38,19 @@
     {
       "role": "Software Developers",
       "names": [
+        "GuyNa",
         "Inbal Bolshinsky",
         "Danielle Konfino"
       ]
     },
     {
-      "role": "Lead QA",
+      "role": "Product Manager",
+      "names": [
+        "Sharon David"
+      ]
+    },
+    {
+      "role": "Dyekathon Representative",
       "names": [
         "Hallel Marx"
       ]

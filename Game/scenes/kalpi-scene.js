@@ -52,6 +52,12 @@ export class KalpiScene extends Phaser.Scene {
     /** @type {Array<Object>} Active crumbling warning tiles */
     this.warningTiles = [];
 
+    /** @type {number} Counter for pothole avoidance bonus points (max 5) */
+    this.potholeAvoidancePointsAwarded = 0;
+
+    /** @type {Array<Object>} Last 2 predictive tiles created (for efficient avoidance point checking) */
+    this.lastPredictiveTiles = [];
+
     this.colsCount = 0;
     this.rowsCount = 0;
     this.tileW = 0;
@@ -62,6 +68,7 @@ export class KalpiScene extends Phaser.Scene {
 
     /** @type {Phaser.GameObjects.Particles.ParticleEmitter} */
     this.explosionParticles = null;
+
   }
 
   create() {
@@ -75,6 +82,8 @@ export class KalpiScene extends Phaser.Scene {
     this.gameplayStarted = false;
     this.roadTiles = [];
     this.warningTiles = [];
+    this.potholeAvoidancePointsAwarded = 0;
+    this.lastPredictiveTiles = [];
 
     this.s = Character.computeScale(height);
 
@@ -164,6 +173,16 @@ export class KalpiScene extends Phaser.Scene {
 
     if (this.player && this.player.visible && this.gameplayStarted && !this.isGameOver && !this.isSceneOver) {
       this._updateCrumblingRoad(delta);
+
+      // Check if player has passed predictive potholes to award avoidance points
+      for (let i = 0; i < this.lastPredictiveTiles.length; i++) {
+        const tile = this.lastPredictiveTiles[i];
+        if (tile.state === 'CRUMBLED' && !tile.avoidancePointsAwarded && this.player.x > tile.tx + this.tileW && this.potholeAvoidancePointsAwarded < 5) {
+          tile.avoidancePointsAwarded = true;
+          this.potholeAvoidancePointsAwarded++;
+          addGlobalScore(this, 1, tile.tx, tile.ty);
+        }
+      }
     }
   }
 
@@ -214,6 +233,8 @@ export class KalpiScene extends Phaser.Scene {
           tx,
           ty,
           shakeTween: null,
+          avoidancePointsAwarded: false,
+          isPredictive: false,
         };
       }
     }
@@ -284,6 +305,12 @@ export class KalpiScene extends Phaser.Scene {
           const tile = this.roadTiles[col][row];
           if (tile.state === 'NORMAL') {
             this._startTileWarning(tile);
+            tile.isPredictive = true;
+            // Track last 2 predictive tiles for efficient avoidance checking
+            this.lastPredictiveTiles.push(tile);
+            if (this.lastPredictiveTiles.length > 2) {
+              this.lastPredictiveTiles.shift();
+            }
           }
         }
       }
@@ -325,8 +352,7 @@ export class KalpiScene extends Phaser.Scene {
         if (!this.player.isInvulnerable) {
           const remaining = LivesManager.deductLife();
           if (remaining > 0) {
-            this.player.takeDamage();
-            this.player.x += 40 * this.s;
+            this.player.knockback();
           } else {
             this.triggerGameOver('FELL_THROUGH');
             return;
@@ -368,8 +394,7 @@ export class KalpiScene extends Phaser.Scene {
           if (!this.player.isInvulnerable) {
             const remaining = LivesManager.deductLife();
             if (remaining > 0) {
-              this.player.takeDamage();
-              this.player.x += 40 * this.s;
+              this.player.knockback();
             } else {
               this.triggerGameOver('FELL_THROUGH');
               return;
@@ -399,7 +424,7 @@ export class KalpiScene extends Phaser.Scene {
     this.cameras.main.shake(150, 0.005);
     this.cameras.main.flash(300, 255, 255, 255);
 
-    addGlobalScore(this, 25, this.kalpi.x, this.kalpi.y);
+    addGlobalScore(this, 5, this.kalpi.x, this.kalpi.y);
 
     playDialogOnce("KalpiScene-victory", this, KALPI_VICTORY_DIALOG, () => {
       this.showVictoryScreen();
