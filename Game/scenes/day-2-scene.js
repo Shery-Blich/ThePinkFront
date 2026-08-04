@@ -7,6 +7,8 @@ import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
+import { playDialogOnce } from '../systems/dialog-system.js';
+import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
 
 import { addGlobalScore } from '../systems/score-manager.js';
 
@@ -27,7 +29,7 @@ export class Day2Scene extends Phaser.Scene {
     this.isSceneOver = false;
     this._debugText = null;
     this._errorMessages = [];
-    this._baseRunSpeed = 160; 
+    this._baseRunSpeed = 160;
     this._speedAdjust = 0;
     this._minRunSpeed = 0;
     this._jumpVelocity = -420;
@@ -37,8 +39,8 @@ export class Day2Scene extends Phaser.Scene {
     this._autoScrollSpeed = 80; // px/sec
 
     this._collectedCount = 0;
-    this._canDoubleJump = false;   
-    this._hasDoubleJumped = false; 
+    this._canDoubleJump = false;
+    this._hasDoubleJumped = false;
     this._sounds = {
       collect: null,
       cashier: null,
@@ -66,13 +68,13 @@ export class Day2Scene extends Phaser.Scene {
     this._cashierDialogStarted = false;
 
     this._moveDirection = 0;
-    this._collectedCount = 0; 
+    this._collectedCount = 0;
     this._canDoubleJump = false;
     this._hasDoubleJumped = false;
     if (this.cameras && this.cameras.main) {
       this.cameras.main.scrollX = 0;
     }
-    
+
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
     const charWidth = 12 * this.s;
@@ -147,12 +149,13 @@ export class Day2Scene extends Phaser.Scene {
     this._setupInput(width);
     this._createHUD();
 
-    // Start gameplay immediately (no intro dialogue)
-    this._dialogActive = false;
-    this.joystick.enable();
-
-    // Show the jump tutorial immediately
-    MovementTutorial.showJumpTutorial(this);
+    // Show intro dialog, then start gameplay
+    this._dialogActive = true;
+    playDialogOnce('Day2Scene-intro', this, DAY_2_INTRO_DIALOG, () => {
+      this._dialogActive = false;
+      this.joystick.enable();
+      MovementTutorial.showJumpTutorial(this);
+    });
 
     // Start scrolling the screen only after the player fulfills the tutorial by jumping
     this.events.once('player-jump', () => {
@@ -231,7 +234,7 @@ export class Day2Scene extends Phaser.Scene {
     // 1. Update Joystick State
     if (this.joystick && this.player && this.player.body) {
       this.joystick.update();
-      
+
       // Limit player movement (prevent running horizontal) until they perform their tutorial jump
       if (!this._isScrollingStarted) {
         this.player.body.setVelocityX(0);
@@ -272,7 +275,7 @@ export class Day2Scene extends Phaser.Scene {
 
     const camera = this.cameras.main;
     const maxScrollX = Math.max(0, this._levelWidth - camera.displayWidth);
-    
+
     let scrollSpeed = this._autoScrollSpeed;
 
     // Speed up camera scroll if player is past the middle width of the screen
@@ -449,7 +452,7 @@ export class Day2Scene extends Phaser.Scene {
     for (const pos of productPositions) {
       const product = new Product(this, pos.x, pos.y);
       this.productGroup.add(product);
-      
+
       if (product.body) {
         product.body.updateFromGameObject();
       }

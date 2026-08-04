@@ -6,6 +6,8 @@ import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
 import { addGlobalScore } from '../systems/score-manager.js';
+import { playDialogOnce } from '../systems/dialog-system.js';
+import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -160,9 +162,11 @@ export class KotelScene extends Phaser.Scene {
     // --- HUD ---
     this._createHUD();
 
-    // Start gameplay immediately (no intro dialogue)
-    this.player.enable();
-    this.gameplayStarted = true;
+    // Show intro dialog, then enable player and start gameplay
+    playDialogOnce("KotelScene-intro", this, KOTEL_INTRO_DIALOG, () => {
+      this.player.enable();
+      this.gameplayStarted = true;
+    });
 
     this.events.once('shutdown', () => {
       if (this.activeBananas) {
@@ -458,14 +462,8 @@ export class KotelScene extends Phaser.Scene {
       });
     }
 
-    // Show small speech bubble directly above President in-game
-    const speechBubble = this.createPresidentSpeechBubble('זאת לא רפובליקת בננות!');
-
-    // Wait a moment then show victory screen (no additional dialog)
-    this.time.delayedCall(2000, () => {
-      if (speechBubble) {
-        speechBubble.destroy();
-      }
+    // Play victory dialogue
+    playDialogOnce("KotelScene-victory", this, KOTEL_VICTORY_DIALOG, () => {
       this.showVictoryScreen();
     });
   }
