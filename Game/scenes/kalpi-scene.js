@@ -269,9 +269,9 @@ export class KalpiScene extends Phaser.Scene {
     const predCol = Math.floor(predX / this.tileW);
     const predRow = Math.floor((predY - this.roadTop) / this.tileH);
 
-    // Target a consistent cluster ahead: length 2 to 3 columns, max height 2 rows
-    const blockLength = Phaser.Math.Between(2, 3); // 2 or 3 columns wide (left to right)
-    const blockHeight = 2; // Max 2 rows high (top to bottom)
+    // Target a small predictive cluster ahead: length max 1 column wide, height 1 or 2 rows (1x1 or 1x2 cluster)
+    const blockLength = 1; // 1 column wide
+    const blockHeight = Phaser.Math.Between(1, 2); // 1 or 2 rows high (1x1 or 1x2 cluster)
 
     const startRow = Phaser.Math.Clamp(predRow, 0, Math.max(0, this.rowsCount - blockHeight));
 
