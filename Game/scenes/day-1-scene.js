@@ -15,6 +15,8 @@ import {
 } from "../analytics.js";
 
 import { addGlobalScore } from "../systems/score-manager.js";
+import { playDialogOnce } from "../systems/dialog-system.js";
+import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from "../data/dialog-data.js";
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -207,9 +209,11 @@ export class Day1Scene extends Phaser.Scene {
       this.droneManager.start();
     });
 
-    // Enable player and show tutorial immediately (no intro dialog)
-    this.player.enable();
-    MovementTutorial.showJoystickTutorial(this, this.player);
+    // Show intro dialog, then enable player
+    playDialogOnce("Day1Scene-intro", this, DAY_1_INTRO_DIALOG, () => {
+      this.player.enable();
+      MovementTutorial.showJoystickTutorial(this, this.player);
+    });
 
     // Cleanup on shutdown
     this.events.once("shutdown", () => {
@@ -463,7 +467,7 @@ export class Day1Scene extends Phaser.Scene {
             this.player.setVisible(false);
             this.player.setAlpha(1);
 
-            // 5. Show victory screen directly (no dialog)
+            // 5. Show victory screen with dialog
             this.time.delayedCall(300, () => {
               this.showVictoryScreen();
             });
@@ -474,11 +478,13 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    showVictoryHelper(
-      this,
-      "Day1Scene",
-      "השלב הושלם!",
-      "הצלחת לחמוק מרחפני האויב בקריית שמונה ולהגיע בשלום."
-    );
+    playDialogOnce("Day1Scene-victory", this, DAY_1_VICTORY_DIALOG, () => {
+      showVictoryHelper(
+        this,
+        "Day1Scene",
+        "השלב הושלם!",
+        "הצלחת לחמוק מרחפני האויב בקריית שמונה ולהגיע בשלום."
+      );
+    });
   }
 }
