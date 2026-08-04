@@ -2,9 +2,7 @@ import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { NPC } from '../entities/npc.js';
-import { DialogSystem, playDialogOnce } from '../systems/dialog-system.js';
 import { DroneManager } from '../systems/drone-manager.js';
-import { DAY_3_INTRO_DIALOG, DAY_3_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
@@ -125,7 +123,6 @@ export class Day3Scene extends Phaser.Scene {
 
     // --- HUD ---
     this._createHUD();
-    this._updateHUD('שידור נכנס');
 
     // --- Particles ---
     this.explosionParticles = this.add.particles(0, 0, 'particle', {
@@ -178,8 +175,8 @@ export class Day3Scene extends Phaser.Scene {
       }
     });
 
-    // Start Phase 1: Intro Dialogue Immediately
-    this._startIntroDialogue(roadCenterY, worldWidth, charH);
+    // Start gameplay immediately (no intro dialogue)
+    this._startGameplay(roadCenterY, worldWidth, charH);
   }
 
   _buildSupermarket() {
@@ -210,43 +207,37 @@ export class Day3Scene extends Phaser.Scene {
     this.superLabel.setDepth(2.6);
   }
 
-  _startIntroDialogue(roadCenterY, worldWidth, charH) {
-    playDialogOnce('Day3Scene', this, DAY_3_INTRO_DIALOG, () => {
-      // Dialogue ends -> Player character leaves the supermarket door
-      this._updateHUD('יוצאת מהסופרמרקט...');
-      const s = this.s;
+  _startGameplay(roadCenterY, worldWidth, charH) {
+    const s = this.s;
 
-      // Spawn player at the supermarket door
-      const doorX = this.scale.width / 2;
-      const doorY = this.roadTop - 6 * s; // Inside door frame height
+    // Spawn player at the supermarket door
+    const doorX = this.scale.width / 2;
+    const doorY = this.roadTop - 6 * s;
 
-      this.player.setPosition(doorX, doorY);
-      this.player.setVisible(true);
-      this.player.setDepth(this.player.y);
+    this.player.setPosition(doorX, doorY);
+    this.player.setVisible(true);
+    this.player.setDepth(this.player.y);
 
-      // Player walks down onto the road
-      const targetPlayerY = roadCenterY + charH * 0.3;
+    // Player walks down onto the road
+    const targetPlayerY = roadCenterY + charH * 0.3;
 
-      this.tweens.add({
-        targets: this.player,
-        y: targetPlayerY,
-        duration: 1000,
-        onComplete: () => {
-          // Camera starts tracking player
-          this.cameras.main.startFollow(this.player, true, 0.1, 0);
+    this.tweens.add({
+      targets: this.player,
+      y: targetPlayerY,
+      duration: 1000,
+      onComplete: () => {
+        // Camera starts tracking player
+        this.cameras.main.startFollow(this.player, true, 0.1, 0);
 
-          // Wait exactly 1 second before starting game (drones & crumbling)
-          this._updateHUD('תתכונני...');
-          this.time.delayedCall(1000, () => {
-            this.player.enable();
-            this.isGameOver = false;
-            this.isSceneOver = false;
-            this.gameplayStarted = true;
-            this.droneManager.start();
-            this._updateHUD('גררי את הג׳ויסטיק כדי לזוז ←');
-          });
-        }
-      });
+        // Start game immediately
+        this.time.delayedCall(500, () => {
+          this.player.enable();
+          this.isGameOver = false;
+          this.isSceneOver = false;
+          this.gameplayStarted = true;
+          this.droneManager.start();
+        });
+      }
     });
   }
 
@@ -597,11 +588,8 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   runVictoryDialogue() {
-    this._updateHUD('המשימה הצליחה!');
-    const dialog = new DialogSystem(this, DAY_3_VICTORY_DIALOG, () => {
-      this.showVictoryScreen();
-    }, 'stone');
-    dialog.start();
+    // Skip dialog and show victory screen directly
+    this.showVictoryScreen();
   }
 
   showVictoryScreen() {
