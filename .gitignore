@@ -72,11 +72,8 @@ web_modules/
 .env
 .env.*
 !.env.example
-!.env.docker.example
 !.env.firebase.example
-!.env.production.example
 .env.firebase
-.env.production
 backend/.cloudrun.env.yaml
 
 # parcel-bundler cache (https://parceljs.org/)

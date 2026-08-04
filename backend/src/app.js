@@ -16,7 +16,7 @@ app.set('trust proxy', 1);
  * Build the allowed CORS origin list from CLIENT_ORIGIN.
  * Supports a single origin or a comma-separated list.
  * For localhost / 127.0.0.1, both hostnames are accepted on the same port
- * so local Docker deploys work either way.
+ * so local Node (localhost / 127.0.0.1) works either way.
  * @returns {string[]|boolean}
  */
 function resolveCorsOrigins() {
