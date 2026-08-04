@@ -8,7 +8,7 @@ export const PLAYER_NAME = "רוי";
 export const DAY_1_INTRO_DIALOG = [
   {
     speaker: SPEAKER_NAME,
-    text: "השתמשו בג'ויסטיק כדי לזוז וברחו מהר מהכטב"מים!",
+    text: `השתמשו בג'ויסטיק כדי לזוז וברחו מהר מהכטב"מים!`,
   },
 ];
 
