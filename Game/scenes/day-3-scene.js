@@ -56,9 +56,10 @@ export class Day3Scene extends Phaser.Scene {
     // Setup physics world
     this.physics.world.setBounds(0, 0, width, height);
 
-    // Create player at supermarket (left side)
-    const playerStartX = 100;
-    const playerStartY = this.roadCenterY;
+    // Create player at supermarket entrance (inside building initially)
+    const supermarketX = 80;
+    const playerStartX = supermarketX;
+    const playerStartY = this.roadTop - 30 * this.s; // Start above road (inside supermarket)
     this.player = new Player(this, playerStartX, playerStartY, this.s);
     this.player.disable(); // Start with disabled movement
     this.player.setDepth(this.player.y);
@@ -91,18 +92,36 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   _startCutscene(width) {
-    // Start with player walking to bus stop
-    this._playerWalksToBusStop(width);
+    // Start with player exiting supermarket, then walking to bus stop
+    this._playerExitsSupermarket(width);
+  }
+
+  _playerExitsSupermarket(width) {
+    // Player exits supermarket - moves down from inside building to road level
+    const roadCenterY = this.roadCenterY;
+
+    this.tweens.add({
+      targets: this.player,
+      y: roadCenterY,
+      duration: 800,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        // Player has exited supermarket, now walks to bus stop
+        this.time.delayedCall(300, () => {
+          this._playerWalksToBusStop(width);
+        });
+      }
+    });
   }
 
   _playerWalksToBusStop(width) {
-    // Player walks from left (supermarket) to center (bus stop)
+    // Player walks from supermarket (left) to center (bus stop)
     const targetX = width / 2;
 
     this.tweens.add({
       targets: this.player,
       x: targetX,
-      duration: 3000,
+      duration: 2500,
       ease: 'Linear',
       onComplete: () => {
         // Wait 1 second, then first bus arrives
@@ -249,10 +268,5 @@ export class Day3Scene extends Phaser.Scene {
       'נמשיך לירושלים!',
       'האוטובוס קיבל את כולנו וממשיך לדרך. הגיע הזמן לעזור לאנשים שנופלים!'
     );
-
-    // Emit complete event for orchestrator - with slight delay to let victory screen show
-    this.time.delayedCall(2500, () => {
-      this.events.emit('complete');
-    });
   }
 }

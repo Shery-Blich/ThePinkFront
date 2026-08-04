@@ -1,37 +1,45 @@
 import Phaser from "phaser";
 import { startSceneMusic } from "../systems/bg-music.js";
-import { showVictoryHelper } from "../systems/level-ui-helper.js";
+import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
 import { LivesManager } from "../systems/lives-manager.js";
 import { addGlobalScore } from "../systems/score-manager.js";
 
 /**
  * Day4Scene — Catching Game: Catching people falling from the bus
  *
- * People fall from the bus in sectors (Arabia, Ethiopia, Haredi, Russian, Yemenite, Ashkenazi, Sephardi).
- * Player catches them to earn points.
+ * People fall from the bus in 7 sectors (Arabia, Ethiopia, Haredi, Russian, Yemenite, Gay-Man, Shlomi).
+ * Player moves the bus left/right to catch them.
+ * Catching 10 people completes the scene with a Jerusalem arrival cutscene.
+ * Missing catches deduct lives; 0 lives triggers game over.
  * Bonus: +10 points for catching at least one person from all 7 sectors.
  * Bonus: +1 point per person caught.
- * Scene completes when the last person is caught or time runs out.
  */
 
-// Character pool with sector information
+// Character pool with sector information - uses real character sprite assets (7 sectors)
 const CHARACTER_POOL = [
-  // Each sector needs multiple characters for variety
-  { name: 'Arabia-1', sector: 'Arabia', color: 0x8B4513 },
-  { name: 'Arabia-2', sector: 'Arabia', color: 0xA0522D },
-  { name: 'Ethiopia-1', sector: 'Ethiopia', color: 0x3D2817 },
-  { name: 'Ethiopia-2', sector: 'Ethiopia', color: 0x2F1B0C },
-  { name: 'Haredi-1', sector: 'Haredi', color: 0x000000 },
-  { name: 'Haredi-2', sector: 'Haredi', color: 0x1a1a1a },
-  { name: 'Russian-1', sector: 'Russian', color: 0xDEB887 },
-  { name: 'Russian-2', sector: 'Russian', color: 0xD2B48C },
-  { name: 'Yemenite-1', sector: 'Yemenite', color: 0x654321 },
-  { name: 'Yemenite-2', sector: 'Yemenite', color: 0x8B6914 },
-  { name: 'Ashkenazi-1', sector: 'Ashkenazi', color: 0xC0C0C0 },
-  { name: 'Ashkenazi-2', sector: 'Ashkenazi', color: 0xE0E0E0 },
-  { name: 'Sephardi-1', sector: 'Sephardi', color: 0x704214 },
-  { name: 'Sephardi-2', sector: 'Sephardi', color: 0x8B5A2B },
+  { name: 'Arabia-1', sector: 'Arabia', sprite: 'char-arabia' },
+  { name: 'Arabia-2', sector: 'Arabia', sprite: 'char-arabia' },
+
+  { name: 'Ethiopia-1', sector: 'Ethiopia', sprite: 'char-ethiopia' },
+  { name: 'Ethiopia-2', sector: 'Ethiopia', sprite: 'char-ethiopia' },
+
+  { name: 'Haredi-1', sector: 'Haredi', sprite: 'char-haredi' },
+  { name: 'Haredi-2', sector: 'Haredi', sprite: 'char-haredi' },
+
+  { name: 'Russian-1', sector: 'Russian', sprite: 'char-dati' },
+  { name: 'Russian-2', sector: 'Russian', sprite: 'char-dati' },
+
+  { name: 'Yemenite-1', sector: 'Yemenite', sprite: 'char-shiri' },
+  { name: 'Yemenite-2', sector: 'Yemenite', sprite: 'char-shiri' },
+
+  { name: 'Gay-Man-1', sector: 'Gay-Man', sprite: 'char-gay' },
+  { name: 'Gay-Man-2', sector: 'Gay-Man', sprite: 'char-gay' },
+
+  { name: 'Shlomi-1', sector: 'Shlomi', sprite: 'char-shlomi' },
+  { name: 'Shlomi-2', sector: 'Shlomi', sprite: 'char-shlomi' },
 ];
+
+const CATCH_TARGET = 10;
 
 export class Day4Scene extends Phaser.Scene {
   constructor() {
@@ -45,25 +53,22 @@ export class Day4Scene extends Phaser.Scene {
 
     // Game state
     this.caughtCount = 0;
-    this.totalCharacters = 0;
     this.fallingCharacters = [];
-    this.player = null;
-    this.playerImg = null;
     this.bus = null;
 
     // Sector tracking for bonus
     this.sectorsCaught = new Set();
-    this.allSectorsCaught = false;
     this.bonusAwarded = false;
+
+    // Track active spawns to stop them on game over
+    this.spawnEvents = [];
   }
 
   create() {
     const { width, height } = this.scale;
 
-    console.log('Day4Scene: create() called');
-
     LivesManager.showHUD();
-    startSceneMusic(this, "bg-middle");
+    startSceneMusic(this, "bg-day4");
 
     this.s = Math.max(1, height / 200);
     this.roadTop = Math.round(height * 0.60);
@@ -71,11 +76,11 @@ export class Day4Scene extends Phaser.Scene {
     const roadHeight = this.roadBottom - this.roadTop;
     this.roadCenterY = this.roadTop + roadHeight / 2;
 
-    // --- Background ---
+    // --- Background - Jerusalem Journey ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
-    if (this.textures.exists("day3-bg")) {
+    if (this.textures.exists("day4-bg")) {
       this.add
-        .image(width / 2, height / 2, "day3-bg")
+        .image(width / 2, height / 2, "day4-bg")
         .setOrigin(0.5, 0.5)
         .setScrollFactor(0)
         .setDisplaySize(width, height)
@@ -87,52 +92,39 @@ export class Day4Scene extends Phaser.Scene {
 
     // Physics world bounds
     this.physics.world.setBounds(0, 0, width, height);
-    this.physics.world.setCollideWorldBounds(false);
 
-    // Bus at top center (where people fall from)
+    // Bus at bottom center (this is the catcher paddle)
     const busX = width / 2;
-    const busY = this.roadTop + 30 * this.s;
+    const busY = this.roadBottom - 20 * this.s;
     this.bus = this.add.image(busX, busY, "egged_bus");
-    this.bus.setScale(this.s).setDepth(100);
-    console.log(`Day4Scene: Bus created at (${busX}, ${busY})`);
-
-    // Player at bottom center - make it a visible catching paddle
-    const playerX = width / 2;
-    const playerY = height - 20 * this.s;
-    this.playerImg = this.add.rectangle(playerX, playerY, 60 * this.s, 16 * this.s, 0xff2a5f);
-    this.playerImg.setDepth(150);
-    this.physics.add.existing(this.playerImg);
-    if (this.playerImg.body) {
-      this.playerImg.body.setImmovable(true);
-    }
-    console.log(`Day4Scene: Player created at (${playerX}, ${playerY})`);
+    this.bus.setScale(this.s).setDepth(150);
 
     // HUD
     this._createHUD();
 
-    // Listen for keyboard input to move the player
+    // Listen for keyboard input to move the bus
     this.input.keyboard.on("keydown-LEFT", () => {
-      if (this.playerImg.x > 0) {
-        this.playerImg.x -= 20 * this.s;
+      if (this.bus.x > 60 * this.s) {
+        this.bus.x -= 20 * this.s;
       }
     });
 
     this.input.keyboard.on("keydown-RIGHT", () => {
-      if (this.playerImg.x < width) {
-        this.playerImg.x += 20 * this.s;
+      if (this.bus.x < width - 60 * this.s) {
+        this.bus.x += 20 * this.s;
       }
     });
 
     // Also support A/D keys for non-EN keyboards
     this.input.keyboard.on("keydown-A", () => {
-      if (this.playerImg.x > 0) {
-        this.playerImg.x -= 20 * this.s;
+      if (this.bus.x > 60 * this.s) {
+        this.bus.x -= 20 * this.s;
       }
     });
 
     this.input.keyboard.on("keydown-D", () => {
-      if (this.playerImg.x < width) {
-        this.playerImg.x += 20 * this.s;
+      if (this.bus.x < width - 60 * this.s) {
+        this.bus.x += 20 * this.s;
       }
     });
 
@@ -144,7 +136,7 @@ export class Day4Scene extends Phaser.Scene {
     // Game timeout: 30 seconds
     this.time.delayedCall(30000, () => {
       if (!this.sceneEnded) {
-        this._endGame();
+        this._endGame(false);
       }
     });
   }
@@ -155,11 +147,17 @@ export class Day4Scene extends Phaser.Scene {
       const char = this.fallingCharacters[i];
 
       if (char.y > this.roadBottom + 100 * this.s) {
-        // Character fell off screen
+        // Character fell off screen - player missed catch
         char.destroy();
         this.fallingCharacters.splice(i, 1);
-      } else if (Phaser.Geom.Rectangle.Overlaps(this.playerImg.getBounds(), char.getBounds())) {
-        // Collision with player
+
+        // Deduct a life
+        const remaining = LivesManager.deductLife();
+        if (remaining <= 0) {
+          this._endGame(false);
+        }
+      } else if (Phaser.Geom.Rectangle.Overlaps(this.bus.getBounds(), char.getBounds())) {
+        // Collision with bus catcher
         this._catchCharacter(char, i);
       }
     }
@@ -183,7 +181,7 @@ export class Day4Scene extends Phaser.Scene {
 
   _createHUD() {
     this.hudText = this.add
-      .text(20, 20, this.caughtCount + "/" + this.totalCharacters + " תפוסים", {
+      .text(20, 20, this.caughtCount + "/" + CATCH_TARGET + " תפוסים", {
         fontFamily: "Arial, sans-serif",
         fontSize: `${16 * this.s}px`,
         color: "#ffffff",
@@ -194,52 +192,62 @@ export class Day4Scene extends Phaser.Scene {
 
   _updateHUD() {
     if (this.hudText) {
-      this.hudText.setText(this.caughtCount + "/" + this.totalCharacters + " תפוסים");
+      this.hudText.setText(this.caughtCount + "/" + CATCH_TARGET + " תפוסים");
     }
   }
 
   _startSpawning() {
-    // Determine total characters to spawn (14 characters = 2 per sector)
-    this.totalCharacters = CHARACTER_POOL.length;
+    // Spawn characters continuously, cycling through the pool
+    // Stop after 10 are caught, not after all pool members spawn
+    let spawnIndex = 0;
 
-    console.log(`Day4Scene: Starting to spawn ${this.totalCharacters} characters`);
+    const spawnLoop = () => {
+      if (this.sceneEnded || this.caughtCount >= CATCH_TARGET) {
+        return;
+      }
 
-    // Spawn characters at intervals (use proper closure to capture index value)
-    for (let i = 0; i < this.totalCharacters; i++) {
-      // Use IIFE to capture the current value of i
-      ((idx) => {
-        this.time.delayedCall(idx * 800 + 200, () => {
-          this._spawnCharacter(idx);
-        });
-      })(i);
-    }
+      this._spawnCharacter(CHARACTER_POOL[spawnIndex % CHARACTER_POOL.length]);
+      spawnIndex++;
+
+      // Schedule next spawn
+      const nextEvent = this.time.delayedCall(800, spawnLoop);
+      this.spawnEvents.push(nextEvent);
+    };
+
+    // Start first spawn after 200ms delay
+    const firstEvent = this.time.delayedCall(200, spawnLoop);
+    this.spawnEvents.push(firstEvent);
   }
 
-  _spawnCharacter(index) {
+  _spawnCharacter(charDef) {
     if (this.sceneEnded) return;
 
-    if (index < 0 || index >= CHARACTER_POOL.length) {
-      console.warn(`Day4Scene: Invalid character index ${index}`);
-      return;
+    const { width, height } = this.scale;
+
+    // Spawn at top of screen with slight randomization
+    const spawnX = Math.random() * (width - 100 * this.s) + 50 * this.s;
+    const spawnY = this.roadTop - 20 * this.s;
+
+    // Create a falling character as a physics sprite using real character images
+    let charSprite;
+    if (this.textures.exists(charDef.sprite)) {
+      charSprite = this.add.sprite(spawnX, spawnY, charDef.sprite);
+      // Scale the sprite appropriately
+      const charH = 20 * this.s;
+      const texture = this.textures.get(charDef.sprite);
+      if (texture && texture.source && texture.source[0]) {
+        const aspect = texture.source[0].width / texture.source[0].height;
+        charSprite.setDisplaySize(charH * aspect, charH);
+      } else {
+        charSprite.setDisplaySize(12 * this.s, 20 * this.s);
+      }
+    } else {
+      // Fallback to colored rectangle if sprite doesn't exist
+      charSprite = this.add.rectangle(spawnX, spawnY, 12 * this.s, 20 * this.s, 0xcccccc);
     }
 
-    const charDef = CHARACTER_POOL[index];
-    const { width } = this.scale;
-
-    // Spawn at bus location with slight randomization
-    const busX = width / 2;
-    const spawnX = busX + (Math.random() * 80 * this.s - 40 * this.s);
-    const spawnY = this.roadTop + 20 * this.s;
-
-    // Create a falling character as a physics rectangle
-    const charSprite = this.add.rectangle(
-      spawnX,
-      spawnY,
-      12 * this.s,
-      20 * this.s,
-      charDef.color
-    );
     charSprite.setDepth(50);
+    charSprite.setOrigin(0.5, 0.5);
     charSprite.sector = charDef.sector;
 
     this.physics.add.existing(charSprite);
@@ -261,14 +269,14 @@ export class Day4Scene extends Phaser.Scene {
     if (!this.sectorsCaught.has(sector)) {
       this.sectorsCaught.add(sector);
       if (this.sectorsCaught.size === 7 && !this.bonusAwarded) {
-        // Award bonus for catching all sectors
+        // Award bonus for catching all 7 sectors
         this.bonusAwarded = true;
-        addGlobalScore(this, 10, this.playerImg.x, this.playerImg.y);
+        addGlobalScore(this, 10, this.bus.x, this.bus.y);
       }
     }
 
     // Award points for catching
-    addGlobalScore(this, 1, this.playerImg.x, this.playerImg.y);
+    addGlobalScore(this, 1, this.bus.x, this.bus.y);
     this.caughtCount++;
 
     // Remove character
@@ -278,17 +286,21 @@ export class Day4Scene extends Phaser.Scene {
     // Play catch sound
     this.sound.play("sfx-levelup", { volume: 0.3 });
 
-    // Check if all characters are caught
-    if (this.caughtCount >= this.totalCharacters) {
-      this._endGame();
+    // Check if catch target is reached
+    if (this.caughtCount >= CATCH_TARGET) {
+      this._endGame(true);
     }
   }
 
-  _endGame() {
+  _endGame(victory) {
     if (this.sceneEnded) return;
     this.sceneEnded = true;
 
-    // Stop spawning
+    // Stop all spawning
+    for (const event of this.spawnEvents) {
+      this.time.removeEvent(event);
+    }
+    this.spawnEvents = [];
     this.time.removeAllEvents();
 
     // Remove remaining falling characters
@@ -297,17 +309,30 @@ export class Day4Scene extends Phaser.Scene {
     }
     this.fallingCharacters = [];
 
-    // Victory message
-    const message =
-      this.caughtCount >= this.totalCharacters
-        ? "כל אנשי האוטובוס נתפסו בבטחה!"
-        : `תפסת ${this.caughtCount} מתוך ${this.totalCharacters} אנשים`;
+    if (victory) {
+      // Victory: 10 people caught - show Jerusalem arrival cutscene
+      this._showJerusalemCutscene();
+    } else {
+      // Defeat: timeout or ran out of health
+      const message = `תפסת ${this.caughtCount} מתוך ${CATCH_TARGET} אנשים`;
+      showGameOverHelper(this, "Day4Scene", "שגעת!", message);
+    }
+  }
 
-    showVictoryHelper(this, "Day4Scene", "טוב מאוד!", message);
+  _showJerusalemCutscene() {
+    const { width, height } = this.scale;
 
-    // Emit complete event for orchestrator
-    this.time.delayedCall(2000, () => {
-      this.events.emit("complete");
+    // Animate the bus moving toward Jerusalem (screen transition)
+    this.tweens.add({
+      targets: this.bus,
+      x: width + 50 * this.s,
+      duration: 1500,
+      ease: "Power1.easeIn",
+      onComplete: () => {
+        // After bus exits screen, show victory
+        const message = `טוב מאוד! תפסת ${this.caughtCount} אנשים בדרך לירושלים!`;
+        showVictoryHelper(this, "Day4Scene", "הגענו לירושלים!", message);
+      }
     });
   }
 }

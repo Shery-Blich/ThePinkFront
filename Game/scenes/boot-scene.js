@@ -30,6 +30,16 @@ export class BootScene extends Phaser.Scene {
     this.load.image('judge-portrait', 'assets/Characters/Judge.png');
     this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
     this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
+
+    // Sector-specific characters for Day 4 catching game
+    this.load.image('char-arabia', 'assets/Characters/Arabia.png');
+    this.load.image('char-ethiopia', 'assets/Characters/Etiopit.png');
+    this.load.image('char-haredi', 'assets/Characters/haredi.png');
+    this.load.image('char-dati', 'assets/Characters/Dati.png');
+    this.load.image('char-shiri', 'assets/Characters/Shiri-front.png');
+    this.load.image('char-gay', 'assets/Characters/Gay-Man.png');
+    this.load.image('char-shlomi', 'assets/Characters/Shlomi.png');
+
     this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
     this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
     this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
@@ -93,32 +103,6 @@ export class BootScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
   // 16×16 base pixel art textures
   // ---------------------------------------------------------------------------
-
-  /** Player: 12×20 red character */
-  _generatePlayerTexture() {
-    const gfx = this.add.graphics();
-
-    // Body
-    gfx.fillStyle(0xdc2626, 1);
-    gfx.fillRect(0, 4, 12, 16);
-
-    // Head
-    gfx.fillStyle(0xef4444, 1);
-    gfx.fillRect(2, 0, 8, 7);
-
-    // Eyes
-    gfx.fillStyle(0xffffff, 1);
-    gfx.fillRect(3, 2, 2, 2);
-    gfx.fillRect(7, 2, 2, 2);
-
-    // Feet
-    gfx.fillStyle(0x991b1b, 1);
-    gfx.fillRect(1, 17, 4, 3);
-    gfx.fillRect(7, 17, 4, 3);
-
-    gfx.generateTexture('player', 12, 20);
-    gfx.destroy();
-  }
 
   /** NPC: 12×20 white character */
   _generateNpcTexture() {

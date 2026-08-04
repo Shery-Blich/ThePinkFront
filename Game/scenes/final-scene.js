@@ -142,8 +142,8 @@ export class FinalScene extends Phaser.Scene {
    */
   _buildJerusalemBackground(width, height) {
     // Use a simple color gradient or placeholder image
-    if (this.textures.exists('bus_stop_jerusalem_transparent')) {
-      const bgImage = this.add.image(width / 2, height * 0.35, 'bus_stop_jerusalem_transparent');
+    if (this.textures.exists('day4-bg')) {
+      const bgImage = this.add.image(width / 2, height * 0.35, 'day4-bg');
       bgImage.setOrigin(0.5, 0.5);
       bgImage.setDisplaySize(width * 1.2, height * 0.5);
       bgImage.setDepth(1);
