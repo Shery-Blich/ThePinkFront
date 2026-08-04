@@ -130,7 +130,7 @@ export class Player extends Character {
    * - Propels player in slide direction
    * - Plays cartoon spin/wobble animation and floating "אופס! 🍌" text
    * - Re-enables input after duration
-   * 
+   *
    * @param {number} [durationMs=300] - Duration of slide in ms
    */
   slide(durationMs = 300) {
@@ -182,6 +182,78 @@ export class Player extends Character {
         if (this.body) {
           this.body.setVelocity(0, 0);
         }
+        this.enable();
+      }
+    });
+  }
+
+  /**
+   * Triggers knockback effect on pothole hit:
+   * - Red tint flash + camera shake + invulnerability
+   * - Propels player forward with spin animation and position shift
+   * - Similar to slide() but with red damage effects
+   *
+   * @param {number} [durationMs=300] - Duration of knockback spin in ms
+   * @param {number} [knockbackDistance=40] - How far to push player forward in units
+   */
+  knockback(durationMs = 300, knockbackDistance = 40) {
+    if (this.isInvulnerable) return;
+    if (this.isSliding) return;
+
+    this.isSliding = true;
+    this.isInvulnerable = true;
+
+    // Disable input during knockback
+    this.disable();
+
+    const s = this.s || 1;
+
+    // Red tint flash
+    this.setTint(0xff0000);
+
+    // Camera shake
+    if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+      this.scene.cameras.main.shake(200, 0.01);
+    }
+
+    // Play damage sound if available
+    if (this.scene && this.scene.sound && this.scene.cache && this.scene.cache.audio && this.scene.cache.audio.exists('sfx-gameover')) {
+      this.scene.sound.play('sfx-gameover', { volume: 0.3 });
+    }
+
+    // Floating damage indicator text
+    const damageText = this.scene.add.text(this.x, this.y - 25 * s, '-1 ♥', {
+      fontFamily: 'Rubik, sans-serif',
+      fontSize: `${Math.max(14, Math.round(16 * s))}px`,
+      fontWeight: '900',
+      color: '#dc2626',
+      stroke: '#ffffff',
+      strokeThickness: 2 * s,
+    }).setOrigin(0.5, 1).setDepth(3000);
+
+    this.scene.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30 * s,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => damageText.destroy(),
+    });
+
+    // Spin animation with forward position shift during knockback
+    this.scene.tweens.add({
+      targets: this,
+      x: this.x + knockbackDistance * s,
+      angle: 360,
+      duration: durationMs,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        this.angle = 0;
+        this.isSliding = false;
+        if (this.body) {
+          this.body.setVelocity(0, 0);
+        }
+        this.clearTint();
+        this.isInvulnerable = false;
         this.enable();
       }
     });
