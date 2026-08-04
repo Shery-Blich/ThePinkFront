@@ -6,8 +6,6 @@ import {
 } from "../systems/level-ui-helper.js";
 import { LivesManager } from "../systems/lives-manager.js";
 import { addGlobalScore } from "../systems/score-manager.js";
-import { playDialogOnce } from "../systems/dialog-system.js";
-import { DAY_5_VICTORY_DIALOG } from "../data/dialog-data.js";
 
 // Preloaded in boot-scene.js from assets/Characters/
 const CHARACTER_KEYS = [
@@ -639,14 +637,12 @@ export class Day5Scene extends Phaser.Scene {
     this._cats = [];
     this.cameras.main.fade(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
-      playDialogOnce("Day5Scene-victory", this, DAY_5_VICTORY_DIALOG, () => {
-        showVictoryHelper(
-          this,
-          "Day5Scene",
-          "השלב הושלם!",
-          "הצלחתם למצוא את כל הדמויות המסתתרות בירושלים!",
-        );
-      });
+      showVictoryHelper(
+        this,
+        "Day5Scene",
+        "השלב הושלם!",
+        "הצלחתם למצוא את כל הדמויות המסתתרות בירושלים!",
+      );
     });
   }
 
