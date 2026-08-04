@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { DialogSystem } from '../systems/dialog-system.js';
 import { Character } from '../entities/character.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { trackGameCompleted } from '../analytics.js';
@@ -42,15 +41,10 @@ export class FinalScene extends Phaser.Scene {
     // --- Stylized Voting Booth Backdrop (Graphic Placeholder) ---
     this._createVotingBoothGraphic(width, height);
 
-    // --- Start Climax Dialogue ---
-    const dialogueLines = [
-      { speaker: 'שלומי', text: 'וואו, סוף סוף הגעתי לתא ההצבעה!' }
-    ];
-
-    const dialog = new DialogSystem(this, dialogueLines, () => {
+    // Show score popup immediately (no intro dialogue)
+    this.time.delayedCall(1000, () => {
       this.showScorePopup();
     });
-    dialog.start();
   }
 
   /**

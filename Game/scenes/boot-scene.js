@@ -20,21 +20,21 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    // Root-relative paths are reliable on mobile browsers / SPA base.
+    // Relative paths for Vite base `./` (local + GitHub Pages).
     // Day 2 panoramic bg must stay ≤4096px wide (WebGL max texture size on many phones).
-    this.load.image('player', '/assets/Characters/Shlomi.png');
-    this.load.image('day1-bg', '/assets/backgrounds/Kiryat%20shmona.png');
-    this.load.image('day2-bg', '/assets/backgrounds/supermarket.png');
-    this.load.image('day3-bg', '/assets/backgrounds/Kiryat%20shmona.png');
-    this.load.image('cashier-character', '/assets/Characters/kupaee.png');
-    this.load.image('npc-yuval', '/assets/Characters/Yuval.png');
-    this.load.image('npc-shiri', '/assets/Characters/Shiri.png');
-    this.load.image('judge-portrait', '/assets/Characters/Judge.png');
-    this.load.image('nassi-1', '/assets/Characters/Nassi-1.png');
-    this.load.image('nassi-2', '/assets/Characters/Nassi-2.png');
-    this.load.image('day4-bg', '/assets/Ellements/bus_stop_jerusalem_transparent.png');
-    this.load.image('kotel-bg', '/assets/backgrounds/Kotel.png');
-    this.load.image('day5-bg', '/assets/Ellements/kalpi.png');
+    this.load.image('player', 'assets/Characters/Shlomi.png');
+    this.load.image('day1-bg', 'assets/backgrounds/Kiryat%20shmona.png');
+    this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
+    this.load.image('day3-bg', 'assets/backgrounds/Kiryat%20shmona.png');
+    this.load.image('cashier-character', 'assets/Characters/kupaee.png');
+    this.load.image('npc-yuval', 'assets/Characters/Yuval.png');
+    this.load.image('npc-shiri', 'assets/Characters/Shiri.png');
+    this.load.image('judge-portrait', 'assets/Characters/Judge.png');
+    this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
+    this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
+    this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
+    this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
+    this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
 
     const groceryFiles = [
       'vegetable.png',
@@ -46,21 +46,21 @@ export class BootScene extends Phaser.Scene {
 
     groceryFiles.forEach((file) => {
       const key = `grocery-${file.replace(/\.[^/.]+$/, '')}`;
-      this.load.image(key, `/assets/groceries/${file}`);
+      this.load.image(key, `assets/groceries/${file}`);
     });
 
-    this.load.audio('sfx-explosion', '/assets/sounds/drone_bomb.wav');
-    this.load.audio('sfx-gameover',  '/assets/sounds/game-over.wav');
-    this.load.audio('sfx-levelup',   '/assets/sounds/level-up.wav');
-    this.load.audio('bg-sessions', '/assets/sounds/session-1-3-background.mp3');
-    this.load.audio('bg-middle',   '/assets/sounds/music-for-middle.wav');
-    this.load.audio('bg-end',      '/assets/sounds/gaming-for-end.wav');
-    this.load.audio('bg-day4',     '/assets/sounds/scene-4-music.wav');
+    this.load.audio('sfx-explosion', 'assets/sounds/drone_bomb.wav');
+    this.load.audio('sfx-gameover',  'assets/sounds/game-over.wav');
+    this.load.audio('sfx-levelup',   'assets/sounds/level-up.wav');
+    this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
+    this.load.audio('bg-middle',   'assets/sounds/music-for-middle.wav');
+    this.load.audio('bg-end',      'assets/sounds/gaming-for-end.wav');
+    this.load.audio('bg-day4',     'assets/sounds/scene-4-music.wav');
     // Day 5 SFX
-    this.load.audio('sfx-meow',   '/assets/sounds/meow.mp3');
-    this.load.audio('sfx-catbag', '/assets/sounds/cat-in-a-bag.mp3');
+    this.load.audio('sfx-meow',   'assets/sounds/meow.mp3');
+    this.load.audio('sfx-catbag', 'assets/sounds/cat-in-a-bag.mp3');
     // Day 2 supermarket collect — key 'collect' is consumed by Day2Scene's existing sound system
-    this.load.audio('collect',    '/assets/sounds/supermarket-collect.mp3');
+    this.load.audio('collect',    'assets/sounds/supermarket-collect.mp3');
   }
 
   create() {

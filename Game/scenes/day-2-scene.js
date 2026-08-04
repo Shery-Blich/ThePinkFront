@@ -7,8 +7,6 @@ import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
-import { playDialogOnce } from '../systems/dialog-system.js';
-import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
 
 import { addGlobalScore } from '../systems/score-manager.js';
 
@@ -151,18 +149,16 @@ export class Day2Scene extends Phaser.Scene {
     this._setupInput(width);
     this._createHUD();
 
-    // Play intro dialogue before starting gameplay
-    playDialogOnce('Day2Scene', this, DAY_2_INTRO_DIALOG, () => {
-      this._dialogActive = false;
-      this.joystick.enable();
+    // Start gameplay immediately (no intro dialogue)
+    this._dialogActive = false;
+    this.joystick.enable();
 
-      // Show the jump tutorial after dialogue finishes
-      MovementTutorial.showJumpTutorial(this);
+    // Show the jump tutorial immediately
+    MovementTutorial.showJumpTutorial(this);
 
-      // Start scrolling the screen only after the player fulfills the tutorial by jumping
-      this.events.once('player-jump', () => {
-        this._isScrollingStarted = true;
-      });
+    // Start scrolling the screen only after the player fulfills the tutorial by jumping
+    this.events.once('player-jump', () => {
+      this._isScrollingStarted = true;
     });
 
     this.events.once('shutdown', () => {
@@ -517,30 +513,15 @@ export class Day2Scene extends Phaser.Scene {
     }
     this._cashierDialogStarted = true;
 
-    // Freeze the player in place while the closing dialogue plays out
+    // Freeze the player in place
     this.joystick?.disable();
     if (this.player && this.player.body) {
       this.player.body.setVelocity(0, 0);
       this.player.body.moves = false;
     }
 
-    const playerLine = `איך יצא לי ${this._collectedCount} מוצרים ב67₪?!`;
-    this._showSpeechBubble(this.player, playerLine, {
-      offsetY: 18 * this.s,
-      duration: 2000,
-    });
-
-    this.time.delayedCall(2200, () => {
-      const cashierTarget = this.finishZone;
-      this._showSpeechBubble(cashierTarget, '!יאללה לא מעניין! הבא בתור', {
-        offsetY: 55,
-        duration: 1600,
-      });
-
-      this.time.delayedCall(1800, () => {
-        this.triggerSceneOver();
-      });
-    });
+    // Skip dialog and trigger scene over immediately
+    this.triggerSceneOver();
   }
 
   /**
