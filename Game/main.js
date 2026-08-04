@@ -7,6 +7,7 @@ import { Day3Scene } from "./scenes/day-3-scene.js";
 import { Day4Scene } from "./scenes/day-4-scene.js";
 import { Day5Scene } from "./scenes/day-5-scene.js";
 import { KotelScene } from "./scenes/kotel-scene.js";
+import { KalpiScene } from "./scenes/kalpi-scene.js";
 import { FinalScene } from "./scenes/final-scene.js";
 import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
 import { resetLevelTrivia } from "./systems/level-trivia.js";
@@ -50,6 +51,7 @@ const config = {
     Day4Scene,
     Day5Scene,
     KotelScene,
+    KalpiScene,
     FinalScene,
   ],
 };
@@ -72,6 +74,7 @@ new SceneOrchestrator(game, [
   Day4Scene,
   Day5Scene,
   KotelScene,
+  KalpiScene,
   FinalScene,
 ]);
 

@@ -21,12 +21,19 @@ export function showVictoryHelper(scene, sceneKey, title, message) {
       message,
       buttonText,
       async () => {
-        await runLevelTrivia(scene, sceneKey);
-        scene.events.emit('complete');
+        try {
+          await runLevelTrivia(scene, sceneKey);
+        } catch (err) {
+          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
+        } finally {
+          scene.events.emit('complete');
+        }
       }
     );
   } else {
-    runLevelTrivia(scene, sceneKey).then(() => {
+    runLevelTrivia(scene, sceneKey).catch((err) => {
+      console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
+    }).finally(() => {
       scene.events.emit('complete');
     });
   }

@@ -27,6 +27,7 @@ export class SceneOrchestrator {
       { title: "יום 4: הכנסת", subtitle: "בלב מקבלת ההחלטות" },
       { title: "יום 5: ועדת הבחירות המרכזית", subtitle: "מאבק על כל קול!" },
       { title: "הכותל המערבי", subtitle: "רגע של תקווה ואחדות" },
+      { title: "הקלפי בירושלים", subtitle: "מממשים את זכות הבחירה!" },
       { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
     ];
 
@@ -44,7 +45,10 @@ export class SceneOrchestrator {
 
     // Resolve the string keys from the provided scene classes
     this.sceneOrder = this.sceneClasses.map(SceneClass => {
-      const instance = this.game.scene.scenes.find(s => s instanceof SceneClass);
+      let instance = this.game.scene.scenes.find(s => s instanceof SceneClass);
+      if (!instance && SceneClass.name) {
+        instance = this.game.scene.scenes.find(s => s.sys && (s.sys.settings.key === SceneClass.name || s.constructor.name === SceneClass.name));
+      }
       if (instance) {
         return instance.sys.settings.key;
       } else {

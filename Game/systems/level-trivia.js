@@ -8,6 +8,7 @@ const TRIVIA_SCENE_ORDER = [
   'Day4Scene',
   'Day5Scene',
   'KotelScene',
+  'KalpiScene',
 ];
 
 function getTriviaState() {
@@ -115,28 +116,45 @@ function showTriviaQuestion(scene, questionIndex, totalQuestions) {
 }
 
 export async function runLevelTrivia(scene, sceneKey) {
-  await loadTriviaQuestions();
+  try {
+    await loadTriviaQuestions();
 
-  const questionCount = getSceneQuestionCount(sceneKey);
-  console.log(`[Trivia Debug] runLevelTrivia: starting trivia sequence for "${sceneKey}" with ${questionCount} questions`);
-  if (questionCount === 0) return;
+    const questions = getTriviaQuestions();
+    const state = getTriviaState();
 
-  const state = getTriviaState();
-  const startIndex = state.nextQuestionIndex;
-
-  for (let offset = 0; offset < questionCount; offset += 1) {
-    const result = await showTriviaQuestion(scene, startIndex + offset, questionCount);
-
-    if (result?.questionIndex === undefined) continue;
-
-    state.answeredQuestions += 1;
-    if (result.isCorrect) {
-      state.correctAnswers += 1;
+    if (!questions || questions.length === 0 || state.nextQuestionIndex >= questions.length) {
+      console.log(`[Trivia Debug] No available trivia questions for "${sceneKey}". Proceeding directly.`);
+      return;
     }
-    dispatchScoreUpdate();
-  }
 
-  state.nextQuestionIndex += questionCount;
+    const questionCount = getSceneQuestionCount(sceneKey);
+    console.log(`[Trivia Debug] runLevelTrivia: starting trivia sequence for "${sceneKey}" with ${questionCount} questions`);
+    if (questionCount === 0) return;
+
+    const startIndex = state.nextQuestionIndex;
+
+    for (let offset = 0; offset < questionCount; offset += 1) {
+      const qIdx = startIndex + offset;
+      if (!questions[qIdx]) {
+        console.warn(`[Trivia Debug] Question at index ${qIdx} is missing for "${sceneKey}". Skipping to next scene.`);
+        break;
+      }
+
+      const result = await showTriviaQuestion(scene, qIdx, questionCount);
+
+      if (result?.questionIndex === undefined) continue;
+
+      state.answeredQuestions += 1;
+      if (result.isCorrect) {
+        state.correctAnswers += 1;
+      }
+      dispatchScoreUpdate();
+    }
+
+    state.nextQuestionIndex += Math.min(questionCount, questions.length - startIndex);
+  } catch (err) {
+    console.warn(`[Trivia Warning] Error running level trivia for "${sceneKey}", continuing cleanly:`, err);
+  }
 }
 
 export function resetLevelTrivia() {
@@ -164,5 +182,10 @@ export function getTriviaScoreSummary() {
 }
 
 export function hasLevelTrivia(sceneKey) {
+  const questions = getTriviaQuestions();
+  const state = getTriviaState();
+  if (!questions || questions.length === 0 || state.nextQuestionIndex >= questions.length) {
+    return false;
+  }
   return getSceneQuestionCount(sceneKey) > 0;
 }
