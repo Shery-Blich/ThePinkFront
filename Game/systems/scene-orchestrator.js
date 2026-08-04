@@ -19,16 +19,17 @@ export class SceneOrchestrator {
     this.sceneClasses = sceneClasses;
     this.sceneOrder = []; // Will store the resolved string keys of the scenes
 
-    // Define level titles and subtitles for the loading screens (keyed by scene key)
-    this.levelInfo = {
-      Day1Scene: { title: "יום 1: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
-      Day2Scene: { title: "יום 2: מחסום בצפון", subtitle: "הוועדה לא מאשרת כל כך בקלות..." },
-      Day3Scene: { title: "יום 3: הכביש המהיר", subtitle: "מתקדמים אל עבר הבירה!" },
-      Day4Scene: { title: "יום 4: הכנסת", subtitle: "בלב מקבלת ההחלטות" },
-      Day5Scene: { title: "יום 5: ועדת הבחירות המרכזית", subtitle: "מאבק על כל קול!" },
-      KotelScene: { title: "הכותל המערבי", subtitle: "רגע של תקווה ואחדות" },
-      FinalScene: { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
-    };
+    // Define level titles and subtitles for the loading screens
+    this.levelInfo = [
+      { title: "ההתחלה: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
+      { title: "ההכנה: סופר בארץ", subtitle: "יוקר המחייה בימנו..." },
+      { title: "יהיציאה: תחבצ בארץ", subtitle: "מתקדמים אל עבר הבירה!" },
+      { title: "הנסיעה: מי שבא ברוך הבא", subtitle: "מאבק על כל קול" },
+      { title: "ההגעה: הנשיא", subtitle: "רגע של תקווה ואחדות!" },
+      { title: "הרגע לפני האחרון: הקלפי", subtitle: "מממשים את זכות הבחירה!" },
+      { title: "הסיום: ההצבעה בירושלים", subtitle: "מממשים את זכות הבחירה!" },
+      { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
+    ];
 
     // Wait for the game instance to boot and be ready before initializing scene links
     this.game.events.once('ready', () => {
@@ -44,7 +45,10 @@ export class SceneOrchestrator {
 
     // Resolve the string keys from the provided scene classes
     this.sceneOrder = this.sceneClasses.map(SceneClass => {
-      const instance = this.game.scene.scenes.find(s => s instanceof SceneClass);
+      let instance = this.game.scene.scenes.find(s => s instanceof SceneClass);
+      if (!instance && SceneClass.name) {
+        instance = this.game.scene.scenes.find(s => s.sys && (s.sys.settings.key === SceneClass.name || s.constructor.name === SceneClass.name));
+      }
       if (instance) {
         return instance.sys.settings.key;
       } else {

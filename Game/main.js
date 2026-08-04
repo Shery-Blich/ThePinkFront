@@ -6,6 +6,7 @@ import { Day2Scene } from "./scenes/day-2-scene.js";
 import { Day3Scene } from "./scenes/day-3-scene.js";
 import { Day4Scene } from "./scenes/day-4-scene.js";
 import { KotelScene } from "./scenes/kotel-scene.js";
+import { KalpiScene } from "./scenes/kalpi-scene.js";
 import { FinalScene } from "./scenes/final-scene.js";
 import { SceneOrchestrator } from "./systems/scene-orchestrator.js";
 import { resetLevelTrivia } from "./systems/level-trivia.js";
@@ -43,11 +44,13 @@ const config = {
   },
   scene: [
     BootScene,
-    // Day1Scene,
-    // Day2Scene,
+    Day1Scene,
+    Day2Scene,
     Day3Scene,
     Day4Scene,
     KotelScene,
+    KalpiScene,
+    FinalScene,
   ],
 };
 
@@ -63,11 +66,13 @@ window.addEventListener('start-game', () => {
 
 // Connect all the stages in chronological order using the Orchestrator
 new SceneOrchestrator(game, [
-  // Day1Scene,
-  // Day2Scene,
-  // Day3Scene,
+  Day1Scene,
+  Day2Scene,
+  Day3Scene,
   Day4Scene,
   KotelScene,
+  KalpiScene,
+  FinalScene,
 ]);
 
 // Mount the Vue trivia overlay component

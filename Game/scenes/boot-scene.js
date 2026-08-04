@@ -44,6 +44,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
     this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
     this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
+    this.load.image('kalpi', 'assets/Ellements/kalpi.png');
 
     const groceryFiles = [
       'vegetable.png',
