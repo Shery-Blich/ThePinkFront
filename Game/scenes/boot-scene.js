@@ -20,7 +20,7 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    this.load.image('player', 'assets/Shlomi.png');
+    this.load.image('player', 'assets/Characters/Shlomi.png');
     this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
     this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
     this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona.png');
@@ -30,9 +30,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('judge-portrait', 'assets/Characters/Judge.png');
     this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
     this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
-    this.load.image('day4-bg', 'assets/backgrounds/bus_stop_jerusalem_transparent.png');
+    this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
     this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
-    this.load.image('day5-bg', 'assets/backgrounds/kalpi.png');
+    this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
 
     const groceryFiles = [
       'vegetable.png',
@@ -62,7 +62,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Player texture is now preloaded from assets/Shlomi.png
+    // Player texture is now preloaded from assets/Characters/Shlomi.png
     this._generateNpcTexture();
     this._generateBuildingTextures();
     this._generateRoadTexture();
