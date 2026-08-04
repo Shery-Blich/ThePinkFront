@@ -2,13 +2,8 @@ import Phaser from "phaser";
 import { Character } from "../entities/character.js";
 import { Player } from "../entities/player.js";
 import { NPC } from "../entities/npc.js";
-import { DialogSystem, playDialogOnce } from "../systems/dialog-system.js";
 import { MovementTutorial } from "../systems/movement-tutorial.js";
 import { DroneManager } from "../systems/drone-manager.js";
-import {
-  DAY_1_INTRO_DIALOG,
-  DAY_1_VICTORY_DIALOG,
-} from "../data/dialog-data.js";
 import { startSceneMusic } from "../systems/bg-music.js";
 import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helper.js";
 import { LivesManager } from "../systems/lives-manager.js";
@@ -150,14 +145,6 @@ export class Day1Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, height);
     this.cameras.main.startFollow(this.player, true, 0.1, 0);
 
-    // Disable movement initially for intro dialogue
-    if (this.player) this.player.disable();
-
-    // --- HUD ---
-    this._createHUD();
-
-
-
     // --- Particles ---
     this.explosionParticles = this.add.particles(0, 0, "particle", {
       speed: { min: 40 * this.s, max: 130 * this.s },
@@ -210,6 +197,9 @@ export class Day1Scene extends Phaser.Scene {
       });
     });
 
+    // --- HUD ---
+    this._createHUD();
+
     this.player.once("move-start", () => {
       trackFirstMove({ scene_id: "kiryat_shmona" });
       this.isGameOver = false;
@@ -217,13 +207,9 @@ export class Day1Scene extends Phaser.Scene {
       this.droneManager.start();
     });
 
-    // --- Play Intro Cutscene Dialogue ---
-    this._updateHUD("שידור נכנס");
-    playDialogOnce('Day1Scene', this, DAY_1_INTRO_DIALOG, () => {
-      this._updateHUD("גררי את הג׳ויסטיק כדי לזוז ←");
-      this.player.enable();
-      MovementTutorial.showJoystickTutorial(this, this.player);
-    });
+    // Enable player and show tutorial immediately (no intro dialog)
+    this.player.enable();
+    MovementTutorial.showJoystickTutorial(this, this.player);
 
     // Cleanup on shutdown
     this.events.once("shutdown", () => {
@@ -412,10 +398,8 @@ export class Day1Scene extends Phaser.Scene {
     const doorH = 28 * s;
 
     this.supermarket = this.add.graphics();
-    // White block placeholder
     this.supermarket.fillStyle(0xffffff, 1);
     this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
-    // Dark rectangle hole door
     this.supermarket.fillStyle(0x110e1a, 1);
     this.supermarket.fillRect(
       x - doorW / 2,
@@ -424,18 +408,7 @@ export class Day1Scene extends Phaser.Scene {
       doorH,
     );
 
-    // Add text label "SUPER"
-    this.superLabel = this.add
-      .text(x, this.roadTop - h + 15 * s, "סופר", {
-        fontFamily: "Impact, sans-serif",
-        fontSize: `${12 * s}px`,
-        color: "#ff2a5f",
-        align: "center",
-      })
-      .setOrigin(0.5);
-
     this.supermarket.setDepth(2.5);
-    this.superLabel.setDepth(2.6);
   }
 
   triggerSceneOver() {
@@ -488,20 +461,11 @@ export class Day1Scene extends Phaser.Scene {
           ease: "Quad.easeIn",
           onComplete: () => {
             this.player.setVisible(false);
-            this.player.setAlpha(1); // Reset alpha back to 1
+            this.player.setAlpha(1);
 
-            // 5. The final dialog will start to trigger the end scene as usual
+            // 5. Show victory screen directly (no dialog)
             this.time.delayedCall(300, () => {
-              this._updateHUD("זמן מצוין לקניות!");
-              const dialog = new DialogSystem(
-                this,
-                [{ speaker: "נהוראי", text: "זמן מצוין לקניות!" }],
-                () => {
-                  this.showVictoryScreen();
-                },
-                'stone'
-              );
-              dialog.start();
+              this.showVictoryScreen();
             });
           },
         });

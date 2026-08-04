@@ -2,8 +2,6 @@ import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { Banana } from '../entities/banana.js';
-import { DialogSystem } from '../systems/dialog-system.js';
-import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
@@ -162,14 +160,9 @@ export class KotelScene extends Phaser.Scene {
     // --- HUD ---
     this._createHUD();
 
-    // --- Start Intro Dialogue ---
-    this._updateHUD('שידור נכנס');
-    const introDialog = new DialogSystem(this, KOTEL_INTRO_DIALOG, () => {
-      this.player.enable();
-      this.gameplayStarted = true;
-      this._updateHUD('רדוף אחרי הנשיא! השתמש במקשים או בג׳ויסטיק כדי לזוז!');
-    });
-    introDialog.start();
+    // Start gameplay immediately (no intro dialogue)
+    this.player.enable();
+    this.gameplayStarted = true;
 
     this.events.once('shutdown', () => {
       if (this.activeBananas) {
@@ -465,19 +458,15 @@ export class KotelScene extends Phaser.Scene {
       });
     }
 
-    // 3. Show small speech bubble directly above President in-game: "זאת לא רפובליקת בננות!"
+    // Show small speech bubble directly above President in-game
     const speechBubble = this.createPresidentSpeechBubble('זאת לא רפובליקת בננות!');
 
-    // 4. Wait 3 seconds showing the ending speech bubble, then trigger regular dialogue textboxes
-    this.time.delayedCall(3000, () => {
+    // Wait a moment then show victory screen (no additional dialog)
+    this.time.delayedCall(2000, () => {
       if (speechBubble) {
         speechBubble.destroy();
       }
-
-      const dialog = new DialogSystem(this, KOTEL_VICTORY_DIALOG, () => {
-        this.showVictoryScreen();
-      });
-      dialog.start();
+      this.showVictoryScreen();
     });
   }
 
