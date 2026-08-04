@@ -19,16 +19,16 @@ export class SceneOrchestrator {
     this.sceneClasses = sceneClasses;
     this.sceneOrder = []; // Will store the resolved string keys of the scenes
 
-    // Define level titles and subtitles for the loading screens
-    this.levelInfo = [
-      { title: "יום 1: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
-      { title: "יום 2: מחסום בצפון", subtitle: "הוועדה לא מאשרת כל כך בקלות..." },
-      { title: "יום 3: הכביש המהיר", subtitle: "מתקדמים אל עבר הבירה!" },
-      { title: "יום 4: הכנסת", subtitle: "בלב מקבלת ההחלטות" },
-      { title: "יום 5: ועדת הבחירות המרכזית", subtitle: "מאבק על כל קול!" },
-      { title: "הכותל המערבי", subtitle: "רגע של תקווה ואחדות" },
-      { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
-    ];
+    // Define level titles and subtitles for the loading screens (keyed by scene key)
+    this.levelInfo = {
+      Day1Scene: { title: "יום 1: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
+      Day2Scene: { title: "יום 2: מחסום בצפון", subtitle: "הוועדה לא מאשרת כל כך בקלות..." },
+      Day3Scene: { title: "יום 3: הכביש המהיר", subtitle: "מתקדמים אל עבר הבירה!" },
+      Day4Scene: { title: "יום 4: הכנסת", subtitle: "בלב מקבלת ההחלטות" },
+      Day5Scene: { title: "יום 5: ועדת הבחירות המרכזית", subtitle: "מאבק על כל קול!" },
+      KotelScene: { title: "הכותל המערבי", subtitle: "רגע של תקווה ואחדות" },
+      FinalScene: { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
+    };
 
     // Wait for the game instance to boot and be ready before initializing scene links
     this.game.events.once('ready', () => {
@@ -87,7 +87,7 @@ export class SceneOrchestrator {
       const targetSceneKey = this.sceneOrder[index];
       console.log(`SceneOrchestrator: Transitioning to stage "${targetSceneKey}" (index: ${index})`);
 
-      const info = this.levelInfo[index] || { title: "טוען...", subtitle: "הכנות אחרונות" };
+      const info = this.levelInfo[targetSceneKey] || { title: "טוען...", subtitle: "הכנות אחרונות" };
 
       if (window.showLoadingScreen) {
         window.showLoadingScreen(info.title, info.subtitle, () => {
