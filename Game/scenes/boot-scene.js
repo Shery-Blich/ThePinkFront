@@ -20,7 +20,7 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    this.load.image('player', 'assets/Characters/Shlomi.png');
+    this.load.image('player', 'assets/Characters/Shiri-front.png');
     this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
     this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
     this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona.png');
