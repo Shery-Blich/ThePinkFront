@@ -7,6 +7,8 @@ import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
+import { playDialogOnce } from '../systems/dialog-system.js';
+import { DAY_2_INTRO_DIALOG, DAY_2_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 import { addGlobalScore } from '../systems/score-manager.js';
 
@@ -147,12 +149,13 @@ export class Day2Scene extends Phaser.Scene {
     this._setupInput(width);
     this._createHUD();
 
-    // Start gameplay immediately (no intro dialogue)
-    this._dialogActive = false;
-    this.joystick.enable();
-
-    // Show the jump tutorial immediately
-    MovementTutorial.showJumpTutorial(this);
+    // Show intro dialog, then start gameplay
+    this._dialogActive = true;
+    playDialogOnce('Day2Scene-intro', this, DAY_2_INTRO_DIALOG, () => {
+      this._dialogActive = false;
+      this.joystick.enable();
+      MovementTutorial.showJumpTutorial(this);
+    });
 
     // Start scrolling the screen only after the player fulfills the tutorial by jumping
     this.events.once('player-jump', () => {
@@ -783,12 +786,14 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    showVictoryHelper(
-      this,
-      'Day2Scene',
-      "השלב הושלם!",
-      "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן."
-    );
+    playDialogOnce('Day2Scene-victory', this, DAY_2_VICTORY_DIALOG, () => {
+      showVictoryHelper(
+        this,
+        'Day2Scene',
+        "השלב הושלם!",
+        "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן."
+      );
+    });
   }
 
   _setupSounds() {

@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { startSceneMusic } from "../systems/bg-music.js";
 import { showVictoryHelper } from "../systems/level-ui-helper.js";
 import { LivesManager } from "../systems/lives-manager.js";
+import { playDialogOnce } from "../systems/dialog-system.js";
+import { DAY_4_INTRO_DIALOG, DAY_4_VICTORY_DIALOG } from "../data/dialog-data.js";
 
 /**
  * Day4Scene — Cutscene: bus ride from Kiryat Shmona to Jerusalem.
@@ -44,6 +46,7 @@ export class Day4Scene extends Phaser.Scene {
     this._genBackgroundTextures(width, height);
     this._buildScene(width, height);
     this._startMusic();
+    playDialogOnce("Day4Scene-intro", this, DAY_4_INTRO_DIALOG);
     this._scheduleTimeline(width, height);
     this.events.once("shutdown", () => this._stopMusic());
   }
@@ -546,12 +549,14 @@ export class Day4Scene extends Phaser.Scene {
     if (this._sceneEnded) return;
     this._sceneEnded = true;
     this._stopMusic();
-    showVictoryHelper(
-      this,
-      "Day4Scene",
-      "הגעתם לירושלים!",
-      "הנסיעה עברה בשלום ונכנסתם לעיר הבירה."
-    );
+    playDialogOnce("Day4Scene-victory", this, DAY_4_VICTORY_DIALOG, () => {
+      showVictoryHelper(
+        this,
+        "Day4Scene",
+        "הגעתם לירושלים!",
+        "הנסיעה עברה בשלום ונכנסתם לעיר הבירה."
+      );
+    });
   }
 
   // ─────────────────────────────────────────────────────────────
