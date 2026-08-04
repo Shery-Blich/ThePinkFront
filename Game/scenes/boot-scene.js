@@ -30,6 +30,17 @@ export class BootScene extends Phaser.Scene {
     this.load.image('judge-portrait', 'assets/Characters/Judge.png');
     this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
     this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
+
+    // Sector-specific characters for Day 4 catching game
+    this.load.image('char-arabia', 'assets/Characters/Arabia.png');
+    this.load.image('char-ethiopia', 'assets/Characters/Etiopit.png');
+    this.load.image('char-haredi', 'assets/Characters/haredi.png');
+    this.load.image('char-dati', 'assets/Characters/Dati.png');
+    this.load.image('char-shiri', 'assets/Characters/Shiri-front.png');
+    this.load.image('char-gay', 'assets/Characters/Gay-Man.png');
+    this.load.image('char-shlomi', 'assets/Characters/Shlomi.png');
+
+    this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
     this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
     this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
     this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
@@ -76,6 +87,7 @@ export class BootScene extends Phaser.Scene {
     this._generateSolbergPortrait();
     this._generateBananaTexture();
     this._generateMineTexture();
+    this._generatePedalTextures();
 
     // Hide the initial loading screen now that boot preloading is complete
     if (typeof window.hideLoadingScreen === 'function') {
@@ -94,32 +106,6 @@ export class BootScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
   // 16×16 base pixel art textures
   // ---------------------------------------------------------------------------
-
-  /** Player: 12×20 red character */
-  _generatePlayerTexture() {
-    const gfx = this.add.graphics();
-
-    // Body
-    gfx.fillStyle(0xdc2626, 1);
-    gfx.fillRect(0, 4, 12, 16);
-
-    // Head
-    gfx.fillStyle(0xef4444, 1);
-    gfx.fillRect(2, 0, 8, 7);
-
-    // Eyes
-    gfx.fillStyle(0xffffff, 1);
-    gfx.fillRect(3, 2, 2, 2);
-    gfx.fillRect(7, 2, 2, 2);
-
-    // Feet
-    gfx.fillStyle(0x991b1b, 1);
-    gfx.fillRect(1, 17, 4, 3);
-    gfx.fillRect(7, 17, 4, 3);
-
-    gfx.generateTexture('player', 12, 20);
-    gfx.destroy();
-  }
 
   /** NPC: 12×20 white character */
   _generateNpcTexture() {
@@ -478,6 +464,45 @@ export class BootScene extends Phaser.Scene {
 
     gfxOpen.generateTexture('egged_bus_open', w, h);
     gfxOpen.destroy();
+
+    // --- 3. BUS WITHOUT DOORS (driver side / reverse view) ---
+    const gfxNoDoors = this.add.graphics();
+    gfxNoDoors.fillStyle(0x009b48, 1);
+    gfxNoDoors.fillRect(0, 6, w, h - 12);
+    gfxNoDoors.fillStyle(0xf3f4f6, 1);
+    gfxNoDoors.fillRect(2, 2, w - 4, 4);
+    gfxNoDoors.fillStyle(0x374151, 1);
+    gfxNoDoors.fillRect(0, h - 8, 6, 4);
+    gfxNoDoors.fillRect(w - 6, h - 8, 6, 4);
+
+    for (let i = 0; i < 6; i++) {
+      const wx = winStartX + i * (winW + winGap);
+      gfxNoDoors.fillStyle(0x1f2937, 1);
+      gfxNoDoors.fillRect(wx - 1, winY - 1, winW + 2, winH + 2);
+      gfxNoDoors.fillStyle(0x93c5fd, 1);
+      gfxNoDoors.fillRect(wx, winY, winW, winH);
+      gfxNoDoors.fillStyle(0xffffff, 0.4);
+      gfxNoDoors.fillRect(wx + 2, winY + 2, 2, winH - 4);
+    }
+
+    // Logo
+    gfxNoDoors.fillStyle(0xef4444, 1);
+    gfxNoDoors.fillRect(32, 22, 10, 6);
+    gfxNoDoors.fillStyle(0xffffff, 1);
+    gfxNoDoors.fillRect(33, 24, 2, 2);
+    gfxNoDoors.fillRect(36, 24, 2, 2);
+    gfxNoDoors.fillRect(39, 24, 2, 2);
+
+    // Wheels
+    gfxNoDoors.fillStyle(0x111827, 1);
+    gfxNoDoors.fillCircle(20, whY, 8);
+    gfxNoDoors.fillCircle(76, whY, 8);
+    gfxNoDoors.fillStyle(0x9ca3af, 1);
+    gfxNoDoors.fillCircle(20, whY, 3);
+    gfxNoDoors.fillCircle(76, whY, 3);
+
+    gfxNoDoors.generateTexture('egged_bus_no_doors', w, h);
+    gfxNoDoors.destroy();
   }
 
   /** Jerusalem buildings: domes and arches */
@@ -614,5 +639,95 @@ export class BootScene extends Phaser.Scene {
 
     gfx.generateTexture('solberg_portrait', 48, 48);
     gfx.destroy();
+  }
+
+  /** Gas and Brake pixel art pedals */
+  _generatePedalTextures() {
+    // 1. GAS PEDAL (Normal: 20x32)
+    let g = this.add.graphics();
+    // Metal mounting arm
+    g.fillStyle(0x334155, 1);
+    g.fillRect(8, 0, 4, 8);
+    // Outer shadow / frame
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(2, 6, 16, 26);
+    // Pedal face (metallic slate)
+    g.fillStyle(0x475569, 1);
+    g.fillRect(3, 7, 14, 24);
+    // Top highlight rim
+    g.fillStyle(0x94a3b8, 1);
+    g.fillRect(3, 7, 14, 2);
+    // Green accent strip
+    g.fillStyle(0x22c55e, 1);
+    g.fillRect(3, 9, 14, 3);
+    // Vertical rubber grip ridges
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(6, 14, 2, 14);
+    g.fillRect(9, 14, 2, 14);
+    g.fillRect(12, 14, 2, 14);
+
+    g.generateTexture('pedal_gas', 20, 32);
+    g.destroy();
+
+    // GAS PEDAL (Pressed: 20x32 - depressed down)
+    g = this.add.graphics();
+    g.fillStyle(0x334155, 1);
+    g.fillRect(8, 0, 4, 11);
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(2, 9, 16, 23);
+    g.fillStyle(0x334155, 1);
+    g.fillRect(3, 10, 14, 21);
+    g.fillStyle(0x4ade80, 1);
+    g.fillRect(3, 10, 14, 3);
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(6, 15, 2, 13);
+    g.fillRect(9, 15, 2, 13);
+    g.fillRect(12, 15, 2, 13);
+
+    g.generateTexture('pedal_gas_pressed', 20, 32);
+    g.destroy();
+
+    // 2. BRAKE PEDAL (Normal: 30x24)
+    g = this.add.graphics();
+    // Metal mounting arm
+    g.fillStyle(0x334155, 1);
+    g.fillRect(13, 0, 4, 6);
+    // Outer shadow / frame
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(2, 4, 26, 20);
+    // Pedal face
+    g.fillStyle(0x475569, 1);
+    g.fillRect(3, 5, 24, 18);
+    // Top highlight rim
+    g.fillStyle(0x94a3b8, 1);
+    g.fillRect(3, 5, 24, 2);
+    // Red accent strip
+    g.fillStyle(0xef4444, 1);
+    g.fillRect(3, 7, 24, 3);
+    // Horizontal rubber grip ridges
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(6, 12, 18, 2);
+    g.fillRect(6, 15, 18, 2);
+    g.fillRect(6, 18, 18, 2);
+
+    g.generateTexture('pedal_brake', 30, 24);
+    g.destroy();
+
+    // BRAKE PEDAL (Pressed: 30x24 - depressed down)
+    g = this.add.graphics();
+    g.fillStyle(0x334155, 1);
+    g.fillRect(13, 0, 4, 9);
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(2, 7, 26, 17);
+    g.fillStyle(0x334155, 1);
+    g.fillRect(3, 8, 24, 15);
+    g.fillStyle(0xf87171, 1);
+    g.fillRect(3, 8, 24, 3);
+    g.fillStyle(0x0f172a, 1);
+    g.fillRect(6, 13, 18, 2);
+    g.fillRect(6, 16, 18, 2);
+
+    g.generateTexture('pedal_brake_pressed', 30, 24);
+    g.destroy();
   }
 }

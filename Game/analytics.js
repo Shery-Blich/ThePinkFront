@@ -30,10 +30,10 @@ export function trackEvent(eventName, properties = {}) {
   return event;
 }
 
-export async function trackGameStarted() {
+export function trackGameStarted() {
   _startNewRun();
   trackEvent('game_started');
-  await _ensureSessionRegistered();
+  _ensureSessionRegistered().catch(() => {});
 }
 
 export function trackSceneStarted(sceneId) {
@@ -64,18 +64,19 @@ export async function trackQuestionAnswered(questionIndex, questionId, chosenInd
   let correctAnswerIndex;
 
   if (questionId) {
-    const mongoSessionId = await _ensureSessionRegistered(sessionId);
-    if (sessionId === getSessionId() && mongoSessionId) {
-      const result = await _postJson(`/game/sessions/${mongoSessionId}/answer`, {
-        questionId,
-        chosenAnswerIndex: chosenIndex,
-        timeSpentMs: timeMs,
-      });
-      if (result) {
-        isCorrect = result.isCorrect;
-        correctAnswerIndex = result.correctAnswerIndex;
+    _ensureSessionRegistered(sessionId).then(async (mongoSessionId) => {
+      if (sessionId === getSessionId() && mongoSessionId) {
+        const result = await _postJson(`/game/sessions/${mongoSessionId}/answer`, {
+          questionId,
+          chosenAnswerIndex: chosenIndex,
+          timeSpentMs: timeMs,
+        });
+        if (result) {
+          isCorrect = result.isCorrect;
+          correctAnswerIndex = result.correctAnswerIndex;
+        }
       }
-    }
+    }).catch(() => {});
   }
 
   trackEvent('question_answered', {
@@ -92,16 +93,16 @@ export function trackObstacleHit(obstacleType, sceneId, properties = {}) {
   trackEvent('obstacle_hit', { obstacle_type: obstacleType, scene_id: sceneId, ...properties });
 }
 
-export async function trackGameCompleted(properties = {}) {
+export function trackGameCompleted(properties = {}) {
   const sessionId = getSessionId();
   trackEvent('game_completed', properties);
-  await _endSession(sessionId);
+  _endSession(sessionId).catch(() => {});
 }
 
-export async function trackGameFailed(properties = {}) {
+export function trackGameFailed(properties = {}) {
   const sessionId = getSessionId();
   trackEvent('game_failed', properties);
-  await _endSession(sessionId);
+  _endSession(sessionId).catch(() => {});
 }
 
 export function trackEndLinkClicked(linkType) {
@@ -137,14 +138,27 @@ function _postToParent(event) {
   } catch (_) {}
 }
 
+async function _fetchWithTimeout(url, options = {}, timeoutMs = 800) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (_) {
+    clearTimeout(id);
+    return null;
+  }
+}
+
 async function _post(path, body) {
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await _fetchWithTimeout(`${API_BASE}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    return response.ok;
+    return response ? response.ok : false;
   } catch (_) {
     return false;
   }
@@ -152,12 +166,12 @@ async function _post(path, body) {
 
 async function _postJson(path, body) {
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await _fetchWithTimeout(`${API_BASE}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!response.ok) return null;
+    if (!response || !response.ok) return null;
     return await response.json();
   } catch (_) {
     return null;
@@ -180,17 +194,13 @@ async function _ensureSessionRegistered(sessionId = getSessionId()) {
 
 async function _registerSession(sessionId) {
   try {
-    const res = await fetch(`${API_BASE}/game/sessions`, {
+    const res = await _fetchWithTimeout(`${API_BASE}/game/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId }),
     });
 
-    if (!res.ok) {
-      if (res.status === 409 && sessionId === getSessionId()) {
-        _startNewRun();
-        return _ensureSessionRegistered();
-      }
+    if (!res || !res.ok) {
       if (sessionId === getSessionId()) {
         _registrationPromise = null;
       }

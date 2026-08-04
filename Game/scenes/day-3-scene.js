@@ -1,603 +1,321 @@
 import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
-import { NPC } from '../entities/npc.js';
-import { DroneManager } from '../systems/drone-manager.js';
 import { startSceneMusic } from '../systems/bg-music.js';
-import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
+import { showVictoryHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
-import { addGlobalScore } from '../systems/score-manager.js';
+import { DialogSystem } from '../systems/dialog-system.js';
 
-// How many character-widths wide the world is
-const WORLD_CHARS_WIDE = 120;
-
+/**
+ * Day3Scene — Bus Cutscene: Supermarket Exit, Bus Stop, Refusal and Acceptance
+ *
+ * Player walks from supermarket exit to bottom sidewalk bus stop.
+ * First bus arrives and refuses women passengers.
+ * Second bus arrives, opens doors, and accepts all passengers.
+ * Player boards second bus and transitions to Day4Scene (catching game).
+ */
 export class Day3Scene extends Phaser.Scene {
   constructor() {
     super({ key: 'Day3Scene' });
 
-    /** @type {Player} */
-    this.player = null;
-
-    /** @type {Phaser.Physics.Arcade.StaticGroup} */
-    this.npcGroup = null;
-
-    /** @type {NPC[]} */
-    this.npcList = [];
-
-    /** @type {number} sprite scale factor */
     this.s = 1;
-
-    /** @type {number} */
     this.roadTop = 0;
-
-    /** @type {number} */
     this.roadBottom = 0;
-
-    /** @type {boolean} */
-    this.isGameOver = false;
-
-    /** @type {boolean} */
-    this.isSceneOver = false;
-
-    /** @type {boolean} Has gameplay active starting phase completed */
-    this.gameplayStarted = false;
-
-    /** @type {DroneManager} */
-    this.droneManager = null;
-
-    /** @type {Phaser.GameObjects.Particles.ParticleEmitter} */
-    this.explosionParticles = null;
-
-    // --- Road Grid details ---
-    /** @type {Array<Array<Object>>} 2D array of tiles */
-    this.roadTiles = [];
-    this.tileW = 0;
-    this.tileH = 0;
-    this.colsCount = 0;
-    this.rowsCount = 0;
-    
-    // Track active crumbling tiles
-    this.warningTiles = [];
-
-    // Bus references
-    this.bus = null;
-
-    // Supermarket graphics placeholder
-    this.supermarket = null;
-
+    this.roadCenterY = 0;
+    this.sceneEnded = false;
+    this.bus1 = null;
+    this.bus2 = null;
+    this.player = null;
+    this.supermarketX = 0;
   }
 
   create() {
     const { width, height } = this.scale;
 
+    LivesManager.showHUD();
     startSceneMusic(this, 'bg-sessions');
 
-    // --- Reset states for scene restart ---
-    this.warningTiles = [];
-    this.roadTiles = [];
-    this.isGameOver = false;
-    this.isSceneOver = false;
-    this.gameplayStarted = false;
-
-    // --- Scale from screen height ---
     this.s = Character.computeScale(height);
-
-    const charH = 20 * this.s;
-    const charW = 12 * this.s;
-
-    // --- Road band ---
-    this.roadTop = Math.round(height * 0.60);
-    this.roadBottom = Math.round(height * 0.92);
+    this.roadTop = Math.round(height * 0.55);
+    this.roadBottom = Math.round(height * 0.82);
     const roadHeight = this.roadBottom - this.roadTop;
-    const roadCenterY = this.roadTop + roadHeight / 2;
-
-    // --- World size ---
-    const worldWidth = WORLD_CHARS_WIDE * charW;
+    this.roadCenterY = this.roadTop + roadHeight / 2;
 
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
-    this._buildBackground(worldWidth, this.roadTop);
-    
-    // Draw crumbling asphalt road (uses asphalt_intact/asphalt_cracked)
-    this._buildCrumblingRoad(worldWidth, roadHeight);
+    if (this.textures.exists('day3-bg')) {
+      this.add.image(width / 2, height / 2, 'day3-bg')
+        .setOrigin(0.5, 0.5)
+        .setScrollFactor(0)
+        .setDisplaySize(width, height)
+        .setDepth(-10);
+    }
 
-    // --- Supermarket building placeholder ---
-    this._buildSupermarket();
+    // Add road band & sidewalk
+    this._buildRoadBand(width, height, roadHeight);
 
-    // --- NPCs (None spawned for this scene) ---
-    this.npcGroup = this.physics.add.staticGroup();
-    this.npcList = [];
+    // Build Supermarket building at top-left
+    this.supermarketX = 90 * this.s;
+    this._buildSupermarket(this.supermarketX);
 
-    // --- Player ---
-    // Player starts invisible and disabled inside the supermarket door
-    const startX = this.scale.width / 2;
-    const startY = roadCenterY + charH * 0.3;
-    this.player = new Player(this, startX, startY, this.s);
-    this.player.setWorldBounds(0, this.roadTop, worldWidth, roadHeight);
-    this.player.setVisible(false);
+    // Build Bus Stop on bottom sidewalk
+    const busStopX = width / 2;
+    const busStopY = this.roadBottom + 12 * this.s;
+    this._buildBusStop(busStopX, busStopY);
+
+    // Setup physics world
+    this.physics.world.setBounds(0, 0, width, height);
+
+    // Create player emerging from supermarket door
+    const doorX = this.supermarketX;
+    const doorY = this.roadTop - 8 * this.s;
+    this.player = new Player(this, doorX, doorY, this.s);
     this.player.disable();
-
-    // --- Camera ---
-    this.cameras.main.setBounds(0, 0, worldWidth, height);
-    this.cameras.main.scrollX = 0;
-
-    // --- HUD ---
-    this._createHUD();
-
-    // --- Particles ---
-    this.explosionParticles = this.add.particles(0, 0, 'particle', {
-      speed: { min: 40 * this.s, max: 130 * this.s },
-      scale: { start: 3, end: 0 },
-      lifespan: 500,
-      tint: [0xff0000, 0xff5500, 0xffaa00, 0xffffff],
-      emitting: false
-    });
-    this.explosionParticles.setDepth(2500);
-
-    this.droneManager = new DroneManager(this, this.player, {
-      particles: this.explosionParticles,
-      roadTop: this.roadTop,
-      roadBottom: this.roadBottom,
-      worldWidth: worldWidth,
-      scale: this.s,
-      maxDrones: 5
-    });
-
-    this.droneManager.on('drone-exploded', (count) => {
-      this._updateDroneHUD(count);
-    });
-
-    this.droneManager.on('player-hit', () => {
-      if (this.isGameOver || this.isSceneOver) return;
-      if (this.player && this.player.isInvulnerable) return;
-
-      const remaining = LivesManager.deductLife();
-      if (remaining > 0) {
-        if (this.player) this.player.takeDamage();
-      } else {
-        this.triggerGameOver('DRONE_HIT');
-      }
-    });
-
-    this.droneManager.on('all-drones-dodged', () => {
-      this.time.delayedCall(1000, () => {
-        if (!this.isGameOver) {
-          this.triggerSceneOver(roadCenterY, worldWidth);
-        }
-      });
-    });
-
-    // Cleanup on shutdown
-    this.events.once('shutdown', () => {
-      if (this.droneManager) this.droneManager.destroy();
-      if (typeof window.hideHUD === 'function') {
-        window.hideHUD('html-stats-hud');
-      }
-    });
-
-    // Start gameplay immediately (no intro dialogue)
-    this._startGameplay(roadCenterY, worldWidth, charH);
-  }
-
-  _buildSupermarket() {
-    const s = this.s;
-    const x = this.scale.width / 2;
-    const w = 64 * s;
-    const h = 80 * s;
-    const doorW = 16 * s;
-    const doorH = 28 * s;
-
-    this.supermarket = this.add.graphics();
-    // White block placeholder
-    this.supermarket.fillStyle(0xffffff, 1);
-    this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
-    // Dark rectangle hole door
-    this.supermarket.fillStyle(0x110e1a, 1);
-    this.supermarket.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
-    
-    // Add text label "SUPER"
-    this.superLabel = this.add.text(x, this.roadTop - h + 15 * s, 'סופר', {
-      fontFamily: 'Impact, sans-serif',
-      fontSize: `${12 * s}px`,
-      color: '#ff2a5f',
-      align: 'center'
-    }).setOrigin(0.5);
-
-    this.supermarket.setDepth(2.5);
-    this.superLabel.setDepth(2.6);
-  }
-
-  _startGameplay(roadCenterY, worldWidth, charH) {
-    const s = this.s;
-
-    // Spawn player at the supermarket door
-    const doorX = this.scale.width / 2;
-    const doorY = this.roadTop - 6 * s;
-
-    this.player.setPosition(doorX, doorY);
-    this.player.setVisible(true);
     this.player.setDepth(this.player.y);
 
-    // Player walks down onto the road
-    const targetPlayerY = roadCenterY + charH * 0.3;
+    this.cameras.main.fadeIn(500);
 
-    this.tweens.add({
-      targets: this.player,
-      y: targetPlayerY,
-      duration: 1000,
-      onComplete: () => {
-        // Camera starts tracking player
-        this.cameras.main.startFollow(this.player, true, 0.1, 0);
-
-        // Start game immediately
-        this.time.delayedCall(500, () => {
-          this.player.enable();
-          this.isGameOver = false;
-          this.isSceneOver = false;
-          this.gameplayStarted = true;
-          this.droneManager.start();
-        });
-      }
-    });
+    // Start cutscene timeline
+    this._startCutscene(width, busStopX, busStopY);
   }
 
-  update(time, delta) {
+  update() {
     if (this.player) {
       this.player.update();
-    }
-
-
-
-    // Process crumbling stones road update only after the game starts
-    if (this.player && this.player.visible && this.gameplayStarted && !this.isGameOver && !this.isSceneOver) {
-      this._updateCrumblingRoad(delta);
+      this.player.depthSort();
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Kiryat Shmona background image
-  // ---------------------------------------------------------------------------
-
-  /** @private */
-  _buildBackground(worldWidth, groundY) {
-    const texture = this.textures.get('day3-bg').getSourceImage();
-    const scale = groundY / texture.height;
-    const displayWidth = texture.width * scale;
-
-    for (let x = displayWidth / 2; x < worldWidth + displayWidth / 2; x += displayWidth) {
-      const bg = this.add.image(x, groundY / 2, 'day3-bg');
-      bg.setDisplaySize(displayWidth, groundY);
-      bg.setDepth(1);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Crumbling Asphalt Road
-  // ---------------------------------------------------------------------------
-
-  /** @private */
-  _buildCrumblingRoad(worldWidth, roadHeight) {
+  _buildSupermarket(x) {
     const s = this.s;
-    this.tileW = 32 * s;
-    this.tileH = 16 * s;
-    this.colsCount = Math.ceil(worldWidth / this.tileW) + 1;
-    this.rowsCount = Math.ceil(roadHeight / this.tileH);
-    const { height } = this.scale;
+    const w = 70 * s;
+    const h = 85 * s;
+    const doorW = 18 * s;
+    const doorH = 30 * s;
 
-    // Draw dark pit backing under the road so holes look dark/empty
-    const pitBacking = this.add.graphics();
-    pitBacking.fillStyle(0x110e1a, 1);
-    pitBacking.fillRect(0, this.roadTop, worldWidth, roadHeight);
-    pitBacking.setDepth(2);
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(x - w / 2, this.roadTop - h, w, h);
 
-    // Build the grid of asphalt tiles
-    for (let col = 0; col < this.colsCount; col++) {
-      this.roadTiles[col] = [];
-      for (let row = 0; row < this.rowsCount; row++) {
-        const tx = col * this.tileW;
-        const ty = this.roadTop + row * this.tileH;
+    gfx.fillStyle(0xe11d48, 1);
+    gfx.fillRect(x - w / 2, this.roadTop - h, w, 8 * s);
 
-        const tileSprite = this.add.sprite(tx, ty, 'asphalt_intact');
-        tileSprite.setOrigin(0, 0);
-        tileSprite.setDisplaySize(this.tileW, this.tileH);
-        tileSprite.setDepth(3);
+    gfx.fillStyle(0x110e1a, 1);
+    gfx.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
+    gfx.setDepth(4);
 
-        this.roadTiles[col][row] = {
-          sprite: tileSprite,
-          state: 'NORMAL', // 'NORMAL', 'WARNING', 'CRUMBLED'
-          timeOnTile: 0,
-          col,
-          row,
-          tx,
-          ty,
-          shakeTween: null
-        };
-      }
-    }
-
-    // Sidewalk below road (similar to Day 1)
-    const swTileW = 16 * s;
-    const swTilesNeeded = Math.ceil(worldWidth / swTileW) + 1;
-    for (let i = 0; i < swTilesNeeded; i++) {
-      const sw = this.add.image(i * swTileW, this.roadBottom, 'sidewalk');
-      sw.setOrigin(0, 0);
-      sw.setDisplaySize(swTileW, height - this.roadBottom);
-      sw.setDepth(3);
-    }
+    this.add.text(x, this.roadTop - h + 12 * s, 'סופרמרקט', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: `${Math.max(10, Math.round(10 * s))}px`,
+      fontWeight: 'bold',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0).setDepth(5);
   }
 
-  /**
-   * Crumbling logic checked every update frame.
-   * @private
-   */
-  _updateCrumblingRoad(delta) {
-    const px = this.player.x;
-    const py = this.player.y;
-
-    const col = Math.floor(px / this.tileW);
-    const row = Math.floor((py - this.roadTop) / this.tileH);
-
-    // 1. Check if the player is currently standing on a tile within valid bounds
-    if (col >= 0 && col < this.colsCount && row >= 0 && row < this.rowsCount) {
-      const tile = this.roadTiles[col][row];
-
-      // If the player walks onto an already crumbled tile -> fall and take damage!
-      if (tile.state === 'CRUMBLED') {
-        if (!this.player.isInvulnerable) {
-          const remaining = LivesManager.deductLife();
-          if (remaining > 0) {
-            this.player.takeDamage();
-            this.player.x += 40 * this.s;
-          } else {
-            this.triggerGameOver('FELL_THROUGH');
-            return;
-          }
-        }
-      }
-
-      // If player touches a normal tile -> trigger the warning self-destruct sequence instantly
-      if (tile.state === 'NORMAL') {
-        tile.state = 'WARNING';
-        tile.sprite.setTexture('asphalt_cracked');
-        tile.timeOnTile = 0;
-
-        // Shaking animation starts immediately
-        tile.shakeTween = this.tweens.add({
-          targets: tile.sprite,
-          x: { from: tile.tx - 2 * this.s, to: tile.tx + 2 * this.s },
-          y: { from: tile.ty - 1 * this.s, to: tile.ty + 1 * this.s },
-          duration: 50,
-          yoyo: true,
-          repeat: -1
-        });
-
-        // Add to warning tiles list so it continues to crumble even if the player leaves
-        this.warningTiles.push(tile);
-      }
-    }
-
-    // 2. Update warning timers for all active crumbling tiles (regardless of player presence)
-    for (let i = this.warningTiles.length - 1; i >= 0; i--) {
-      const tile = this.warningTiles[i];
-      tile.timeOnTile += delta;
-
-      // Once 2 seconds have passed since the player touched the asphalt tile
-      if (tile.timeOnTile >= 2000) {
-        tile.state = 'CRUMBLED';
-        tile.sprite.setTexture('stone_broken'); // Reuse the dark hole texture from BootScene
-
-        // Stop the rumbling/shaking tween
-        if (tile.shakeTween) {
-          tile.shakeTween.remove();
-          tile.shakeTween = null;
-        }
-        tile.sprite.setPosition(tile.tx, tile.ty);
-
-        // Dust/particle explosion at the center of the tile
-        if (this.explosionParticles) {
-          this.explosionParticles.explode(8, tile.tx + this.tileW / 2, tile.ty + this.tileH / 2);
-        }
-        this.cameras.main.shake(100, 0.003);
-
-        // Remove from active warning list
-        this.warningTiles.splice(i, 1);
-
-        // If the player is still standing on this tile when it crumbles -> fall and take damage!
-        const pCol = Math.floor(this.player.x / this.tileW);
-        const pRow = Math.floor((this.player.y - this.roadTop) / this.tileH);
-        if (pCol === tile.col && pRow === tile.row) {
-          if (!this.player.isInvulnerable) {
-            const remaining = LivesManager.deductLife();
-            if (remaining > 0) {
-              this.player.takeDamage();
-              this.player.x += 40 * this.s;
-            } else {
-              this.triggerGameOver('FELL_THROUGH');
-              return;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // HUD
-  // ---------------------------------------------------------------------------
-
-  /** @private */
-  _createHUD() {
-    LivesManager.showHUD();
-    if (typeof window.showHUD === 'function') {
-      window.showHUD('html-stats-hud', 'רחפנים שחמקת מהם: 0/5');
-    }
-  }
-
-  /** @private */
-  _updateHUD(message) {
-    // Instructions HUD is removed
-  }
-
-  _updateDroneHUD(count) {
-    if (typeof window.updateHUDText === 'function') {
-      window.updateHUDText('html-stats-hud', `רחפנים שחמקת מהם: ${count}/5`);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Scene Game States
-  // ---------------------------------------------------------------------------
-
-  triggerGameOver(reason = 'DRONE_HIT') {
-    if (this.isGameOver || this.isSceneOver) return;
-    this.isGameOver = true;
-    this.sound.play('sfx-gameover', { volume: 0.6 });
-
-    if (this.player) this.player.disable();
-    if (this.droneManager) this.droneManager.stop();
-
-    // Clean up any remaining shake tweens
-    for (let col = 0; col < this.colsCount; col++) {
-      if (this.roadTiles[col]) {
-        for (let row = 0; row < this.rowsCount; row++) {
-          const tile = this.roadTiles[col][row];
-          if (tile && tile.shakeTween) {
-            tile.shakeTween.remove();
-            tile.shakeTween = null;
-          }
-        }
-      }
-    }
-
-    let titleText = 'נפסלת!';
-    let messageText = 'הרחפנים של עכו קלטו אותך מלמעלה! נראה שכישורי ההתחמקות שלך זקוקים לשיפוץ דחוף בוועדת הכלכלה.';
-    let deathTweenOptions = {
-      targets: this.player,
-      angle: 90,
-      tint: 0x333333,
-      y: this.player.y + 5 * this.s,
-      duration: 600,
-      ease: 'Bounce.easeOut'
-    };
-
-    if (reason === 'FELL_THROUGH') {
-      titleText = 'נפלת לבור!';
-      messageText = 'נפלת לבור! ידענו שהתשתיות פה ישנות, אבל ליפול לחור ברצפה? זה כבר מחדל תשתיתי ברמת ועדת חקירה!';
-      deathTweenOptions = {
-        targets: this.player,
-        scale: 0.1,
-        y: this.player.y + 20 * this.s,
-        alpha: 0,
-        angle: 180,
-        duration: 800,
-        ease: 'Cubic.easeIn'
-      };
-    }
-
-    // Falling / grey out animation
-    this.tweens.add(deathTweenOptions);
-
-    showGameOverHelper(this, titleText, messageText);
-  }
-
-  triggerSceneOver(roadCenterY, worldWidth) {
-    if (this.isSceneOver || this.isGameOver) return;
-    this.isSceneOver = true;
-    this.sound.play('sfx-levelup', { volume: 0.6 });
-
-    // 1. Player loses controls
-    if (this.player) this.player.disable();
-    if (this.droneManager) this.droneManager.stop();
-    this.gameplayStarted = false; // Halt crumbling update checks
-
-    this._updateHUD('אוטובוס החילוץ מגיע...');
-
-    // 2. Spawn the Egged Bus offscreen and drive it to stop in front of the player
+  _buildBusStop(x, y) {
     const s = this.s;
-    this.bus = this.add.image(-150 * s, roadCenterY, 'egged_bus'); // Starts closed
-    this.bus.setScale(s);
-    this.bus.setDepth(roadCenterY);
 
-    // Stop camera tracking the player and track the arriving bus instead
-    this.cameras.main.startFollow(this.bus, true, 0.1, 0);
+    if (this.textures.exists('bus-stop')) {
+      const busStopSprite = this.add.image(x, y, 'bus-stop');
+      busStopSprite.setOrigin(0.5, 1);
+      const targetH = 55 * s;
+      const tex = this.textures.get('bus-stop').getSourceImage();
+      if (tex) {
+        const aspect = tex.width / tex.height;
+        busStopSprite.setDisplaySize(targetH * aspect, targetH);
+      } else {
+        busStopSprite.setDisplaySize(32 * s, 55 * s);
+      }
+      busStopSprite.setDepth(y);
+    } else {
+      const gfx = this.add.graphics();
+      gfx.fillStyle(0x64748b, 1);
+      gfx.fillRect(x - 2 * s, y - 45 * s, 4 * s, 45 * s);
+      gfx.fillStyle(0x0284c7, 1);
+      gfx.fillRect(x - 16 * s, y - 55 * s, 32 * s, 16 * s);
+      gfx.fillStyle(0xfacc15, 1);
+      gfx.fillRect(x - 12 * s, y - 52 * s, 24 * s, 10 * s);
+      gfx.setDepth(y);
+    }
+  }
 
-    // We position the bus so its passenger door (x + 24 * s) aligns directly with the player's X coordinate
-    const targetBusX = this.player.x - 24 * s;
+  _buildRoadBand(width, height, roadHeight) {
+    const roadGfx = this.add.graphics();
+    roadGfx.fillStyle(0x333333, 1);
+    roadGfx.fillRect(0, this.roadTop, width, roadHeight);
+    roadGfx.setScrollFactor(0).setDepth(2);
 
+    const lineGfx = this.add.graphics();
+    lineGfx.fillStyle(0xffff00, 0.7);
+    lineGfx.fillRect(0, this.roadCenterY - 2, width, 4);
+    lineGfx.setScrollFactor(0).setDepth(2);
+
+    const swGfx = this.add.graphics();
+    swGfx.fillStyle(0x555555, 1);
+    swGfx.fillRect(0, this.roadBottom, width, height - this.roadBottom);
+    swGfx.lineStyle(2, 0x444444, 1);
+    swGfx.strokeRect(0, this.roadBottom, width, height - this.roadBottom);
+    swGfx.setScrollFactor(0).setDepth(3);
+  }
+
+  _startCutscene(width, busStopX, busStopY) {
+    this._playerExitsSupermarket(width, busStopX, busStopY);
+  }
+
+  _playerExitsSupermarket(width, busStopX, busStopY) {
     this.tweens.add({
-      targets: this.bus,
-      x: targetBusX,
-      duration: 3000,
+      targets: this.player,
+      y: this.roadCenterY,
+      duration: 1000,
       ease: 'Quad.easeOut',
       onComplete: () => {
-        this.cameras.main.stopFollow();
-
-        // Open the bus doors!
-        this.bus.setTexture('egged_bus_open');
-
-        // Wait a short delay for doors to fully open, then walk the player in
         this.time.delayedCall(300, () => {
-          this.player.setDepth(this.bus.depth + 10); // Render in front of bus door
-
-          const doorX = this.bus.x + 24 * s;
-          const doorY = this.bus.y + 6 * s; // Door floor level height
-
-          // 3. Player walks up into the bus door (reverse of the exit animation)
-          this.tweens.add({
-            targets: this.player,
-            x: doorX,
-            y: doorY,
-            duration: 1200,
-            onComplete: () => {
-              // Award 10 points right as the player gets on the bus!
-              addGlobalScore(this, 10, doorX, doorY);
-
-              // Player entered the bus! Make invisible
-              this.player.setVisible(false);
-
-              // Wait 300ms, then close the doors
-              this.time.delayedCall(300, () => {
-                // Close the doors!
-                this.bus.setTexture('egged_bus');
-
-                // Wait 600ms (doors fully closed), then the bus departs
-                this.time.delayedCall(600, () => {
-                  // Camera tracks the departing bus
-                  this.cameras.main.startFollow(this.bus, true, 0.1, 0);
-
-                  this.tweens.add({
-                    targets: this.bus,
-                    x: worldWidth + 200 * s,
-                    duration: 4000,
-                    ease: 'Quad.easeIn',
-                    onComplete: () => {
-                      this.cameras.main.stopFollow();
-                      if (this.bus) this.bus.destroy();
-
-                      // 4. Run the victory dialogue
-                      this.runVictoryDialogue();
-                    }
-                  });
-                });
-              });
-            }
-          });
+          this._playerWalksToBusStop(width, busStopX, busStopY);
         });
       }
     });
   }
 
-  runVictoryDialogue() {
-    // Skip dialog and show victory screen directly
-    this.showVictoryScreen();
+  _playerWalksToBusStop(width, busStopX, busStopY) {
+    const targetX = busStopX - 25 * this.s;
+    const targetY = busStopY;
+
+    this.tweens.add({
+      targets: this.player,
+      x: targetX,
+      y: targetY,
+      duration: 2200,
+      ease: 'Linear',
+      onComplete: () => {
+        this.time.delayedCall(1000, () => {
+          this._spawnFirstBus(width, busStopX);
+        });
+      }
+    });
   }
 
-  showVictoryScreen() {
+  _spawnFirstBus(width, busStopX) {
+    this.bus1 = this.add.image(-100 * this.s, this.roadCenterY, 'egged_bus');
+    this.bus1.setScale(this.s).setDepth(100);
+
+    this.tweens.add({
+      targets: this.bus1,
+      x: busStopX - 40 * this.s,
+      duration: 2500,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        this.time.delayedCall(300, () => {
+          this._showRefusalDialog(width, busStopX);
+        });
+      }
+    });
+  }
+
+  _showRefusalDialog(width, busStopX) {
+    const refusalDialog = [
+      { speaker: 'נהג האוטובוס', text: 'סליחה גברת, זה אוטובוס לגברים בלבד!' },
+      { speaker: 'שירי', text: 'מה?! אבל זה לא חוקי!' },
+    ];
+
+    const dialog = new DialogSystem(this, refusalDialog, () => {
+      this.time.delayedCall(500, () => {
+        this._firstBusLeaves(width, busStopX);
+      });
+    });
+    dialog.start();
+  }
+
+  _firstBusLeaves(width, busStopX) {
+    this.tweens.add({
+      targets: this.bus1,
+      x: width + 100 * this.s,
+      duration: 2000,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (this.bus1) this.bus1.destroy();
+
+        this.time.delayedCall(800, () => {
+          this._spawnSecondBus(width, busStopX);
+        });
+      }
+    });
+  }
+
+  _spawnSecondBus(width, busStopX) {
+    this.bus2 = this.add.image(-100 * this.s, this.roadCenterY, 'egged_bus');
+    this.bus2.setScale(this.s).setDepth(100);
+
+    this.tweens.add({
+      targets: this.bus2,
+      x: busStopX - 40 * this.s,
+      duration: 2500,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        // Open bus doors!
+        if (this.textures.exists('egged_bus_open')) {
+          this.bus2.setTexture('egged_bus_open');
+        }
+
+        this.time.delayedCall(300, () => {
+          this._playerBoardsBus();
+        });
+      }
+    });
+  }
+
+  _playerBoardsBus() {
+    // Door entrance coordinate on bus2
+    const doorX = this.bus2.x + 24 * this.s;
+    const doorY = this.bus2.y + 6 * this.s;
+
+    // Player walks up from sidewalk to bus open door and fades inside
+    this.tweens.add({
+      targets: this.player,
+      x: doorX,
+      y: doorY,
+      duration: 600,
+      ease: 'Linear',
+      onComplete: () => {
+        this.tweens.add({
+          targets: this.player,
+          alpha: 0,
+          scaleX: 0.1,
+          scaleY: 0.1,
+          duration: 200,
+          ease: 'Quad.easeIn',
+          onComplete: () => {
+            this.player.setVisible(false);
+
+            if (this.textures.exists('egged_bus')) {
+              this.bus2.setTexture('egged_bus');
+            }
+
+            const { width } = this.scale;
+            this.tweens.add({
+              targets: this.bus2,
+              x: width + 120 * this.s,
+              duration: 1000,
+              ease: 'Quad.easeIn',
+              onComplete: () => {
+                if (this.bus2) this.bus2.destroy();
+                this._endScene();
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  _endScene() {
+    if (this.sceneEnded) return;
+    this.sceneEnded = true;
+
     showVictoryHelper(
       this,
       'Day3Scene',
-      "הדרך לירושלים נפתחה!",
-      "חמקת מהרחפנים ושרדת את קריסת אבני הדרך בעכו. הגיע הזמן להתקדם לירושלים!"
+      'לירושלים!',
+      'לירושלים!'
     );
   }
 }

@@ -192,11 +192,9 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     this.droneManager.on("all-drones-dodged", () => {
-      this.time.delayedCall(1000, () => {
-        if (!this.isGameOver) {
-          this.triggerSceneOver();
-        }
-      });
+      if (!this.isGameOver) {
+        this.triggerSceneOver();
+      }
     });
 
     // --- HUD ---
@@ -468,9 +466,7 @@ export class Day1Scene extends Phaser.Scene {
             this.player.setAlpha(1);
 
             // 5. Show victory screen with dialog
-            this.time.delayedCall(300, () => {
-              this.showVictoryScreen();
-            });
+            this.showVictoryScreen();
           },
         });
       },

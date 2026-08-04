@@ -79,7 +79,7 @@ export class KotelScene extends Phaser.Scene {
     const charH = 20 * this.s;
     const charW = 12 * this.s;
 
-    // --- Road band (where player and President move) ---
+    // --- Road band (Jerusalem Plaza floor) ---
     this.roadTop = Math.round(height * 0.60);
     this.roadBottom = Math.round(height * 0.92);
     const roadHeight = this.roadBottom - this.roadTop;
@@ -94,18 +94,27 @@ export class KotelScene extends Phaser.Scene {
     // 1. Draw the Kotel backdrop image
     this._buildKotelBackground(worldWidth, this.roadTop);
 
-    // 2. Draw Jerusalem Stone Road Plaza
+    // 2. Draw Jerusalem Stone Road Plaza & Upper Sidewalk
     this._buildJerusalemPlaza(worldWidth, roadHeight);
 
+    // --- Bus stop on upper sidewalk ---
+    const busStopX = 120 * this.s;
+    const busStopY = this.roadTop;
+    this._buildBusStop(busStopX, busStopY);
+
+    // --- Start position for cutscene ---
+    const startX = busStopX;
+    const startY = this.roadTop - 2 * this.s;
+
     // --- Player ---
-    const startX = 200 * this.s;
-    const startY = roadCenterY;
     this.player = new Player(this, startX, startY, this.s);
     this.player.setWorldBounds(0, this.roadTop, worldWidth, roadHeight);
-    this.player.disable(); // Disabled for intro dialogue
+    this.player.disable(); // Disabled for cutscene
+    this.player.setVisible(false); // Initially hidden before bus arrives!
+    this.player.setDepth(this.player.y);
 
-    // --- President NPC (Dynamic body, starts ~2 player-widths ahead of player) ---
-    const presStartX = startX + 26 * this.s;
+    // --- President NPC (positioned roughly one player width outside initial viewing screen width) ---
+    const presStartX = width + 12 * this.s;
     const presStartY = Phaser.Math.Clamp(
       roadCenterY,
       this.roadTop + 30 * this.s,
@@ -132,10 +141,10 @@ export class KotelScene extends Phaser.Scene {
     this.president.body.setSize(localWidth, localHeight);
     this.president.body.setOffset(localOffsetX, localOffsetY);
 
-    // Give President a distinct blue tint to look presidential/special
+    // Give President a distinct blue tint to look special
     this.president.setTint(0xa0c0ff);
 
-    // Floating text label above the President
+    // Floating text label above President
     this.presidentLabel = this.add.text(this.president.x, this.president.y - 24 * this.s, 'הנשיא 🇮🇱', {
       fontFamily: 'monospace',
       fontSize: `${Math.max(10, Math.round(10 * this.s))}px`,
@@ -162,16 +171,85 @@ export class KotelScene extends Phaser.Scene {
     // --- HUD ---
     this._createHUD();
 
-    // Show intro dialog, then enable player and start gameplay
-    playDialogOnce("KotelScene-intro", this, KOTEL_INTRO_DIALOG, () => {
-      this.player.enable();
-      this.gameplayStarted = true;
-    });
+    // Fade in camera & start Kotel drop-in cutscene
+    this.cameras.main.fadeIn(500);
+    this._runKotelIntroCutscene(busStopX, presStartX);
 
+    // Shutdown cleanup listener
     this.events.once('shutdown', () => {
       if (this.activeBananas) {
         this.activeBananas.forEach((b) => b.destroy());
         this.activeBananas = [];
+      }
+    });
+  }
+
+  /**
+   * Intro Cutscene: Bus drops off player on upper sidewalk, drives off, player walks up near President, then triggers intro dialog.
+   */
+  _runKotelIntroCutscene(busStopX, presStartX) {
+    // 1. Bus drives in and stops at upper sidewalk bus stop (bus set on top depth layer 2000)
+    const bus = this.add.image(-120 * this.s, this.roadTop + 10 * this.s, 'egged_bus');
+    bus.setScale(this.s).setDepth(2000);
+
+    this.tweens.add({
+      targets: bus,
+      x: busStopX + 15 * this.s,
+      duration: 2000,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        // 2. Player spawns / becomes visible behind the bus when bus reaches the station
+        this.player.setPosition(busStopX, this.roadTop - 2 * this.s);
+        this.player.setVisible(true);
+
+        this.time.delayedCall(400, () => {
+          // Bus drives off
+          this.tweens.add({
+            targets: bus,
+            x: busStopX + 600 * this.s,
+            duration: 2200,
+            ease: 'Quad.easeIn',
+            onComplete: () => {
+              bus.destroy();
+            }
+          });
+
+          // 3. As bus drives off, player is revealed and walks down to plaza & president
+          this.time.delayedCall(600, () => {
+            const targetX = presStartX - 35 * this.s;
+            const targetY = this.roadTop + (this.roadBottom - this.roadTop) / 2;
+
+            const walkDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, targetX, targetY);
+            // Slower, natural walking speed (~75px/sec)
+            const walkDuration = Math.round((walkDist / (75 * this.s)) * 1000);
+
+            if (this.player.anims) {
+              this.player.anims.play('walk-right', true);
+            }
+
+            this.tweens.add({
+              targets: this.player,
+              x: targetX,
+              y: targetY,
+              duration: walkDuration,
+              ease: 'Linear',
+              onComplete: () => {
+                if (this.player.anims) {
+                  this.player.anims.stop();
+                }
+
+                // 4. Player arrives near President — trigger intro dialog
+                this.time.delayedCall(300, () => {
+                  playDialogOnce("KotelScene-intro", this, KOTEL_INTRO_DIALOG, () => {
+                    // Dialogue ended — enable player & start President chase!
+                    this.player.enable();
+                    this.gameplayStarted = true;
+                  });
+                });
+              }
+            });
+          });
+        });
       }
     });
   }
@@ -181,7 +259,7 @@ export class KotelScene extends Phaser.Scene {
       this.player.update();
     }
 
-    // Depth sort President and update its label position
+    // Depth sort President and update label position
     if (this.president && this.president.active) {
       this.president.setDepth(this.president.y);
       if (this.presidentLabel) {
@@ -190,17 +268,17 @@ export class KotelScene extends Phaser.Scene {
       }
     }
 
-    // Update active landed bananas (check if player moves near them on floor)
+    // Update active landed bananas
     if (this.activeBananas && this.activeBananas.length > 0) {
       this.activeBananas.forEach((b) => b.update(delta));
       this.activeBananas = this.activeBananas.filter((b) => !b.isResolved);
     }
 
-    // President banana dropping & AI state updates
+    // President banana dropping & chase behavior during active gameplay
     if (this.gameplayStarted && !this.isSceneOver && this.president && this.player) {
       this.chaseTimer += delta;
 
-      // Proximity catch trigger (guarantees catching President when touching him)
+      // Proximity catch trigger
       const distToPres = Phaser.Math.Distance.Between(
         this.player.x, this.player.y,
         this.president.x, this.president.y
@@ -210,7 +288,7 @@ export class KotelScene extends Phaser.Scene {
         return;
       }
 
-      // Drop banana every 2.5 seconds (2500ms) up to 7 bananas total
+      // Drop banana every 2.5 seconds up to maxBananas
       if (this.bananasDropped < this.maxBananas) {
         this.bananaDropTimer += delta;
         if (this.bananaDropTimer >= 2500) {
@@ -223,15 +301,8 @@ export class KotelScene extends Phaser.Scene {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Kotel Background Drawing
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Builds the Kotel backdrop image.
-   * @private
-   */
   _buildKotelBackground(worldWidth, groundY) {
+    if (!this.textures.exists('kotel-bg')) return;
     const texture = this.textures.get('kotel-bg').getSourceImage();
     const scale = groundY / texture.height;
     const displayWidth = texture.width * scale;
@@ -243,10 +314,6 @@ export class KotelScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Paves the plaza road with Jerusalem stone textures.
-   * @private
-   */
   _buildJerusalemPlaza(worldWidth, roadHeight) {
     const s = this.s;
     const tileW = 32 * s;
@@ -254,7 +321,6 @@ export class KotelScene extends Phaser.Scene {
     const cols = Math.ceil(worldWidth / tileW) + 1;
     const rows = Math.ceil(roadHeight / tileH);
 
-    // Draw plaza stones
     for (let col = 0; col < cols; col++) {
       for (let row = 0; row < rows; row++) {
         const tx = col * tileW;
@@ -267,9 +333,19 @@ export class KotelScene extends Phaser.Scene {
       }
     }
 
-    // Bottom barrier sidewalk line
     const swTileW = 16 * s;
     const swNeeded = Math.ceil(worldWidth / swTileW) + 1;
+
+    // Upper sidewalk above roadTop
+    const upperSwH = 14 * s;
+    for (let i = 0; i < swNeeded; i++) {
+      const swUpper = this.add.image(i * swTileW, this.roadTop - upperSwH, 'sidewalk');
+      swUpper.setOrigin(0, 0);
+      swUpper.setDisplaySize(swTileW, upperSwH);
+      swUpper.setDepth(2);
+    }
+
+    // Lower sidewalk below roadBottom
     for (let i = 0; i < swNeeded; i++) {
       const sw = this.add.image(i * swTileW, this.roadBottom, 'sidewalk');
       sw.setOrigin(0, 0);
@@ -278,24 +354,33 @@ export class KotelScene extends Phaser.Scene {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // President Chasing & AI Logic
-  // ---------------------------------------------------------------------------
+  _buildBusStop(x, y) {
+    const s = this.s;
 
-  /**
-   * Updates President NPC actions: natural organic wandering (like Scene 1 NPCs),
-   * dynamic player evasion when close, and slow NPC pacing when exhausted.
-   * @private
-   */
-  /**
-   * Updates President NPC movement during the chase.
-   * - Natural rightward linear movement with smooth organic Y-wobble.
-   * - Stamina decays over 21 seconds so player naturally catches him.
-   * - Keeps President mostly on-screen so banana drops remain visible.
-   * @param {number} time - Current scene time in ms
-   * @param {number} delta - Delta time in ms
-   * @private
-   */
+    if (this.textures.exists('bus-stop')) {
+      const busStopSprite = this.add.image(x, y, 'bus-stop');
+      busStopSprite.setOrigin(0.5, 1);
+      const targetH = 55 * s;
+      const tex = this.textures.get('bus-stop').getSourceImage();
+      if (tex) {
+        const aspect = tex.width / tex.height;
+        busStopSprite.setDisplaySize(targetH * aspect, targetH);
+      } else {
+        busStopSprite.setDisplaySize(32 * s, 55 * s);
+      }
+      busStopSprite.setDepth(y);
+    } else {
+      const gfx = this.add.graphics();
+      gfx.fillStyle(0x64748b, 1);
+      gfx.fillRect(x - 2 * s, y - 45 * s, 4 * s, 45 * s);
+      gfx.fillStyle(0x0284c7, 1);
+      gfx.fillRect(x - 16 * s, y - 55 * s, 32 * s, 16 * s);
+      gfx.fillStyle(0xfacc15, 1);
+      gfx.fillRect(x - 12 * s, y - 52 * s, 24 * s, 10 * s);
+      gfx.setDepth(y);
+    }
+  }
+
   _updatePresidentBehavior(time, delta) {
     if (!this.president || !this.president.active || !this.player || !this.player.active) return;
 
@@ -307,52 +392,38 @@ export class KotelScene extends Phaser.Scene {
     let speedFactor;
 
     if (this.chaseTimer <= 3000) {
-      // --- Initial rapid sprint burst (0s to 3s) ---
-      // Starts right near player and rapidly pulls further ahead to entice chase!
       const sprintProgress = this.chaseTimer / 3000;
-      speedFactor = 1.60 - (sprintProgress * 0.40); // 1.60x down to 1.20x
+      speedFactor = 1.60 - (sprintProgress * 0.40);
     } else {
-      // --- Dynamic stamina decay (3s to 21s) ---
       const chaseProgress = Math.min(1.0, (this.chaseTimer - 3000) / 18000);
-      speedFactor = 1.20 - (chaseProgress * 0.90); // 1.20x down to 0.30x
+      speedFactor = 1.20 - (chaseProgress * 0.90);
     }
 
-    // Relative distance ahead of player
     const distAhead = this.president.x - this.player.x;
-
-    // Keep President mostly on-screen in view of the player:
-    // If he gets too far ahead (> 150 * s), cap speed so player keeps him in view
     if (distAhead > 150 * s) {
       speedFactor = Math.min(speedFactor, 0.6);
     }
 
-    // Guaranteed exhaustion at/after 21 seconds (stamina depleted)
     if (this.chaseTimer >= 21000) {
-      speedFactor = 0.25; // Slow panting walk
+      speedFactor = 0.25;
     }
 
-    // Target rightward velocity
     let vx = playerSpeed * speedFactor;
-
-    // Organic Y-axis movement (combination of smooth sine waves)
     const timeSec = time / 1000;
     let vy = Math.sin(timeSec * 2.2) * (35 * s) + Math.cos(timeSec * 1.1) * (15 * s);
 
-    // Boundary constraints: keep inside road strip
     if (this.president.y > this.roadBottom - 20 * s) {
       vy = -Math.abs(vy || 20 * s);
     } else if (this.president.y < this.roadTop + 20 * s) {
       vy = Math.abs(vy || 20 * s);
     }
 
-    // World right boundary clamp
     if (this.president.x > worldWidth - 40 * s) {
       vx = Math.min(vx, 0);
     }
 
     this.president.body.setVelocity(vx, vy);
 
-    // Flip sprite facing direction based on movement
     if (vx > 5) {
       this.president.setFlipX(false);
     } else if (vx < -5) {
@@ -360,9 +431,6 @@ export class KotelScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Drops a banana peel mine either slightly behind the President (50%) or predictively thrown at the player (50%).
-   */
   dropBanana() {
     if (!this.gameplayStarted || this.isSceneOver || !this.president || !this.player) return;
 
@@ -372,24 +440,18 @@ export class KotelScene extends Phaser.Scene {
     const sy = this.president.y;
 
     let tx, ty;
-
-    // 50% chance: Drop slightly behind President (cookie trail), 50% chance: Throw predictively at player
     const isBehind = Phaser.Math.Between(0, 100) < 50;
 
     if (isBehind) {
-      // Drop slightly behind President
       tx = this.president.x - 35 * this.s;
       ty = this.president.y + Phaser.Math.Between(-15, 15) * this.s;
     } else {
-      // Predictive throw at Player: calculate target location based on player velocity vector
       const pVx = this.player.body ? this.player.body.velocity.x : 0;
       const pVy = this.player.body ? this.player.body.velocity.y : 0;
-      // Lead target based on 0.8s flight prediction
       tx = this.player.x + (pVx * 0.8) + Phaser.Math.Between(-10, 10) * this.s;
       ty = this.player.y + (pVy * 0.8) + Phaser.Math.Between(-10, 10) * this.s;
     }
 
-    // Clamp target coordinates within visible road viewport near player to guarantee visibility!
     const minVisibleX = Math.max(40 * this.s, this.player.x - 70 * this.s);
     const maxVisibleX = Math.min(WORLD_CHARS_WIDE * 12 * this.s - 40 * this.s, this.player.x + 150 * this.s);
 
@@ -402,39 +464,29 @@ export class KotelScene extends Phaser.Scene {
         this.bananasHitCount++;
         this.cameras.main.shake(150, 0.008);
       },
-      onAvoid: () => {
-        // Player avoided banana! (+3 points awarded inside Banana class)
-      }
+      onAvoid: () => {}
     });
 
     this.activeBananas.push(banana);
   }
 
-  /**
-   * Catches the President! Overlap handler.
-   */
   catchPresident() {
     if (!this.gameplayStarted || this.isSceneOver) return;
     this.isSceneOver = true;
     this.gameplayStarted = false;
 
-    // Destroy active banana indicators/sprites
     if (this.activeBananas) {
       this.activeBananas.forEach((b) => b.destroy());
       this.activeBananas = [];
     }
 
-    // 1. Freeze player and President
     this.player.disable();
     this.player.body.setVelocity(0, 0);
     this.president.body.setVelocity(0, 0);
 
-    // 2. Play catch effects (little camera shake and flash)
     this.cameras.main.shake(150, 0.005);
     this.cameras.main.flash(300, 255, 255, 255);
-    this._updateHUD('נתפס!');
 
-    // Calculate score: Base +9 points + remaining unthrown bananas bonus (+3 points each)
     const remainingBananas = Math.max(0, this.maxBananas - this.bananasDropped);
     const bonusPoints = remainingBananas * 3;
     const catchScore = 9 + bonusPoints;
@@ -442,7 +494,6 @@ export class KotelScene extends Phaser.Scene {
     addGlobalScore(this, catchScore, this.president.x, this.president.y);
 
     if (bonusPoints > 0) {
-      // Floating bonus points indicator
       const s = this.s || 1;
       const bonusText = this.add.text(this.president.x, this.president.y - 45 * s, `+${bonusPoints} בונוס תפיסה מהירה!`, {
         fontFamily: 'Rubik, sans-serif',
@@ -462,82 +513,14 @@ export class KotelScene extends Phaser.Scene {
       });
     }
 
-    // Play victory dialogue
     playDialogOnce("KotelScene-victory", this, KOTEL_VICTORY_DIALOG, () => {
       this.showVictoryScreen();
     });
   }
 
-  /**
-   * Creates a small styled speech bubble container directly above the President.
-   * @param {string} text - Message text to display inside speech bubble
-   * @returns {Phaser.GameObjects.Container}
-   */
-  createPresidentSpeechBubble(text) {
-    const s = this.s;
-    const px = this.president.x;
-    const py = this.president.y - 42 * s;
-
-    const container = this.add.container(px, py).setDepth(4000);
-
-    const paddingX = 10 * s;
-    const paddingY = 6 * s;
-
-    const labelText = this.add.text(0, 0, text, {
-      fontFamily: 'Rubik, Arial, sans-serif',
-      fontSize: `${Math.max(13, Math.round(15 * s))}px`,
-      fontWeight: 'bold',
-      color: '#0f172a',
-      align: 'center'
-    }).setOrigin(0.5, 0.5);
-
-    const bounds = labelText.getBounds();
-    const bgWidth = bounds.width + paddingX * 2;
-    const bgHeight = bounds.height + paddingY * 2;
-
-    const bgGraphics = this.add.graphics();
-    // Rounded white speech bubble box with blue border
-    bgGraphics.fillStyle(0xffffff, 0.95);
-    bgGraphics.lineStyle(2 * s, 0x0284c7, 1);
-    bgGraphics.fillRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 6 * s);
-    bgGraphics.strokeRoundedRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight, 6 * s);
-
-    // Speech bubble pointer triangle at bottom
-    bgGraphics.fillStyle(0xffffff, 0.95);
-    bgGraphics.fillTriangle(
-      -5 * s, bgHeight / 2,
-      5 * s, bgHeight / 2,
-      0, bgHeight / 2 + 6 * s
-    );
-
-    container.add([bgGraphics, labelText]);
-
-    // Pop-in animation
-    container.setScale(0.2);
-    this.tweens.add({
-      targets: container,
-      scale: 1,
-      duration: 250,
-      ease: 'Back.easeOut'
-    });
-
-    return container;
-  }
-
-  // ---------------------------------------------------------------------------
-  // HUD & Transition Screen
-  // ---------------------------------------------------------------------------
-
-  /** @private */
   _createHUD() {
     LivesManager.showHUD();
   }
-
-  /** @private */
-  _updateHUD(message) {
-    // Instructions HUD is removed
-  }
-
 
   showVictoryScreen() {
     showVictoryHelper(

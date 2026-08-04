@@ -6,7 +6,6 @@ const TRIVIA_SCENE_ORDER = [
   'Day2Scene',
   'Day3Scene',
   'Day4Scene',
-  'Day5Scene',
   'KotelScene',
   'KalpiScene',
 ];
@@ -58,12 +57,10 @@ function getSceneQuestionCount(sceneKey) {
 
   const state = getTriviaState();
   const questionsRemaining = getTriviaQuestions().length - state.nextQuestionIndex;
-  const levelsRemaining = TRIVIA_SCENE_ORDER.length - sceneIndex;
 
-  console.log(`[Trivia Debug] getSceneQuestionCount: sceneKey=${sceneKey}, nextQuestionIndex=${state.nextQuestionIndex}, questionsRemaining=${questionsRemaining}, levelsRemaining=${levelsRemaining}`);
+  console.log(`[Trivia Debug] getSceneQuestionCount: sceneKey=${sceneKey}, nextQuestionIndex=${state.nextQuestionIndex}, questionsRemaining=${questionsRemaining}`);
 
   if (questionsRemaining <= 0) return 0;
-  if (questionsRemaining > levelsRemaining) return 2;
   return 1;
 }
 

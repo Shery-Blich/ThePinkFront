@@ -1,21 +1,63 @@
 import Phaser from 'phaser';
 import { Character } from '../entities/character.js';
+import { Player } from '../entities/player.js';
 import { startSceneMusic } from '../systems/bg-music.js';
-import { trackGameCompleted } from '../analytics.js';
-import { getGlobalScoreSummary } from '../systems/score-manager.js';
+import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
+import { LivesManager } from '../systems/lives-manager.js';
+import { addGlobalScore } from '../systems/score-manager.js';
 
 /**
- * FinalScene — The voting booth climax.
- * 
+ * FinalScene — Jerusalem Floor Crumbling Stage
+ *
  * Features:
- * - A beautiful neon pixel-style voting booth graphic.
- * - Dialogue acknowledging reaching the booth.
- * - A premium retro score overlay with share, Instagram, and website buttons.
+ * - Player stands on a grid of floor tiles in Jerusalem
+ * - Floor tiles crumble and fall away every 2 seconds
+ * - Player must reach the school (goal) within 20 seconds
+ * - Neon pixel-style retro visual design
+ * - Physics-based movement and falling
  */
 export class FinalScene extends Phaser.Scene {
   constructor() {
     super({ key: 'FinalScene' });
-    this.s = 1; // scale factor
+
+    /** @type {Player} */
+    this.player = null;
+
+    /** @type {number} sprite scale factor */
+    this.s = 1;
+
+    /** @type {number} Countdown timer in seconds */
+    this.timeRemaining = 20;
+
+    /** @type {Phaser.GameObjects.Text} */
+    this.timerText = null;
+
+    /** @type {Phaser.Physics.Arcade.Group} */
+    this.floorTiles = null;
+
+    /** @type {boolean} */
+    this.isSceneOver = false;
+
+    /** @type {number} Accumulator for timer updates (milliseconds) */
+    this.timerAccumulator = 0;
+
+    /** @type {number} Accumulator for crumble timer (milliseconds) */
+    this.crumbleAccumulator = 0;
+
+    /** @type {Phaser.GameObjects.Container} */
+    this.schoolGoal = null;
+
+    /** @type {number} Position of school goal on X axis */
+    this.schoolX = 0;
+
+    /** @type {number} Road/floor Y position */
+    this.roadY = 0;
+
+    /** @type {number} Floor tile size */
+    this.tileSize = 0;
+
+    /** @type {Array} Grid information for tracking which tiles exist */
+    this.floorGrid = [];
   }
 
   create() {
@@ -23,6 +65,12 @@ export class FinalScene extends Phaser.Scene {
     this.s = Character.computeScale(height);
 
     startSceneMusic(this, 'bg-end');
+
+    // --- Reset states ---
+    this.isSceneOver = false;
+    this.timeRemaining = 20;
+    this.timerAccumulator = 0;
+    this.crumbleAccumulator = 0;
 
     // --- Background Styling ---
     this.cameras.main.setBackgroundColor('#1a1a2e');
@@ -38,66 +86,196 @@ export class FinalScene extends Phaser.Scene {
       grid.lineBetween(0, ly, width, ly);
     }
 
-    // --- Stylized Voting Booth Backdrop (Graphic Placeholder) ---
-    this._createVotingBoothGraphic(width, height);
+    // --- Jerusalem background ---
+    this._buildJerusalemBackground(width, height);
 
-    // Show score popup immediately (no intro dialogue)
-    this.time.delayedCall(1000, () => {
-      this.showScorePopup();
+    // --- Floor setup ---
+    this.tileSize = 32 * this.s;
+    this.roadY = Math.round(height * 0.70);
+    const worldWidth = width * 2.5; // Extended world for camera follow
+
+    this._buildFloor(worldWidth);
+
+    // --- Player setup ---
+    const startX = width * 0.1;
+    const startY = this.roadY - 5 * this.s; // Standing on the floor
+    this.player = new Player(this, startX, startY, this.s);
+
+    // Set up physics for gravity (player falls when floor is gone)
+    this.physics.world.gravity.y = 600 * this.s;
+
+    // Collision between player and floor tiles
+    this.physics.add.collider(
+      this.player,
+      this.floorTiles,
+      () => {
+        if (this.player) this.player.onCollision();
+      },
+      null,
+      this
+    );
+
+    // --- School goal setup ---
+    this.schoolX = width * 0.85;
+    this._createSchoolGoal(this.schoolX, this.roadY);
+
+    // --- HUD ---
+    this._createHUD(width, height);
+
+    // --- Camera ---
+    this.cameras.main.setBounds(0, 0, worldWidth, height);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0);
+
+    // Start gameplay
+    this.player.enable();
+
+    this.events.once('shutdown', () => {
+      if (this.floorTiles) {
+        this.floorTiles.clear(true, true);
+      }
     });
   }
 
   /**
-   * Draws a premium retro voting box illustration with float animation.
+   * Builds the Jerusalem background visual.
    * @private
    */
-  _createVotingBoothGraphic(width, height) {
-    const cx = width / 2;
-    const cy = height * 0.42;
+  _buildJerusalemBackground(width, height) {
+    // Use a simple color gradient or placeholder image
+    if (this.textures.exists('day4-bg')) {
+      const bgImage = this.add.image(width / 2, height * 0.35, 'day4-bg');
+      bgImage.setOrigin(0.5, 0.5);
+      bgImage.setDisplaySize(width * 1.2, height * 0.5);
+      bgImage.setDepth(1);
+      bgImage.setAlpha(0.6);
+    } else {
+      // Fallback: draw a simple Jerusalem-themed background
+      const sky = this.add.graphics();
+      sky.fillStyle(0x2a2a3e, 1);
+      sky.fillRect(0, 0, width, height * 0.35);
+      sky.setDepth(0);
 
-    // Draw Voting Box Container
-    const booth = this.add.graphics();
-    booth.fillStyle(0x0f0c1b, 1);
-    booth.lineStyle(3 * this.s, 0xff007f, 1); // Neon pink border
-    booth.fillRoundedRect(cx - 60 * this.s, cy - 40 * this.s, 120 * this.s, 80 * this.s, 8 * this.s);
-    booth.strokeRoundedRect(cx - 60 * this.s, cy - 40 * this.s, 120 * this.s, 80 * this.s, 8 * this.s);
+      // Draw distant Jerusalem buildings silhouette effect
+      const silhouette = this.add.graphics();
+      silhouette.fillStyle(0x1a1a2e, 0.8);
+      const buildingHeight = height * 0.2;
+      const buildingWidth = 80 * this.s;
+      for (let i = 0; i < 8; i++) {
+        silhouette.fillRect(
+          i * buildingWidth,
+          height * 0.35 - buildingHeight,
+          buildingWidth,
+          buildingHeight
+        );
+      }
+      silhouette.setDepth(1);
+    }
+  }
 
-    // Add slot details
-    booth.fillStyle(0x00e6ff, 1); // Neon cyan slot glow
-    booth.fillRect(cx - 30 * this.s, cy - 25 * this.s, 60 * this.s, 6 * this.s);
-    booth.fillStyle(0x000000, 1);
-    booth.fillRect(cx - 28 * this.s, cy - 23 * this.s, 56 * this.s, 2 * this.s);
+  /**
+   * Builds the crumbling floor grid.
+   * @private
+   */
+  _buildFloor(worldWidth) {
+    this.floorTiles = this.physics.add.staticGroup();
+    this.floorGrid = [];
 
-    // Box label
-    const voteLabel = this.add.text(cx, cy + 15 * this.s, 'הצביעו', {
+    // Create a simple texture for floor tiles if it doesn't exist
+    if (!this.textures.exists('floorTile')) {
+      const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+      graphics.fillStyle(0x8b7355, 1);
+      graphics.fillRect(0, 0, 32, 32);
+      graphics.lineStyle(2, 0x6b5745, 1);
+      graphics.strokeRect(0, 0, 32, 32);
+      graphics.generateTexture('floorTile', 32, 32);
+      graphics.destroy();
+    }
+
+    // Calculate grid dimensions
+    const tilesWide = Math.ceil(worldWidth / this.tileSize) + 2;
+    const tilesHigh = 3; // Three rows of floor for visual depth
+
+    // Create initial floor grid
+    for (let row = 0; row < tilesHigh; row++) {
+      this.floorGrid[row] = [];
+      for (let col = 0; col < tilesWide; col++) {
+        const tx = col * this.tileSize;
+        const ty = this.roadY + (row * this.tileSize);
+
+        // Create floor tile sprite using the generated texture
+        const tile = this.floorTiles.create(tx, ty, 'floorTile');
+        tile.setOrigin(0, 0);
+        tile.setDisplaySize(this.tileSize, this.tileSize);
+        tile.body.setSize(this.tileSize, this.tileSize);
+        tile.body.setOffset(0, 0);
+
+        // Store metadata
+        tile.gridRow = row;
+        tile.gridCol = col;
+        tile.isActive = true;
+        this.floorGrid[row][col] = tile;
+      }
+    }
+  }
+
+  /**
+   * Creates the school goal visual.
+   * @private
+   */
+  _createSchoolGoal(x, y) {
+    this.schoolGoal = this.add.container(x, y - 40 * this.s).setDepth(3);
+
+    // Draw school building structure
+    const schoolGraphics = this.add.graphics();
+
+    // Main building
+    const buildingW = 60 * this.s;
+    const buildingH = 80 * this.s;
+    schoolGraphics.fillStyle(0xff4444, 1); // Red neon
+    schoolGraphics.fillRect(-buildingW / 2, -buildingH, buildingW, buildingH);
+    schoolGraphics.lineStyle(3 * this.s, 0xff00ff, 1); // Neon pink outline
+    schoolGraphics.strokeRect(-buildingW / 2, -buildingH, buildingW, buildingH);
+
+    // Windows
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 4; j++) {
+        schoolGraphics.fillStyle(0xffff00, 1); // Neon yellow windows
+        schoolGraphics.fillRect(
+          -buildingW / 2 + 8 * this.s + i * 16 * this.s,
+          -buildingH + 8 * this.s + j * 18 * this.s,
+          8 * this.s,
+          8 * this.s
+        );
+      }
+    }
+
+    // Roof triangle
+    schoolGraphics.fillStyle(0xff00ff, 1);
+    schoolGraphics.fillTriangle(
+      -buildingW / 2, -buildingH,
+      buildingW / 2, -buildingH,
+      0, -buildingH - 20 * this.s
+    );
+
+    this.schoolGoal.add(schoolGraphics);
+
+    // Label
+    const schoolLabel = this.add.text(x, y + 20 * this.s, 'בית ספר', {
       fontFamily: 'monospace',
-      fontSize: `${18 * this.s}px`,
+      fontSize: `${14 * this.s}px`,
       fontWeight: '900',
-      color: '#00e6ff'
+      color: '#ffff00',
+      align: 'center'
     });
-    voteLabel.setOrigin(0.5);
-    voteLabel.setStroke('#000000', 4 * this.s);
+    schoolLabel.setOrigin(0.5);
+    schoolLabel.setStroke('#000000', 2 * this.s);
+    schoolLabel.setDepth(3);
 
-    // Floating envelope graphics
-    const envelope = this.add.graphics();
-    envelope.fillStyle(0xffffff, 1);
-    envelope.fillRect(-20 * this.s, -12 * this.s, 40 * this.s, 24 * this.s);
-    envelope.lineStyle(1.5 * this.s, 0x1a1a2e, 1);
-    // Draw envelope lines
-    envelope.lineBetween(-20 * this.s, -12 * this.s, 0, 0);
-    envelope.lineBetween(20 * this.s, -12 * this.s, 0, 0);
-    envelope.lineBetween(-20 * this.s, 12 * this.s, -8 * this.s, 0);
-    envelope.lineBetween(20 * this.s, 12 * this.s, 8 * this.s, 0);
-    envelope.lineBetween(-8 * this.s, 0, 8 * this.s, 0);
-
-    const envContainer = this.add.container(cx, cy - 65 * this.s);
-    envContainer.add(envelope);
-
-    // Float animation
+    // Pulsing glow effect for goal
     this.tweens.add({
-      targets: envContainer,
-      y: cy - 54 * this.s,
-      duration: 1200,
+      targets: this.schoolGoal,
+      scale: { from: 1.0, to: 1.15 },
+      duration: 800,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
@@ -105,23 +283,185 @@ export class FinalScene extends Phaser.Scene {
   }
 
   /**
-   * Delegates the display of the final score screen to the responsive HTML overlay APIs.
+   * Creates HUD elements (timer, lives).
+   * @private
    */
-  showScorePopup() {
-    const scoreSummary = getGlobalScoreSummary();
-    trackGameCompleted({
-      score: scoreSummary.score,
-      max_score: scoreSummary.maxScore,
-      correct_answers: scoreSummary.correctAnswers,
-      answered_questions: scoreSummary.answeredQuestions,
+  _createHUD(width, height) {
+    LivesManager.showHUD();
+
+    // Timer display
+    this.timerText = this.add.text(width * 0.95, 30 * this.s, '20s', {
+      fontFamily: 'monospace',
+      fontSize: `${32 * this.s}px`,
+      fontWeight: '900',
+      color: '#00ff00',
+      align: 'right'
     });
-    if (typeof window.showScorePopup === 'function') {
-      window.showScorePopup(scoreSummary);
+    this.timerText.setOrigin(1, 0);
+    this.timerText.setStroke('#000000', 4 * this.s);
+    this.timerText.setScrollFactor(0);
+    this.timerText.setDepth(1000);
+
+    // Instructions text
+    const instructions = this.add.text(width / 2, height * 0.05, 'הגיעו לבית הספר בעוד 20 שניות!', {
+      fontFamily: 'monospace',
+      fontSize: `${14 * this.s}px`,
+      fontWeight: 'bold',
+      color: '#00ffff',
+      align: 'center'
+    });
+    instructions.setOrigin(0.5, 0);
+    instructions.setStroke('#000000', 2 * this.s);
+    instructions.setScrollFactor(0);
+    instructions.setDepth(1000);
+  }
+
+
+  /**
+   * Crumbles random floor tiles.
+   * @private
+   */
+  crumbleRandomFloor() {
+    if (!this.floorGrid || this.floorGrid.length === 0) return;
+
+    // Randomly remove 2-4 floor tiles
+    const tilesToCrumble = Phaser.Math.Between(2, 4);
+
+    for (let i = 0; i < tilesToCrumble; i++) {
+      const randomRow = Phaser.Math.Between(0, this.floorGrid.length - 1);
+      const randomCol = Phaser.Math.Between(0, this.floorGrid[randomRow].length - 1);
+
+      const tile = this.floorGrid[randomRow][randomCol];
+      if (tile && tile.isActive) {
+        this.destroyFloorTile(tile);
+      }
+    }
+  }
+
+  /**
+   * Destroys a floor tile with crumble effect.
+   * @private
+   */
+  destroyFloorTile(tile) {
+    if (!tile || !tile.isActive) return;
+
+    tile.isActive = false;
+
+    // Crumble animation
+    this.tweens.add({
+      targets: tile,
+      y: tile.y + 100 * this.s,
+      alpha: 0,
+      angle: 45,
+      duration: 500,
+      onComplete: () => {
+        tile.destroy();
+      }
+    });
+
+    // Dust particle effect
+    const dustGraphics = this.add.graphics();
+    dustGraphics.fillStyle(0x8b7355, 0.7);
+    for (let i = 0; i < 5; i++) {
+      dustGraphics.fillCircle(
+        tile.x + Phaser.Math.Between(0, this.tileSize),
+        tile.y + Phaser.Math.Between(0, this.tileSize),
+        Phaser.Math.Between(2, 5)
+      );
+    }
+    this.tweens.add({
+      targets: dustGraphics,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => dustGraphics.destroy()
+    });
+  }
+
+  /**
+   * Ends the game (win or lose).
+   * @private
+   */
+  endGame(isVictory) {
+    if (this.isSceneOver) return;
+    this.isSceneOver = true;
+
+    // Freeze player
+    this.player.disable();
+    this.player.body.setVelocity(0, 0);
+
+    // Calculate and add score
+    if (isVictory) {
+      const score = 15; // Base victory score
+      addGlobalScore(this, score, this.player.x, this.player.y);
+
+      this.time.delayedCall(500, () => {
+        showVictoryHelper(
+          this,
+          'FinalScene',
+          'הגעתם לבית הספר!',
+          'עברתם בהצלחה דרך הרעידה!'
+        );
+      });
+    } else {
+      this.time.delayedCall(500, () => {
+        showGameOverHelper(
+          this,
+          'נפלתם!',
+          'נסו שוב להגיע לבית הספר במהירות'
+        );
+      });
+    }
+  }
+
+  update(time, delta) {
+    if (this.player) {
+      this.player.update();
     }
 
-    // Listen for the replay event triggered by the HTML overlay
-    window.addEventListener('replay-game-event', () => {
-      this.events.emit('complete');
-    }, { once: true });
+    if (this.isSceneOver || !this.player || !this.player.active) return;
+
+    // Accumulate time for timer update (once per second)
+    this.timerAccumulator += delta;
+    if (this.timerAccumulator >= 1000) {
+      this.timeRemaining -= 1;
+      this.timerAccumulator = 0;
+
+      if (this.timerText) {
+        this.timerText.setText(`${Math.max(0, this.timeRemaining)}s`);
+
+        // Color warning when time is low
+        if (this.timeRemaining <= 5) {
+          this.timerText.setColor('#ff0000');
+        }
+      }
+
+      // Crumble floor every 2 seconds
+      this.crumbleAccumulator += 1000;
+      if (this.crumbleAccumulator >= 2000 && this.timeRemaining > 0) {
+        this.crumbleAccumulator = 0;
+        this.crumbleRandomFloor();
+      }
+
+      // Time's up!
+      if (this.timeRemaining <= 0) {
+        this.endGame(false);
+      }
+    }
+
+    // Check if player reached school
+    if (this.player && this.schoolGoal) {
+      const distToSchool = Phaser.Math.Distance.Between(
+        this.player.x, this.player.y,
+        this.schoolX, this.roadY
+      );
+      if (distToSchool < 40 * this.s) {
+        this.endGame(true);
+      }
+    }
+
+    // Check if player fell off the world
+    if (this.player && this.player.y > this.roadY + 300 * this.s) {
+      this.endGame(false);
+    }
   }
 }

@@ -13,9 +13,12 @@ export function showVictoryHelper(scene, sceneKey, title, message) {
   scene.sound.play('sfx-levelup', { volume: 0.6 });
   
   const hasTrivia = hasLevelTrivia(sceneKey);
-  const buttonText = hasTrivia ? 'למעבר לחידון' : 'לשלב הבא';
 
-  if (typeof window.showVictoryScreen === 'function') {
+  if (hasTrivia) {
+    runLevelTrivia(scene, sceneKey).then(() => {
+      scene.events.emit('complete');
+    });
+  } else if (typeof window.showVictoryScreen === 'function') {
     window.showVictoryScreen(
       title,
       message,
