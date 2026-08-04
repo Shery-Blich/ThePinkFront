@@ -8,7 +8,7 @@ import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helpe
 import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
-import { DAY_2_INTRO_DIALOG, DAY_2_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
 
 import { addGlobalScore } from '../systems/score-manager.js';
 
@@ -29,7 +29,7 @@ export class Day2Scene extends Phaser.Scene {
     this.isSceneOver = false;
     this._debugText = null;
     this._errorMessages = [];
-    this._baseRunSpeed = 160; 
+    this._baseRunSpeed = 160;
     this._speedAdjust = 0;
     this._minRunSpeed = 0;
     this._jumpVelocity = -420;
@@ -39,8 +39,8 @@ export class Day2Scene extends Phaser.Scene {
     this._autoScrollSpeed = 80; // px/sec
 
     this._collectedCount = 0;
-    this._canDoubleJump = false;   
-    this._hasDoubleJumped = false; 
+    this._canDoubleJump = false;
+    this._hasDoubleJumped = false;
     this._sounds = {
       collect: null,
       cashier: null,
@@ -68,13 +68,13 @@ export class Day2Scene extends Phaser.Scene {
     this._cashierDialogStarted = false;
 
     this._moveDirection = 0;
-    this._collectedCount = 0; 
+    this._collectedCount = 0;
     this._canDoubleJump = false;
     this._hasDoubleJumped = false;
     if (this.cameras && this.cameras.main) {
       this.cameras.main.scrollX = 0;
     }
-    
+
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
     const charWidth = 12 * this.s;
@@ -234,7 +234,7 @@ export class Day2Scene extends Phaser.Scene {
     // 1. Update Joystick State
     if (this.joystick && this.player && this.player.body) {
       this.joystick.update();
-      
+
       // Limit player movement (prevent running horizontal) until they perform their tutorial jump
       if (!this._isScrollingStarted) {
         this.player.body.setVelocityX(0);
@@ -275,7 +275,7 @@ export class Day2Scene extends Phaser.Scene {
 
     const camera = this.cameras.main;
     const maxScrollX = Math.max(0, this._levelWidth - camera.displayWidth);
-    
+
     let scrollSpeed = this._autoScrollSpeed;
 
     // Speed up camera scroll if player is past the middle width of the screen
@@ -452,7 +452,7 @@ export class Day2Scene extends Phaser.Scene {
     for (const pos of productPositions) {
       const product = new Product(this, pos.x, pos.y);
       this.productGroup.add(product);
-      
+
       if (product.body) {
         product.body.updateFromGameObject();
       }
@@ -786,14 +786,12 @@ export class Day2Scene extends Phaser.Scene {
   }
 
   showVictoryScreen() {
-    playDialogOnce('Day2Scene-victory', this, DAY_2_VICTORY_DIALOG, () => {
-      showVictoryHelper(
-        this,
-        'Day2Scene',
-        "השלב הושלם!",
-        "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן."
-      );
-    });
+    showVictoryHelper(
+      this,
+      'Day2Scene',
+      "השלב הושלם!",
+      "הצלחת לאסוף את כל מצרכי היסוד ולהגיע לקופה בזמן."
+    );
   }
 
   _setupSounds() {

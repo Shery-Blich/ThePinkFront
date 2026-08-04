@@ -32,11 +32,8 @@ export const DAY_2_INTRO_DIALOG = [
     speaker: SPEAKER_NAME,
     text: "בדיוק. קפוץ כדי לאסוף מצרכים מהמדפים. אל תשאיר אפילו שקל אחד עודף!",
   },
-];
-
-export const DAY_2_VICTORY_DIALOG = [
   {
-    speaker: "דמות",
+    speaker: "shiri",
     text: "מה? זה בקושי הספיק למשהו 🙁",
   },
 ];
