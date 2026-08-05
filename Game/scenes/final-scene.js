@@ -3,13 +3,13 @@ import { Character } from '../entities/character.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { trackGameCompleted } from '../analytics.js';
 import { getGlobalScoreSummary } from '../systems/score-manager.js';
+import { playDialogOnce } from '../systems/dialog-system.js';
 
 /**
  * FinalScene — The voting booth climax.
  * 
  * Features:
  * - A beautiful neon pixel-style voting booth graphic.
- * - Dialogue acknowledging reaching the booth.
  * - A premium retro score overlay with share, Instagram, and website buttons.
  */
 export class FinalScene extends Phaser.Scene {
@@ -41,62 +41,65 @@ export class FinalScene extends Phaser.Scene {
     // --- Stylized Voting Booth Backdrop (Graphic Placeholder) ---
     this._createVotingBoothGraphic(width, height);
 
-    // Show score popup immediately (no intro dialogue)
-    this.time.delayedCall(1000, () => {
+    // Play victory dialogue then trigger score popup
+    playDialogOnce('FinalScene-dialog', this, [
+      { speaker: 'שירי', text: 'סוף סוף הצבעתי! הגיע הזמן לנוח' }
+    ], () => {
       this.showScorePopup();
     });
   }
 
   /**
-   * Draws a premium retro voting box illustration with float animation.
+   * Displays the Kalpi PNG illustration in center screen with floating envelope animation on the middle right wing.
    * @private
    */
   _createVotingBoothGraphic(width, height) {
     const cx = width / 2;
-    const cy = height * 0.42;
+    const cy = height * 0.50;
 
-    // Draw Voting Box Container
-    const booth = this.add.graphics();
-    booth.fillStyle(0x0f0c1b, 1);
-    booth.lineStyle(3 * this.s, 0xff007f, 1); // Neon pink border
-    booth.fillRoundedRect(cx - 60 * this.s, cy - 40 * this.s, 120 * this.s, 80 * this.s, 8 * this.s);
-    booth.strokeRoundedRect(cx - 60 * this.s, cy - 40 * this.s, 120 * this.s, 80 * this.s, 8 * this.s);
+    let boothWidth = 160 * this.s;
 
-    // Add slot details
-    booth.fillStyle(0x00e6ff, 1); // Neon cyan slot glow
-    booth.fillRect(cx - 30 * this.s, cy - 25 * this.s, 60 * this.s, 6 * this.s);
-    booth.fillStyle(0x000000, 1);
-    booth.fillRect(cx - 28 * this.s, cy - 23 * this.s, 56 * this.s, 2 * this.s);
-
-    // Box label
-    const voteLabel = this.add.text(cx, cy + 15 * this.s, 'הצביעו', {
-      fontFamily: 'monospace',
-      fontSize: `${18 * this.s}px`,
-      fontWeight: '900',
-      color: '#00e6ff'
-    });
-    voteLabel.setOrigin(0.5);
-    voteLabel.setStroke('#000000', 4 * this.s);
+    // Display Kalpi PNG image (large centered asset)
+    const kalpiTex = this.textures.exists('kalpi') ? 'kalpi' : (this.textures.exists('day5-bg') ? 'day5-bg' : null);
+    if (kalpiTex) {
+      const booth = this.add.image(cx, cy, kalpiTex);
+      booth.setOrigin(0.5, 0.5);
+      const desiredHeight = 220 * this.s; // Bigger Kalpi PNG
+      const aspect = (booth.width || 1) / (booth.height || 1);
+      boothWidth = aspect * desiredHeight;
+      booth.setDisplaySize(boothWidth, desiredHeight);
+    } else {
+      // Fallback voting booth graphic
+      const booth = this.add.graphics();
+      booth.fillStyle(0x0f0c1b, 1);
+      booth.lineStyle(3 * this.s, 0xff007f, 1);
+      booth.fillRoundedRect(cx - 90 * this.s, cy - 60 * this.s, 180 * this.s, 120 * this.s, 8 * this.s);
+      booth.strokeRoundedRect(cx - 90 * this.s, cy - 60 * this.s, 180 * this.s, 120 * this.s, 8 * this.s);
+      boothWidth = 180 * this.s;
+    }
 
     // Floating envelope graphics
     const envelope = this.add.graphics();
     envelope.fillStyle(0xffffff, 1);
-    envelope.fillRect(-20 * this.s, -12 * this.s, 40 * this.s, 24 * this.s);
+    envelope.fillRect(-18 * this.s, -10 * this.s, 36 * this.s, 20 * this.s);
     envelope.lineStyle(1.5 * this.s, 0x1a1a2e, 1);
     // Draw envelope lines
-    envelope.lineBetween(-20 * this.s, -12 * this.s, 0, 0);
-    envelope.lineBetween(20 * this.s, -12 * this.s, 0, 0);
-    envelope.lineBetween(-20 * this.s, 12 * this.s, -8 * this.s, 0);
-    envelope.lineBetween(20 * this.s, 12 * this.s, 8 * this.s, 0);
-    envelope.lineBetween(-8 * this.s, 0, 8 * this.s, 0);
+    envelope.lineBetween(-18 * this.s, -10 * this.s, 0, 0);
+    envelope.lineBetween(18 * this.s, -10 * this.s, 0, 0);
+    envelope.lineBetween(-18 * this.s, 10 * this.s, -7 * this.s, 0);
+    envelope.lineBetween(18 * this.s, 10 * this.s, 7 * this.s, 0);
+    envelope.lineBetween(-7 * this.s, 0, 7 * this.s, 0);
 
-    const envContainer = this.add.container(cx, cy - 65 * this.s);
+    // Position envelope on the middle right wing of the Kalpi PNG
+    const envStartX = cx + (boothWidth * 0.22);
+    const envStartY = cy - 10 * this.s;
+    const envContainer = this.add.container(envStartX, envStartY);
     envContainer.add(envelope);
 
-    // Float animation
+    // Float animation (hovering at the middle right wing of the ballot box)
     this.tweens.add({
       targets: envContainer,
-      y: cy - 54 * this.s,
+      y: envStartY + 10 * this.s,
       duration: 1200,
       yoyo: true,
       repeat: -1,

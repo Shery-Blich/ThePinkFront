@@ -1670,6 +1670,9 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
       };
 
+      // Escapes text for HTML, then turns literal newlines into real line breaks
+      const escapeHtmlWithBreaks = (str) => escapeHtml(str).replace(/\n/g, '<br />');
+
       const buildGroupHtml = (roleList) => {
         let html = '<div class="credits-content-group">';
         roleList.forEach(item => {
@@ -1678,13 +1681,13 @@
               <span class="credits-role-title">${escapeHtml(item.role)}</span>
               ${item.names.map(n => {
                 if (typeof n === 'string') {
-                  return `<span class="credits-name">${escapeHtml(n)}</span>`;
+                  return `<span class="credits-name">${escapeHtmlWithBreaks(n)}</span>`;
                 } else if (n && typeof n === 'object' && n.name) {
                   const url = n.link ? escapeHtml(n.link) : '';
                   if (url) {
-                    return `<a class="credits-name credits-link" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.name)} ↗</a>`;
+                    return `<a class="credits-name credits-link" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtmlWithBreaks(n.name)} ↗</a>`;
                   }
-                  return `<span class="credits-name">${escapeHtml(n.name)}</span>`;
+                  return `<span class="credits-name">${escapeHtmlWithBreaks(n.name)}</span>`;
                 }
                 return '';
               }).join('')}
@@ -1713,6 +1716,55 @@
       creditsInitialized = true;
     }
 
+    // Drives a credits track with a single continuous requestAnimationFrame
+    // loop instead of CSS animation/transition: starts with the track's
+    // first entry (SheryB) centered in the frame, slides up to the normal
+    // scroll position at the same speed as the loop, then loops forever.
+    // Handing off between a CSS transition and a separate CSS keyframe
+    // animation left a visible "pop" at the seam once the loop wrapped -
+    // computing the transform from elapsed time every frame avoids that
+    // entirely, since the wrap is just a modulo, not a discrete handoff.
+    function startCreditsMarquee(track) {
+      if (!track || track.dataset.marqueeStarted === '1') return;
+
+      const frame = track.parentElement;
+      const firstGroup = track.querySelector('.credits-content-group');
+      const firstBlock = firstGroup && firstGroup.querySelector('.credits-role-block');
+      if (!frame || !firstBlock) return;
+
+      const frameHeight = frame.clientHeight;
+      const copyHeight = track.scrollHeight / 2;
+      if (!frameHeight || !copyHeight) return; // Not laid out/visible yet - retry later
+
+      const itemTop = firstBlock.offsetTop;
+      const itemHeight = firstBlock.offsetHeight;
+      const startOffset = Math.max(0, (frameHeight / 2) - itemTop - (itemHeight / 2));
+
+      // Same speed as the original CSS loop: one copy height per 25s.
+      const LOOP_DURATION_MS = 25000;
+      const pxPerMs = copyHeight / LOOP_DURATION_MS;
+      const introDurationMs = startOffset / pxPerMs;
+
+      track.dataset.marqueeStarted = '1';
+      track.style.animation = 'none'; // Fully JS-driven from here on
+      track.style.transition = 'none';
+
+      let startTime = null;
+      const tick = (now) => {
+        if (startTime === null) startTime = now;
+        const elapsed = now - startTime;
+
+        const y = elapsed < introDurationMs
+          ? startOffset - (elapsed * pxPerMs)
+          : -(((elapsed - introDurationMs) % LOOP_DURATION_MS) * pxPerMs);
+
+        track.style.transform = `translateY(${y}px)`;
+        requestAnimationFrame(tick);
+      };
+
+      requestAnimationFrame(tick);
+    }
+
     window.showScorePopup = (scoreSummary = {}) => {
       window.__lastScoreSummary = scoreSummary;
       const score = Math.round(scoreSummary.score ?? 0);
@@ -1734,6 +1786,9 @@
 
       // Load/init credits automatically when score popup is displayed
       initCredits();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        startCreditsMarquee(document.getElementById('credits-track-left'));
+      }));
     };
 
     window.hideScorePopup = () => {
@@ -1759,6 +1814,9 @@
         overlay.style.display = 'flex';
         overlay.offsetHeight; // force reflow
         overlay.classList.add('active');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          startCreditsMarquee(document.getElementById('credits-track-mobile'));
+        }));
       }
     });
 

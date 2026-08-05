@@ -21,12 +21,13 @@ export class SceneOrchestrator {
 
     // Define level titles and subtitles for the loading screens
     this.levelInfo = [
-      { title: "יום 1: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
-      { title: "יום 2: מחסום בצפון", subtitle: "הוועדה לא מאשרת כל כך בקלות..." },
-      { title: "יום 3: הכביש המהיר", subtitle: "מתקדמים אל עבר הבירה!" },
-      { title: "יום 4: הכנסת", subtitle: "בלב מקבלת ההחלטות" },
-      { title: "יום 5: ועדת הבחירות המרכזית", subtitle: "מאבק על כל קול!" },
-      { title: "הכותל המערבי", subtitle: "רגע של תקווה ואחדות" },
+      { title: "ההתחלה: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
+      { title: "ההכנה: סופר בארץ", subtitle: "יוקר המחייה בימנו..." },
+      { title: "יהיציאה: תחבצ בארץ", subtitle: "מתקדמים אל עבר הבירה!" },
+      { title: "הנסיעה: מי שבא ברוך הבא", subtitle: "מאבק על כל קול" },
+      { title: "ההגעה: הנשיא", subtitle: "רגע של תקווה ואחדות!" },
+      { title: "הרגע לפני האחרון: הקלפי", subtitle: "מממשים את זכות הבחירה!" },
+      { title: "הסיום: ההצבעה בירושלים", subtitle: "מממשים את זכות הבחירה!" },
       { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
     ];
 
@@ -44,7 +45,10 @@ export class SceneOrchestrator {
 
     // Resolve the string keys from the provided scene classes
     this.sceneOrder = this.sceneClasses.map(SceneClass => {
-      const instance = this.game.scene.scenes.find(s => s instanceof SceneClass);
+      let instance = this.game.scene.scenes.find(s => s instanceof SceneClass);
+      if (!instance && SceneClass.name) {
+        instance = this.game.scene.scenes.find(s => s.sys && (s.sys.settings.key === SceneClass.name || s.constructor.name === SceneClass.name));
+      }
       if (instance) {
         return instance.sys.settings.key;
       } else {
@@ -87,7 +91,7 @@ export class SceneOrchestrator {
       const targetSceneKey = this.sceneOrder[index];
       console.log(`SceneOrchestrator: Transitioning to stage "${targetSceneKey}" (index: ${index})`);
 
-      const info = this.levelInfo[index] || { title: "טוען...", subtitle: "הכנות אחרונות" };
+      const info = this.levelInfo[targetSceneKey] || { title: "טוען...", subtitle: "הכנות אחרונות" };
 
       if (window.showLoadingScreen) {
         window.showLoadingScreen(info.title, info.subtitle, () => {

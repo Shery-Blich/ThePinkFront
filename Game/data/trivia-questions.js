@@ -85,7 +85,11 @@ export function loadTriviaQuestions() {
 
   _loadPromise = (async () => {
     try {
-      const res = await fetch(`${API_BASE}/game/questions`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      const res = await fetch(`${API_BASE}/game/questions`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) throw new Error('empty response');
@@ -100,6 +104,9 @@ export function loadTriviaQuestions() {
 
   return _loadPromise;
 }
+
+// Pre-trigger early load when module is imported
+loadTriviaQuestions();
 
 export function getTriviaQuestions() {
   return _questions;

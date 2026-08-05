@@ -7,13 +7,12 @@ import { LivesManager } from './lives-manager.js';
  * @param {Phaser.Scene} scene - The current scene instance.
  * @param {string} sceneKey - The key of the current scene (e.g. 'Day1Scene').
  * @param {string} title - The title text for the victory overlay.
- * @param {string} message - The detail message text for the victory overlay.
+ * @param {string} [buttonText='המשך'] - Optional button text for victory overlay.
  */
-export function showVictoryHelper(scene, sceneKey, title, message) {
+export function showVictoryHelper(scene, sceneKey, title, message, buttonText = 'המשך') {
   scene.sound.play('sfx-levelup', { volume: 0.6 });
   
   const hasTrivia = hasLevelTrivia(sceneKey);
-  const buttonText = hasTrivia ? 'למעבר לחידון' : 'לשלב הבא';
 
   if (typeof window.showVictoryScreen === 'function') {
     window.showVictoryScreen(
@@ -21,14 +20,29 @@ export function showVictoryHelper(scene, sceneKey, title, message) {
       message,
       buttonText,
       async () => {
-        await runLevelTrivia(scene, sceneKey);
-        scene.events.emit('complete');
+        try {
+          if (hasTrivia) {
+            await runLevelTrivia(scene, sceneKey);
+          }
+        } catch (err) {
+          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
+        } finally {
+          scene.events.emit('complete');
+        }
       }
     );
   } else {
-    runLevelTrivia(scene, sceneKey).then(() => {
+    if (hasTrivia) {
+      runLevelTrivia(scene, sceneKey)
+        .catch((err) => {
+          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
+        })
+        .finally(() => {
+          scene.events.emit('complete');
+        });
+    } else {
       scene.events.emit('complete');
-    });
+    }
   }
 }
 
