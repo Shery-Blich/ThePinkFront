@@ -44,11 +44,15 @@ export class Day3Scene extends Phaser.Scene {
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
     if (this.textures.exists('day3-bg')) {
-      this.add.image(width / 2, height / 2, 'day3-bg')
-        .setOrigin(0.5, 0.5)
-        .setScrollFactor(0)
-        .setDisplaySize(width, height)
-        .setDepth(-10);
+      const tex = this.textures.get('day3-bg').getSourceImage();
+      const bgTile = this.add.tileSprite(0, 0, width, height, 'day3-bg');
+      bgTile.setOrigin(0, 0);
+      if (tex && tex.height) {
+        const scale = height / tex.height;
+        bgTile.setTileScale(scale, scale);
+      }
+      bgTile.setScrollFactor(0);
+      bgTile.setDepth(-10);
     }
 
     // Add road band & sidewalk
@@ -88,28 +92,49 @@ export class Day3Scene extends Phaser.Scene {
 
   _buildSupermarket(x) {
     const s = this.s;
-    const w = 70 * s;
-    const h = 85 * s;
-    const doorW = 18 * s;
-    const doorH = 30 * s;
+    if (this.textures.exists('supermarket-outside')) {
+      const baseGfx = this.add.graphics();
+      baseGfx.fillStyle(0x666666, 1);
+      baseGfx.fillRect(x - 65 * s, this.roadTop - 2 * s, 130 * s, 10 * s);
+      baseGfx.lineStyle(2 * s, 0x444444, 1);
+      baseGfx.strokeRect(x - 65 * s, this.roadTop - 2 * s, 130 * s, 10 * s);
+      baseGfx.setDepth(99);
 
-    const gfx = this.add.graphics();
-    gfx.fillStyle(0xffffff, 1);
-    gfx.fillRect(x - w / 2, this.roadTop - h, w, h);
+      const img = this.add.image(x, this.roadTop + 8 * s, 'supermarket-outside');
+      img.setOrigin(0.5, 1);
+      const targetH = 90 * s;
+      const tex = this.textures.get('supermarket-outside').getSourceImage();
+      if (tex && tex.height) {
+        const aspect = tex.width / tex.height;
+        img.setDisplaySize(targetH * aspect, targetH);
+      } else {
+        img.setDisplaySize(90 * s, targetH);
+      }
+      img.setDepth(100);
+    } else {
+      const w = 70 * s;
+      const h = 85 * s;
+      const doorW = 18 * s;
+      const doorH = 30 * s;
 
-    gfx.fillStyle(0xe11d48, 1);
-    gfx.fillRect(x - w / 2, this.roadTop - h, w, 8 * s);
+      const gfx = this.add.graphics();
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillRect(x - w / 2, this.roadTop - h, w, h);
 
-    gfx.fillStyle(0x110e1a, 1);
-    gfx.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
-    gfx.setDepth(4);
+      gfx.fillStyle(0xe11d48, 1);
+      gfx.fillRect(x - w / 2, this.roadTop - h, w, 8 * s);
 
-    this.add.text(x, this.roadTop - h + 12 * s, 'סופרמרקט', {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: `${Math.max(10, Math.round(10 * s))}px`,
-      fontWeight: 'bold',
-      color: '#ffffff',
-    }).setOrigin(0.5, 0).setDepth(5);
+      gfx.fillStyle(0x110e1a, 1);
+      gfx.fillRect(x - doorW / 2, this.roadTop - doorH, doorW, doorH);
+      gfx.setDepth(4);
+
+      this.add.text(x, this.roadTop - h + 12 * s, 'סופרמרקט', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: `${Math.max(10, Math.round(10 * s))}px`,
+        fontWeight: 'bold',
+        color: '#ffffff',
+      }).setOrigin(0.5, 0).setDepth(5);
+    }
   }
 
   _buildBusStop(x, y) {
@@ -140,22 +165,44 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   _buildRoadBand(width, height, roadHeight) {
+    const s = this.s;
+
+    // Asphalt road surface (depth 2)
     const roadGfx = this.add.graphics();
-    roadGfx.fillStyle(0x333333, 1);
+    roadGfx.fillStyle(0x2a2a35, 0.85);
     roadGfx.fillRect(0, this.roadTop, width, roadHeight);
-    roadGfx.setScrollFactor(0).setDepth(2);
+    roadGfx.setDepth(2);
 
+    // Upper curb line (depth 3)
+    const upperCurb = this.add.graphics();
+    upperCurb.fillStyle(0x777788, 1);
+    upperCurb.fillRect(0, this.roadTop - 3 * s, width, 3 * s);
+    upperCurb.setDepth(3);
+
+    // Lower curb line (depth 3)
+    const lowerCurb = this.add.graphics();
+    lowerCurb.fillStyle(0x777788, 1);
+    lowerCurb.fillRect(0, this.roadBottom - 2 * s, width, 2 * s);
+    lowerCurb.setDepth(3);
+
+    // Yellow center road line (depth 3)
+    const dashW = 10 * s;
+    const dashGap = 12 * s;
+    const dashCount = Math.ceil(width / (dashW + dashGap));
     const lineGfx = this.add.graphics();
-    lineGfx.fillStyle(0xffff00, 0.7);
-    lineGfx.fillRect(0, this.roadCenterY - 2, width, 4);
-    lineGfx.setScrollFactor(0).setDepth(2);
+    lineGfx.fillStyle(0xeab308, 0.85);
+    for (let i = 0; i < dashCount; i++) {
+      lineGfx.fillRect(i * (dashW + dashGap), this.roadCenterY - 1.5 * s, dashW, 3 * s);
+    }
+    lineGfx.setDepth(3);
 
+    // Bottom sidewalk platform (depth 3)
     const swGfx = this.add.graphics();
-    swGfx.fillStyle(0x555555, 1);
+    swGfx.fillStyle(0x475569, 1);
     swGfx.fillRect(0, this.roadBottom, width, height - this.roadBottom);
-    swGfx.lineStyle(2, 0x444444, 1);
+    swGfx.lineStyle(2 * s, 0x334155, 1);
     swGfx.strokeRect(0, this.roadBottom, width, height - this.roadBottom);
-    swGfx.setScrollFactor(0).setDepth(3);
+    swGfx.setDepth(3);
   }
 
   _startCutscene(width, busStopX, busStopY) {
