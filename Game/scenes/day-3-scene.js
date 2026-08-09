@@ -362,7 +362,7 @@ export class Day3Scene extends Phaser.Scene {
       this,
       'Day3Scene',
       'לירושלים!',
-      'לירושלים!'
+      'עולים לעיר הבירה לממש את זכות הבחירה!'
     );
   }
 }

@@ -1132,7 +1132,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: #12121c;
+      background-color: #0b192c;
       font-family: 'Outfit', 'Rubik', sans-serif;
       color: #ffffff;
       display: flex;
@@ -1165,14 +1165,14 @@
     #loading-day-title {
       font-size: clamp(1.8rem, 4vw, 2.8rem);
       font-weight: 900;
-      color: #ff007f;
+      color: #38bdf8;
       text-shadow: 2px 2px 0px #000000;
     }
 
     #loading-day-subtitle {
       font-size: clamp(1rem, 2vw, 1.4rem);
       font-weight: 700;
-      color: #f48fb1;
+      color: #bae6fd;
     }
 
     .loading-icon-pixel {
@@ -1184,8 +1184,8 @@
     .loading-progress-container {
       width: 300px;
       height: 16px;
-      border: 2px solid #ffffff;
-      background: #1e1e2f;
+      border: 2px solid #0ea5e9;
+      background: #0b192c;
       border-radius: 8px;
       position: relative;
       overflow: hidden;
@@ -1198,14 +1198,14 @@
       top: 0;
       bottom: 0;
       width: 0%;
-      background: linear-gradient(270deg, #ff007f, #f48fb1);
+      background: linear-gradient(270deg, #0284c7, #0ea5e9);
       transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .loading-tip-box {
       max-width: 480px;
-      background: rgba(30, 30, 47, 0.6);
-      border: 2px dashed #ff007f;
+      background: rgba(11, 25, 44, 0.7);
+      border: 2px dashed #0ea5e9;
       border-radius: 8px;
       padding: 1rem;
       box-shadow: 4px 4px 0px #000000;
@@ -1215,7 +1215,7 @@
     .loading-tip-label {
       font-size: 0.8rem;
       font-weight: 900;
-      color: #ff007f;
+      color: #38bdf8;
       text-transform: uppercase;
       margin-bottom: 0.4rem;
       letter-spacing: 1px;
@@ -1224,7 +1224,7 @@
     #loading-tip-text {
       font-size: clamp(0.85rem, 1.8vw, 1.05rem);
       font-weight: 700;
-      color: #a0a0b0;
+      color: #bae6fd;
       line-height: 1.4;
     }
 
@@ -1274,7 +1274,9 @@
     </div>
     
     <div class="loading-middle">
-      <div class="loading-icon-pixel">💖</div>
+      <div class="loading-icon-pixel">
+        <img src="assets/Ellements/kalpi.png" alt="קלפי" style="height: 72px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));" />
+      </div>
       <div class="loading-progress-container">
         <div id="loading-progress-fill"></div>
       </div>

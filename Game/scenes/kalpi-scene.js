@@ -137,10 +137,14 @@ export class KalpiScene extends Phaser.Scene {
     // 7. HUD setup
     this._createHUD();
 
-    // 8. Dialogue & gameplay start
+    // 8. Opening dialogue popup before gameplay starts
+    this.gameplayStarted = false;
+
     playDialogOnce("KalpiScene-intro", this, KALPI_INTRO_DIALOG, () => {
-      this.player.enable();
       this.gameplayStarted = true;
+      if (this.player) {
+        this.player.enable();
+      }
 
       // Start 2-second predictive block destruction timer
       this.predictiveTimerEvent = this.time.addEvent({

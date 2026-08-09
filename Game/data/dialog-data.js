@@ -55,7 +55,7 @@ export const KOTEL_VICTORY_DIALOG = [
 export const KALPI_INTRO_DIALOG = [
   {
     speaker: SPEAKER_NAME,
-    text: "הגעת לקלפי בירושלים! רוצי במהירות ימינה לקלפי והיזהרי מאבני ירושלים המתפוררות!",
+    text: "רוצו אל הקלפי והיזהרי מהאבנים המתפוררות",
   },
 ];
 
@@ -65,5 +65,6 @@ export const KALPI_VICTORY_DIALOG = [
     text: "הצלחתי! ממשתי את זכות הבחירה שלי!",
   },
 ];
+
 
 

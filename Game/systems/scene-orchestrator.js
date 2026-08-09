@@ -85,15 +85,16 @@ export class SceneOrchestrator {
   /**
    * Starts a scene at a specific index in our sequence.
    * @param {number} index
+   * @param {boolean} [skipLoadingScreen=false] - Whether to skip HTML loading screen overlay
    */
-  startSceneAtIndex(index) {
+  startSceneAtIndex(index, skipLoadingScreen = false) {
     if (index >= 0 && index < this.sceneOrder.length) {
       const targetSceneKey = this.sceneOrder[index];
       console.log(`SceneOrchestrator: Transitioning to stage "${targetSceneKey}" (index: ${index})`);
 
       const info = this.levelInfo[targetSceneKey] || { title: "טוען...", subtitle: "הכנות אחרונות" };
 
-      if (window.showLoadingScreen) {
+      if (!skipLoadingScreen && window.showLoadingScreen) {
         window.showLoadingScreen(info.title, info.subtitle, () => {
           // Ensure BootScene or other scenes are stopped before starting the target
           this.game.scene.scenes.forEach(scene => {
@@ -125,7 +126,7 @@ export class SceneOrchestrator {
           }, 300);
         });
       } else {
-        // Fallback without loading screen
+        // Fallback or direct transition without loading screen overlay
         this.game.scene.scenes.forEach(scene => {
           if (scene.scene.key !== targetSceneKey) {
             this.game.scene.stop(scene.scene.key);
@@ -157,7 +158,8 @@ export class SceneOrchestrator {
 
         const nextIndex = completedIndex + 1;
         if (nextIndex < this.sceneOrder.length) {
-          this.startSceneAtIndex(nextIndex);
+          const skipLoading = (completedSceneKey === 'Day3Scene');
+          this.startSceneAtIndex(nextIndex, skipLoading);
         } else {
           console.log('SceneOrchestrator: All stages completed. Resetting to main menu.');
           this.resetToMainMenu();
@@ -167,7 +169,8 @@ export class SceneOrchestrator {
       // Fallback transition if the completed scene object is unavailable
       const nextIndex = completedIndex + 1;
       if (nextIndex < this.sceneOrder.length) {
-        this.startSceneAtIndex(nextIndex);
+        const skipLoading = (completedSceneKey === 'Day3Scene');
+        this.startSceneAtIndex(nextIndex, skipLoading);
       } else {
         this.resetToMainMenu();
       }
