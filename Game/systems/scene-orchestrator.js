@@ -92,6 +92,12 @@ export class SceneOrchestrator {
       const targetSceneKey = this.sceneOrder[index];
       console.log(`SceneOrchestrator: Transitioning to stage "${targetSceneKey}" (index: ${index})`);
 
+      if (index === 0) {
+        LivesManager.resetLives();
+      } else {
+        LivesManager.recordStageStartLives();
+      }
+
       const info = this.levelInfo[targetSceneKey] || { title: "טוען...", subtitle: "הכנות אחרונות" };
 
       if (!skipLoadingScreen && window.showLoadingScreen) {

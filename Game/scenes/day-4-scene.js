@@ -305,8 +305,40 @@ export class Day4Scene extends Phaser.Scene {
 
       if (char.y > this.roadBottom + 40 * this.s) {
         // Character fell off screen — player missed catch
+        const missX = char.x;
         char.destroy();
         this.fallingCharacters.splice(i, 1);
+
+        // Sound feedback on miss / failure (Kahoot Gong from ColorUp)
+        if (this.sound.get('sfx-fail-gong')) {
+          this.sound.play('sfx-fail-gong', { volume: 0.7 });
+        } else if (this.sound.get('sfx-wrong')) {
+          this.sound.play('sfx-wrong', { volume: 0.6 });
+        } else {
+          this.sound.play('sfx-explosion', { volume: 0.5 });
+        }
+
+        // Red camera flash & subtle camera shake
+        this.cameras.main.flash(200, 239, 68, 68, 0.35);
+        this.cameras.main.shake(120, 0.004);
+
+        // Floating red "-1 💔" pop text at bottom screen
+        const missPopText = this.add.text(missX, this.roadBottom - 10 * this.s, "-1 💔", {
+          fontFamily: "Arial, sans-serif",
+          fontSize: `${Math.max(14, Math.round(16 * this.s))}px`,
+          fontWeight: "bold",
+          color: "#ef4444",
+          stroke: "#000000",
+          strokeThickness: 3,
+        }).setOrigin(0.5, 1).setDepth(2000);
+
+        this.tweens.add({
+          targets: missPopText,
+          y: missPopText.y - 30 * this.s,
+          alpha: 0,
+          duration: 900,
+          onComplete: () => missPopText.destroy()
+        });
 
         // Deduct a life
         const remaining = LivesManager.deductLife();
@@ -773,7 +805,13 @@ export class Day4Scene extends Phaser.Scene {
       }
     }
 
-    this.sound.play("sfx-meow", { volume: 0.6 });
+    if (this.sound.get('sfx-catch-mix')) {
+      this.sound.play('sfx-catch-mix', { volume: 0.7 });
+    } else if (this.sound.get('sfx-correct')) {
+      this.sound.play('sfx-correct', { volume: 0.6 });
+    } else {
+      this.sound.play('collect', { volume: 0.6 });
+    }
 
     this.tweens.killTweensOf(charSprite);
     this.tweens.add({

@@ -40,13 +40,13 @@ export function showGameOverHelper(scene, title, message) {
       title,
       message,
       () => {
-        LivesManager.resetLives();
+        LivesManager.restoreStageStartLives();
         scene.scene.restart();
       }
     );
   } else {
     scene.time.delayedCall(1000, () => {
-      LivesManager.resetLives();
+      LivesManager.restoreStageStartLives();
       scene.scene.restart();
     });
   }

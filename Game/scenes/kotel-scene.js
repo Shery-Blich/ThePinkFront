@@ -302,16 +302,44 @@ export class KotelScene extends Phaser.Scene {
   }
 
   _buildKotelBackground(worldWidth, groundY) {
-    if (!this.textures.exists('kotel-bg')) return;
-    const texture = this.textures.get('kotel-bg').getSourceImage();
-    const scale = groundY / texture.height;
-    const displayWidth = texture.width * scale;
+    if (this.textures.exists('kotel-start') && this.textures.exists('kotel-mid') && this.textures.exists('kotel-end')) {
+      const sectionW = groundY * (16 / 9);
 
-    for (let x = displayWidth / 2; x < worldWidth + displayWidth / 2; x += displayWidth) {
-      const bg = this.add.image(x, groundY / 2, 'kotel-bg');
-      bg.setDisplaySize(displayWidth, groundY);
-      bg.setDepth(1);
+      // 1. Start section on far left (plaza entrance)
+      const startBg = this.add.image(sectionW / 2, groundY / 2, 'kotel-start');
+      startBg.setDisplaySize(sectionW, groundY);
+      startBg.setDepth(1);
+
+      // 2. End section on far right (golden dome view)
+      const endBg = this.add.image(worldWidth - sectionW / 2, groundY / 2, 'kotel-end');
+      endBg.setDisplaySize(sectionW, groundY);
+      endBg.setDepth(1);
+
+      // 3. Middle loopable section (tileable Kotel wall facade)
+      const midStartX = sectionW;
+      const midEndX = worldWidth - sectionW;
+      const midWidth = midEndX - midStartX;
+
+      if (midWidth > 0) {
+        const midBg = this.add.tileSprite(midStartX + midWidth / 2, groundY / 2, midWidth, groundY, 'kotel-mid');
+        const texture = this.textures.get('kotel-mid').getSourceImage();
+        if (texture && texture.height) {
+          const scaleY = groundY / texture.height;
+          midBg.setTileScale(scaleY, scaleY);
+        }
+        midBg.setDepth(1);
+      }
+      return;
     }
+
+    const bgKey = this.textures.exists('kotel-panoramic-bg')
+      ? 'kotel-panoramic-bg'
+      : (this.textures.exists('kotel-bg') ? 'kotel-bg' : null);
+    if (!bgKey) return;
+
+    const bg = this.add.image(worldWidth / 2, groundY / 2, bgKey);
+    bg.setDisplaySize(worldWidth, groundY);
+    bg.setDepth(1);
   }
 
   _buildJerusalemPlaza(worldWidth, roadHeight) {

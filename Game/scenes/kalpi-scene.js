@@ -192,7 +192,11 @@ export class KalpiScene extends Phaser.Scene {
 
   /** @private */
   _buildBackground(worldWidth, groundY) {
-    const bgKey = this.textures.exists('kalpi-bg') ? 'kalpi-bg' : 'kotel-bg';
+    const bgKey = this.textures.exists('kalpi-bg')
+      ? 'kalpi-bg'
+      : (this.textures.exists('kotel-panoramic-bg') ? 'kotel-panoramic-bg' : 'kotel-bg');
+    if (!this.textures.exists(bgKey)) return;
+
     const bgTile = this.add.tileSprite(0, 0, worldWidth, groundY, bgKey);
     bgTile.setOrigin(0, 0);
     const texture = this.textures.get(bgKey).getSourceImage();
