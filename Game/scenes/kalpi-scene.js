@@ -137,10 +137,14 @@ export class KalpiScene extends Phaser.Scene {
     // 7. HUD setup
     this._createHUD();
 
-    // 8. Dialogue & gameplay start
+    // 8. Opening dialogue popup before gameplay starts
+    this.gameplayStarted = false;
+
     playDialogOnce("KalpiScene-intro", this, KALPI_INTRO_DIALOG, () => {
-      this.player.enable();
       this.gameplayStarted = true;
+      if (this.player) {
+        this.player.enable();
+      }
 
       // Start 2-second predictive block destruction timer
       this.predictiveTimerEvent = this.time.addEvent({
@@ -188,7 +192,11 @@ export class KalpiScene extends Phaser.Scene {
 
   /** @private */
   _buildBackground(worldWidth, groundY) {
-    const bgKey = this.textures.exists('kalpi-bg') ? 'kalpi-bg' : 'kotel-bg';
+    const bgKey = this.textures.exists('kalpi-bg')
+      ? 'kalpi-bg'
+      : (this.textures.exists('kotel-panoramic-bg') ? 'kotel-panoramic-bg' : 'kotel-bg');
+    if (!this.textures.exists(bgKey)) return;
+
     const bgTile = this.add.tileSprite(0, 0, worldWidth, groundY, bgKey);
     bgTile.setOrigin(0, 0);
     const texture = this.textures.get(bgKey).getSourceImage();

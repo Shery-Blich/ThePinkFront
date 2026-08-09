@@ -21,12 +21,15 @@ export const DAY_1_VICTORY_DIALOG = [
 
 export const DAY_2_INTRO_DIALOG = [
   {
-    speaker: SPEAKER_NAME,
-    text: "יש לך 67 ש\"ח, עליך לקנות...",
-  },
-  {
     speaker: PLAYER_NAME,
-    text: "מה? זה בקושי הספיק למשהו 🙁",
+    text: "יש לי רק 67 ש\"ח, מקווה שיספיק...",
+  },
+];
+
+export const DAY_2_VICTORY_DIALOG = [
+  {
+    speaker: "הקופאי",
+    text: "מה? בקושי קנית משהו 🙁",
   },
 ];
 
@@ -55,7 +58,7 @@ export const KOTEL_VICTORY_DIALOG = [
 export const KALPI_INTRO_DIALOG = [
   {
     speaker: SPEAKER_NAME,
-    text: "הגעת לקלפי בירושלים! רוצי במהירות ימינה לקלפי והיזהרי מאבני ירושלים המתפוררות!",
+    text: "רוצו אל הקלפי והיזהרי מהאבנים המתפוררות",
   },
 ];
 
@@ -65,5 +68,6 @@ export const KALPI_VICTORY_DIALOG = [
     text: "הצלחתי! ממשתי את זכות הבחירה שלי!",
   },
 ];
+
 
 

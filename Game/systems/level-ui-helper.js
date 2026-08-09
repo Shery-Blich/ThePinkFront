@@ -14,35 +14,16 @@ export function showVictoryHelper(scene, sceneKey, title, message, buttonText = 
   
   const hasTrivia = hasLevelTrivia(sceneKey);
 
-  if (typeof window.showVictoryScreen === 'function') {
-    window.showVictoryScreen(
-      title,
-      message,
-      buttonText,
-      async () => {
-        try {
-          if (hasTrivia) {
-            await runLevelTrivia(scene, sceneKey);
-          }
-        } catch (err) {
-          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
-        } finally {
-          scene.events.emit('complete');
-        }
-      }
-    );
+  if (hasTrivia) {
+    runLevelTrivia(scene, sceneKey)
+      .catch((err) => {
+        console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
+      })
+      .finally(() => {
+        scene.events.emit('complete');
+      });
   } else {
-    if (hasTrivia) {
-      runLevelTrivia(scene, sceneKey)
-        .catch((err) => {
-          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
-        })
-        .finally(() => {
-          scene.events.emit('complete');
-        });
-    } else {
-      scene.events.emit('complete');
-    }
+    scene.events.emit('complete');
   }
 }
 
@@ -59,11 +40,13 @@ export function showGameOverHelper(scene, title, message) {
       title,
       message,
       () => {
+        LivesManager.restoreStageStartLives();
         scene.scene.restart();
       }
     );
   } else {
     scene.time.delayedCall(1000, () => {
+      LivesManager.restoreStageStartLives();
       scene.scene.restart();
     });
   }

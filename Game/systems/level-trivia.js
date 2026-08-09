@@ -4,7 +4,6 @@ import { getGlobalScore } from './score-manager.js';
 const TRIVIA_SCENE_ORDER = [
   'Day1Scene',
   'Day2Scene',
-  'Day3Scene',
   'Day4Scene',
   'KotelScene',
   'KalpiScene',

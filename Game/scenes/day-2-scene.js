@@ -8,7 +8,7 @@ import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helpe
 import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
-import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
+import { DAY_2_INTRO_DIALOG, DAY_2_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 import { addGlobalScore } from '../systems/score-manager.js';
 
@@ -521,8 +521,9 @@ export class Day2Scene extends Phaser.Scene {
       this.player.body.moves = false;
     }
 
-    // Skip dialog and trigger scene over immediately
-    this.triggerSceneOver();
+    playDialogOnce('Day2Scene-victory', this, DAY_2_VICTORY_DIALOG, () => {
+      this.triggerSceneOver();
+    });
   }
 
   /**
@@ -694,10 +695,6 @@ export class Day2Scene extends Phaser.Scene {
           productObj.priceLabel.setColor('#ef4444');
         }
       });
-
-      if (typeof window.showToastNotification === 'function') {
-        window.showToastNotification('פיו! סיימתי את הקניות להיום!');
-      }
     }
   }
 

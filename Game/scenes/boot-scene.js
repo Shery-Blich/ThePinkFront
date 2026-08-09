@@ -42,7 +42,11 @@ export class BootScene extends Phaser.Scene {
 
     this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
     this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
-    this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
+    this.load.image('kotel-bg', 'assets/backgrounds/Kotel-panoramic.png');
+    this.load.image('kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png');
+    this.load.image('kotel-start', 'assets/backgrounds/kotel-start.png');
+    this.load.image('kotel-mid', 'assets/backgrounds/kotel-mid.png');
+    this.load.image('kotel-end', 'assets/backgrounds/kotel-end.png');
     this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
     this.load.image('kalpi', 'assets/Ellements/kalpi.png');
     this.load.image('supermarket-outside', 'assets/backgrounds/supermarketOutside.png');
@@ -72,6 +76,10 @@ export class BootScene extends Phaser.Scene {
     // Day 5 SFX
     this.load.audio('sfx-meow',   'assets/sounds/meow.mp3');
     this.load.audio('sfx-catbag', 'assets/sounds/cat-in-a-bag.mp3');
+    this.load.audio('sfx-wrong',  'assets/sounds/wrong-answer .mp3');
+    this.load.audio('sfx-correct','assets/sounds/correct answer.mp3');
+    this.load.audio('sfx-catch-mix', 'assets/sounds/catch-mix.mp3');
+    this.load.audio('sfx-fail-gong', 'assets/sounds/fail-gong.mp3');
     // Day 2 supermarket collect — key 'collect' is consumed by Day2Scene's existing sound system
     this.load.audio('collect',    'assets/sounds/supermarket-collect.mp3');
   }

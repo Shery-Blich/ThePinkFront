@@ -51,6 +51,8 @@ export class Day4Scene extends Phaser.Scene {
     this.isBrakePressed = false;
     this.gasBtn = null;
     this.brakeBtn = null;
+    this.gasPedalSprite = null;
+    this.brakePedalSprite = null;
 
     // Sector tracking for bonus
     this.sectorsCaught = new Set();
@@ -58,9 +60,47 @@ export class Day4Scene extends Phaser.Scene {
 
     // Active spawn timers
     this.spawnEvents = [];
+
+    // Tutorial state
+    this.tutorialStep = "none";
+    this.tutorialArrow = null;
+    this.tutorialContainer = null;
+    this.tutorialText = null;
+    this.gasHoldTimer = 0;
+    this.brakeHoldTimer = 0;
+  }
+
+  init() {
+    this.sceneEnded = false;
+    this.caughtCount = 0;
+    this.fallingCharacters = [];
+    this.bus = null;
+    this.jerusalemEntrance = null;
+    this.roadDashes = null;
+
+    this.isGasPressed = false;
+    this.isBrakePressed = false;
+    this.gasBtn = null;
+    this.brakeBtn = null;
+    this.gasPedalSprite = null;
+    this.brakePedalSprite = null;
+
+    this.sectorsCaught = new Set();
+    this.bonusAwarded = false;
+
+    this.spawnEvents = [];
+
+    this.tutorialStep = "none";
+    this.tutorialArrow = null;
+    this.tutorialContainer = null;
+    this.tutorialText = null;
+    this.gasHoldTimer = 0;
+    this.brakeHoldTimer = 0;
   }
 
   create() {
+    this.init();
+
     const { width, height } = this.scale;
 
     LivesManager.showHUD();
@@ -101,18 +141,23 @@ export class Day4Scene extends Phaser.Scene {
     this._createHUD();
 
     // Input handlers — Keyboard (Right Arrow / D = Gas Pump, Left Arrow / A = Brake)
-    this.input.keyboard.on("keydown-RIGHT", () => this._pressGasPedal());
-    this.input.keyboard.on("keyup-RIGHT", () => this._releaseGasPedal());
-    this.input.keyboard.on("keydown-D", () => this._pressGasPedal());
-    this.input.keyboard.on("keyup-D", () => this._releaseGasPedal());
+    this._onKeyDownRight = () => this._pressGasPedal();
+    this._onKeyUpRight = () => this._releaseGasPedal();
+    this._onKeyDownLeft = () => this._pressBrakePedal();
+    this._onKeyUpLeft = () => this._releaseBrakePedal();
 
-    this.input.keyboard.on("keydown-LEFT", () => this._pressBrakePedal());
-    this.input.keyboard.on("keyup-LEFT", () => this._releaseBrakePedal());
-    this.input.keyboard.on("keydown-A", () => this._pressBrakePedal());
-    this.input.keyboard.on("keyup-A", () => this._releaseBrakePedal());
+    this.input.keyboard.on("keydown-RIGHT", this._onKeyDownRight);
+    this.input.keyboard.on("keyup-RIGHT", this._onKeyUpRight);
+    this.input.keyboard.on("keydown-D", this._onKeyDownRight);
+    this.input.keyboard.on("keyup-D", this._onKeyUpRight);
+
+    this.input.keyboard.on("keydown-LEFT", this._onKeyDownLeft);
+    this.input.keyboard.on("keyup-LEFT", this._onKeyUpLeft);
+    this.input.keyboard.on("keydown-A", this._onKeyDownLeft);
+    this.input.keyboard.on("keyup-A", this._onKeyUpLeft);
 
     // Screen Touch zones fallback (touch right half = Gas, touch left half = Brake)
-    this.input.on("pointerdown", (pointer) => {
+    this._onPointerDown = (pointer) => {
       if (pointer.y < height - 70 * this.s) {
         if (pointer.x > width / 2) {
           this._pressGasPedal();
@@ -120,22 +165,22 @@ export class Day4Scene extends Phaser.Scene {
           this._pressBrakePedal();
         }
       }
-    });
-    this.input.on("pointerup", () => {
+    };
+    this._onPointerUp = () => {
       this._releaseGasPedal();
       this._releaseBrakePedal();
-    });
+    };
+
+    this.input.on("pointerdown", this._onPointerDown);
+    this.input.on("pointerup", this._onPointerUp);
 
     this.cameras.main.fadeIn(500);
 
-    // Shutdown listener to hide stats HUD
-    this.events.once("shutdown", () => {
-      if (typeof window.hideHUD === 'function') {
-        window.hideHUD('html-stats-hud');
-      }
-    });
+    // Shutdown / Destroy listeners to cleanup scene state properly
+    this.events.once("shutdown", () => this._cleanupScene());
+    this.events.once("destroy", () => this._cleanupScene());
 
-    // Opening dialogue, then start spawning falling characters
+    // Opening dialogue, then start pedal tutorial
     const introDialog = [
       {
         speaker: "נהג האוטובוס",
@@ -143,14 +188,84 @@ export class Day4Scene extends Phaser.Scene {
       },
     ];
     playDialogOnce("Day4Scene-intro", this, introDialog, () => {
-      this._startSpawning();
+      this._startTutorial();
     });
+  }
+
+  _cleanupScene() {
+    if (typeof window.hideHUD === 'function') {
+      window.hideHUD('html-stats-hud');
+    }
+
+    if (this.input && this.input.keyboard) {
+      if (this._onKeyDownRight) {
+        this.input.keyboard.off("keydown-RIGHT", this._onKeyDownRight);
+        this.input.keyboard.off("keyup-RIGHT", this._onKeyUpRight);
+        this.input.keyboard.off("keydown-D", this._onKeyDownRight);
+        this.input.keyboard.off("keyup-D", this._onKeyUpRight);
+      }
+      if (this._onKeyDownLeft) {
+        this.input.keyboard.off("keydown-LEFT", this._onKeyDownLeft);
+        this.input.keyboard.off("keyup-LEFT", this._onKeyUpLeft);
+        this.input.keyboard.off("keydown-A", this._onKeyDownLeft);
+        this.input.keyboard.off("keyup-A", this._onKeyUpLeft);
+      }
+    }
+    if (this.input) {
+      if (this._onPointerDown) this.input.off("pointerdown", this._onPointerDown);
+      if (this._onPointerUp) this.input.off("pointerup", this._onPointerUp);
+    }
+
+    for (const event of this.spawnEvents) {
+      if (event) this.time.removeEvent(event);
+    }
+    this.spawnEvents = [];
+    this.time.removeAllEvents();
+
+    if (this.fallingCharacters) {
+      for (const char of this.fallingCharacters) {
+        if (char && char.destroy) char.destroy();
+      }
+      this.fallingCharacters = [];
+    }
+
+    if (this.tutorialArrowBounce) {
+      this.tutorialArrowBounce.stop();
+      this.tutorialArrowBounce = null;
+    }
+    if (this.tutorialArrow) {
+      this.tutorialArrow.destroy();
+      this.tutorialArrow = null;
+    }
+    if (this.tutorialCard) {
+      this.tutorialCard.remove();
+      this.tutorialCard = null;
+    }
+
+    this.tweens.killAll();
   }
 
   update(time, delta) {
     if (this.sceneEnded) return;
 
     const dt = (delta || 16.6) / 1000;
+
+    // --- Interactive Tutorial Progress ---
+    if (this.tutorialStep === "gas") {
+      if (this.isGasPressed) {
+        this.gasHoldTimer += dt;
+        if (this.gasHoldTimer >= 0.4) {
+          this._advanceTutorialToBrake();
+        }
+      }
+    } else if (this.tutorialStep === "brake") {
+      if (this.isBrakePressed) {
+        this.brakeHoldTimer += dt;
+        if (this.brakeHoldTimer >= 0.4) {
+          this._completeTutorial();
+        }
+      }
+    }
 
     // Default cruising position when idle (hugging the left side of screen)
     const cruiseX = 90 * this.s;
@@ -190,8 +305,40 @@ export class Day4Scene extends Phaser.Scene {
 
       if (char.y > this.roadBottom + 40 * this.s) {
         // Character fell off screen — player missed catch
+        const missX = char.x;
         char.destroy();
         this.fallingCharacters.splice(i, 1);
+
+        // Sound feedback on miss / failure (Kahoot Gong from ColorUp)
+        if (this.sound.get('sfx-fail-gong')) {
+          this.sound.play('sfx-fail-gong', { volume: 0.7 });
+        } else if (this.sound.get('sfx-wrong')) {
+          this.sound.play('sfx-wrong', { volume: 0.6 });
+        } else {
+          this.sound.play('sfx-explosion', { volume: 0.5 });
+        }
+
+        // Red camera flash & subtle camera shake
+        this.cameras.main.flash(200, 239, 68, 68, 0.35);
+        this.cameras.main.shake(120, 0.004);
+
+        // Floating red "-1 💔" pop text at bottom screen
+        const missPopText = this.add.text(missX, this.roadBottom - 10 * this.s, "-1 💔", {
+          fontFamily: "Arial, sans-serif",
+          fontSize: `${Math.max(14, Math.round(16 * this.s))}px`,
+          fontWeight: "bold",
+          color: "#ef4444",
+          stroke: "#000000",
+          strokeThickness: 3,
+        }).setOrigin(0.5, 1).setDepth(2000);
+
+        this.tweens.add({
+          targets: missPopText,
+          y: missPopText.y - 30 * this.s,
+          alpha: 0,
+          duration: 900,
+          onComplete: () => missPopText.destroy()
+        });
 
         // Deduct a life
         const remaining = LivesManager.deductLife();
@@ -413,6 +560,149 @@ export class Day4Scene extends Phaser.Scene {
     }
   }
 
+  // --- Interactive Tutorial Methods (Unified Visual Language) ---
+  _startTutorial() {
+    if (this.sceneEnded) return;
+
+    const { width, height } = this.scale;
+    const s = this.s;
+
+    // 1. Create HTML tutorial card (matches Stage 1 & 2 glassmorphic design system)
+    this.tutorialCard = document.createElement('div');
+    this.tutorialCard.className = 'tutorial-card';
+    this.tutorialCard.style.left = '50%';
+    this.tutorialCard.style.transform = 'translate(-50%, 20px)';
+    this.tutorialCard.style.bottom = `${Math.round(height * 0.42)}px`;
+    this.tutorialCard.innerHTML = `
+      <div class="highlight-text">לחצו על דוושת הגז (ימינה) כדי להתקדם!</div>
+      <div class="sub-text">לחצו והחזיקו כדי להאיץ קדימה בכביש</div>
+    `;
+    document.body.appendChild(this.tutorialCard);
+
+    requestAnimationFrame(() => {
+      if (this.tutorialCard) {
+        this.tutorialCard.style.transform = 'translate(-50%, 0)';
+        this.tutorialCard.classList.add('show');
+      }
+    });
+
+    // 2. Create Phaser neon pink arrow pointer pointing down at Gas pedal
+    const arrow = this.add.graphics();
+    arrow.setScrollFactor(0);
+    arrow.setDepth(10000);
+
+    const drawArrow = (size = 16 * s) => {
+      arrow.clear();
+      arrow.lineStyle(4 * s, 0xff007f, 1);
+      arrow.fillStyle(0xff007f, 0.9);
+
+      // Arrow tail line
+      arrow.beginPath();
+      arrow.moveTo(0, -size * 2);
+      arrow.lineTo(0, -size * 0.5);
+      arrow.strokePath();
+
+      // Triangle head pointing down at (0,0)
+      arrow.beginPath();
+      arrow.moveTo(0, 0);
+      arrow.lineTo(-size * 0.6, -size * 0.7);
+      arrow.lineTo(size * 0.6, -size * 0.7);
+      arrow.closePath();
+      arrow.fillPath();
+    };
+    drawArrow();
+
+    const gasX = width - 42 * s;
+    const btnY = height - 32 * s;
+    const targetY = btnY - 32 * s;
+    arrow.setPosition(gasX, targetY);
+
+    this.tutorialArrowBounce = this.tweens.add({
+      targets: arrow,
+      y: targetY - 12 * s,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    this.tutorialArrow = arrow;
+    this.tutorialStep = "gas";
+    this.gasHoldTimer = 0;
+  }
+
+  _advanceTutorialToBrake() {
+    const { height } = this.scale;
+    const s = this.s;
+
+    this.tutorialStep = "brake";
+    this.brakeHoldTimer = 0;
+
+    if (this.tutorialCard) {
+      this.tutorialCard.innerHTML = `
+        <div class="highlight-text">לחצו על הבלם (שמאלה) כדי להאיט ולחזור אחורה!</div>
+        <div class="sub-text">לחצו כדי להאיט ולחזור אחורה בקלות</div>
+      `;
+    }
+
+    if (this.tutorialArrow) {
+      const brakeX = 42 * s;
+      const btnY = height - 32 * s;
+      const targetY = btnY - 32 * s;
+
+      if (this.tutorialArrowBounce) {
+        this.tutorialArrowBounce.stop();
+        this.tutorialArrowBounce = null;
+      }
+      this.tutorialArrow.setPosition(brakeX, targetY);
+
+      this.tutorialArrowBounce = this.tweens.add({
+        targets: this.tutorialArrow,
+        y: targetY - 12 * s,
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
+  }
+
+  _completeTutorial() {
+    this.tutorialStep = "done";
+
+    if (this.tutorialArrowBounce) {
+      this.tutorialArrowBounce.stop();
+      this.tutorialArrowBounce = null;
+    }
+
+    if (this.tutorialArrow) {
+      this.tweens.add({
+        targets: this.tutorialArrow,
+        alpha: 0,
+        scale: 0.5,
+        duration: 300,
+        onComplete: () => {
+          if (this.tutorialArrow) {
+            this.tutorialArrow.destroy();
+            this.tutorialArrow = null;
+          }
+        }
+      });
+    }
+
+    if (this.tutorialCard) {
+      const card = this.tutorialCard;
+      this.tutorialCard = null;
+      card.style.transform = 'translate(-50%, 20px)';
+      card.classList.remove('show');
+      setTimeout(() => {
+        card.remove();
+      }, 400);
+    }
+
+    this._startSpawning();
+  }
+
   _startSpawning() {
     let spawnIndex = 0;
 
@@ -425,7 +715,8 @@ export class Day4Scene extends Phaser.Scene {
       this._spawnCharacter(sectorDef);
       spawnIndex++;
 
-      const delay = Math.max(600, 1200 - this.caughtCount * 50);
+      // Fixed spawn delay (~1450ms) so 10 characters span ~15 seconds of gameplay
+      const delay = 1450;
       const nextEvent = this.time.delayedCall(delay, spawnLoop);
       this.spawnEvents.push(nextEvent);
     };
@@ -437,7 +728,7 @@ export class Day4Scene extends Phaser.Scene {
   _spawnCharacter(charDef) {
     if (this.sceneEnded) return;
 
-    const { width } = this.scale;
+    const { width, height } = this.scale;
 
     const spawnX = Math.random() * (width - 100 * this.s) + 50 * this.s;
     const spawnY = -20 * this.s;
@@ -463,8 +754,10 @@ export class Day4Scene extends Phaser.Scene {
 
     this.physics.add.existing(charSprite);
     if (charSprite.body) {
-      charSprite.body.setVelocityY(130 + Math.random() * 80);
-      charSprite.body.setVelocityX((Math.random() - 0.5) * 60);
+      // Scaled fall velocity for player reaction time
+      const baseVelY = (110 + Math.random() * 40) * (height / 360);
+      charSprite.body.setVelocityY(baseVelY);
+      charSprite.body.setVelocityX((Math.random() - 0.5) * 40 * this.s);
       charSprite.body.setCollideWorldBounds(false);
     }
 
@@ -493,7 +786,7 @@ export class Day4Scene extends Phaser.Scene {
         this.bonusAwarded = true;
         addGlobalScore(this, 10, this.bus.x, this.bus.y - 30 * this.s);
 
-        const bonusText = this.add.text(this.bus.x, this.bus.y - 50 * this.s, "+10 בונוס כל 7 המגזרים!", {
+        const bonusText = this.add.text(this.bus.x, this.bus.y - 50 * this.s, "+10 על ייצוג הולם", {
           fontFamily: "Arial, sans-serif",
           fontSize: `${Math.max(14, Math.round(16 * this.s))}px`,
           fontWeight: "bold",
@@ -512,7 +805,13 @@ export class Day4Scene extends Phaser.Scene {
       }
     }
 
-    this.sound.play("sfx-meow", { volume: 0.6 });
+    if (this.sound.get('sfx-catch-mix')) {
+      this.sound.play('sfx-catch-mix', { volume: 0.7 });
+    } else if (this.sound.get('sfx-correct')) {
+      this.sound.play('sfx-correct', { volume: 0.6 });
+    } else {
+      this.sound.play('collect', { volume: 0.6 });
+    }
 
     this.tweens.killTweensOf(charSprite);
     this.tweens.add({
@@ -553,15 +852,24 @@ export class Day4Scene extends Phaser.Scene {
 
     // Stop all spawning
     for (const event of this.spawnEvents) {
-      this.time.removeEvent(event);
+      if (event) this.time.removeEvent(event);
     }
     this.spawnEvents = [];
     this.time.removeAllEvents();
 
     for (const char of this.fallingCharacters) {
-      char.destroy();
+      if (char && char.destroy) char.destroy();
     }
     this.fallingCharacters = [];
+
+    if (this.tutorialArrow) {
+      this.tutorialArrow.destroy();
+      this.tutorialArrow = null;
+    }
+    if (this.tutorialContainer) {
+      this.tutorialContainer.destroy();
+      this.tutorialContainer = null;
+    }
 
     if (victory) {
       this._showJerusalemEntranceCutscene();
@@ -633,7 +941,7 @@ export class Day4Scene extends Phaser.Scene {
               ease: 'Power1.easeIn',
               onComplete: () => {
                 // Bus arrives at Jerusalem — show victory screen and transition!
-                const message = `כל הכבוד! תפסת ${this.caughtCount} אנשים מכל המגזרים והגעתם בשלום לירושלים!`;
+                const message = `כל הכבוד! תפסת ${this.caughtCount} אנשים, יש ייצוג הולם לכולם והגעתם בשלום לירושלים!`;
                 showVictoryHelper(this, "Day4Scene", "הגענו לירושלים!", message);
               }
             });
@@ -643,3 +951,4 @@ export class Day4Scene extends Phaser.Scene {
     });
   }
 }
+
