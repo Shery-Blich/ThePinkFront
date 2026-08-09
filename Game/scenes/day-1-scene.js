@@ -91,14 +91,16 @@ export class Day1Scene extends Phaser.Scene {
     // --- Background ---
     this.cameras.main.setBackgroundColor(0x1a1a2e);
     if (this.textures.exists("day1-bg")) {
-      this.add
-        .image(0, 0, "day1-bg")
-        .setOrigin(0, 0)
-        .setScrollFactor(0)
-        .setDisplaySize(width, height)
-        .setDepth(-10);
+      const tex = this.textures.get("day1-bg").getSourceImage();
+      const bgWidth = worldWidth + width;
+      const bgTile = this.add.tileSprite(0, 0, bgWidth, height, "day1-bg");
+      bgTile.setOrigin(0, 0);
+      if (tex && tex.height) {
+        const scale = height / tex.height;
+        bgTile.setTileScale(scale, scale);
+      }
+      bgTile.setDepth(-10);
     }
-    this._buildSkyline(worldWidth, this.roadTop);
     this._buildRoad(worldWidth, roadHeight, roadCenterY);
 
     // --- NPCs ---
@@ -286,57 +288,44 @@ export class Day1Scene extends Phaser.Scene {
   /** @private */
   _buildRoad(worldWidth, roadHeight, roadCenterY) {
     const s = this.s;
-    const tileW = 16 * s;
-    const tilesNeeded = Math.ceil(worldWidth / tileW) + 1;
     const { height } = this.scale;
 
-    // Asphalt
-    for (let i = 0; i < tilesNeeded; i++) {
-      const tile = this.add.image(i * tileW, this.roadTop, "road");
-      tile.setOrigin(0, 0);
-      tile.setDisplaySize(tileW, roadHeight);
-      tile.setDepth(3);
-    }
+    // Asphalt road surface (depth 2)
+    const roadGfx = this.add.graphics();
+    roadGfx.fillStyle(0x2a2a35, 0.85);
+    roadGfx.fillRect(0, this.roadTop, worldWidth, roadHeight);
+    roadGfx.setDepth(2);
 
-    // Upper curb
-    for (let i = 0; i < tilesNeeded; i++) {
-      const curb = this.add.image(i * tileW, this.roadTop, "curb");
-      curb.setOrigin(0, 0);
-      curb.setScale(s);
-      curb.setDepth(4);
-    }
+    // Upper curb line (depth 3)
+    const upperCurb = this.add.graphics();
+    upperCurb.fillStyle(0x777788, 1);
+    upperCurb.fillRect(0, this.roadTop - 3 * s, worldWidth, 3 * s);
+    upperCurb.setDepth(3);
 
-    // Lower curb
-    for (let i = 0; i < tilesNeeded; i++) {
-      const curb = this.add.image(i * tileW, this.roadBottom - 2 * s, "curb");
-      curb.setOrigin(0, 0);
-      curb.setScale(s);
-      curb.setDepth(4);
-    }
+    // Lower curb line (depth 3)
+    const lowerCurb = this.add.graphics();
+    lowerCurb.fillStyle(0x777788, 1);
+    lowerCurb.fillRect(0, this.roadBottom - 2 * s, worldWidth, 2 * s);
+    lowerCurb.setDepth(3);
 
-    // Dashed center line
-    const dashW = 6 * s;
-    const dashGap = 10 * s;
+    // Yellow center road line (depth 3)
+    const dashW = 10 * s;
+    const dashGap = 12 * s;
     const dashCount = Math.ceil(worldWidth / (dashW + dashGap));
+    const lineGfx = this.add.graphics();
+    lineGfx.fillStyle(0xeab308, 0.85);
     for (let i = 0; i < dashCount; i++) {
-      const dash = this.add.image(
-        i * (dashW + dashGap),
-        roadCenterY,
-        "road_line",
-      );
-      dash.setOrigin(0, 0.5);
-      dash.setScale(s);
-      dash.setAlpha(0.7);
-      dash.setDepth(4);
+      lineGfx.fillRect(i * (dashW + dashGap), roadCenterY - 1.5 * s, dashW, 3 * s);
     }
+    lineGfx.setDepth(3);
 
-    // Sidewalk below road
-    for (let i = 0; i < tilesNeeded; i++) {
-      const sw = this.add.image(i * tileW, this.roadBottom, "sidewalk");
-      sw.setOrigin(0, 0);
-      sw.setDisplaySize(tileW, height - this.roadBottom);
-      sw.setDepth(3);
-    }
+    // Bottom sidewalk platform (depth 3)
+    const swGfx = this.add.graphics();
+    swGfx.fillStyle(0x475569, 1);
+    swGfx.fillRect(0, this.roadBottom, worldWidth, height - this.roadBottom);
+    swGfx.lineStyle(2 * s, 0x334155, 1);
+    swGfx.strokeRect(0, this.roadBottom, worldWidth, height - this.roadBottom);
+    swGfx.setDepth(3);
   }
 
   // ---------------------------------------------------------------------------
@@ -394,23 +383,46 @@ export class Day1Scene extends Phaser.Scene {
 
   _buildSupermarket(x) {
     const s = this.s;
-    const w = 64 * s;
-    const h = 80 * s;
-    const doorW = 16 * s;
-    const doorH = 28 * s;
+    if (this.textures.exists('supermarket-outside')) {
+      // Sidewalk ground baseline under supermarket
+      const baseGfx = this.add.graphics();
+      baseGfx.fillStyle(0x666666, 1);
+      baseGfx.fillRect(x - 65 * s, this.roadTop - 2 * s, 130 * s, 10 * s);
+      baseGfx.lineStyle(2 * s, 0x444444, 1);
+      baseGfx.strokeRect(x - 65 * s, this.roadTop - 2 * s, 130 * s, 10 * s);
+      baseGfx.setDepth(99);
 
-    this.supermarket = this.add.graphics();
-    this.supermarket.fillStyle(0xffffff, 1);
-    this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
-    this.supermarket.fillStyle(0x110e1a, 1);
-    this.supermarket.fillRect(
-      x - doorW / 2,
-      this.roadTop - doorH,
-      doorW,
-      doorH,
-    );
+      const img = this.add.image(x, this.roadTop + 8 * s, 'supermarket-outside');
+      img.setOrigin(0.5, 1);
+      const targetH = 90 * s;
+      const tex = this.textures.get('supermarket-outside').getSourceImage();
+      if (tex && tex.height) {
+        const aspect = tex.width / tex.height;
+        img.setDisplaySize(targetH * aspect, targetH);
+      } else {
+        img.setDisplaySize(90 * s, targetH);
+      }
+      img.setDepth(100);
+      this.supermarket = img;
+    } else {
+      const w = 64 * s;
+      const h = 80 * s;
+      const doorW = 16 * s;
+      const doorH = 28 * s;
 
-    this.supermarket.setDepth(2.5);
+      this.supermarket = this.add.graphics();
+      this.supermarket.fillStyle(0xffffff, 1);
+      this.supermarket.fillRect(x - w / 2, this.roadTop - h, w, h);
+      this.supermarket.fillStyle(0x110e1a, 1);
+      this.supermarket.fillRect(
+        x - doorW / 2,
+        this.roadTop - doorH,
+        doorW,
+        doorH,
+      );
+
+      this.supermarket.setDepth(2.5);
+    }
   }
 
   triggerSceneOver() {
@@ -421,6 +433,10 @@ export class Day1Scene extends Phaser.Scene {
     if (this.player) {
       this.player.disable();
       this.player.setFlipX(false); // Face right when walking to the store
+      this.player.setCollideWorldBounds(false); // Remove world bounds restriction so player can enter door above roadTop
+      if (this.player.body) {
+        this.player.body.checkCollision.none = true;
+      }
     }
     if (this.droneManager) this.droneManager.stop();
 
@@ -438,9 +454,12 @@ export class Day1Scene extends Phaser.Scene {
 
     // 3. Player character will walk to the store's front
     const frontX = superX;
-    const frontY = this.roadTop + 15 * s;
+    const frontY = this.roadTop + 10 * s;
 
     this._updateHUD("הולכת לסופרמרקט...");
+
+    const startScaleX = this.player.scaleX;
+    const startScaleY = this.player.scaleY;
 
     this.tweens.add({
       targets: this.player,
@@ -452,12 +471,14 @@ export class Day1Scene extends Phaser.Scene {
         // Stop following once player reaches the storefront
         this.cameras.main.stopFollow();
 
-        // 4. Player character will enter to the store and disappear with fade
-        const doorY = this.roadTop - 6 * s;
+        // 4. Player character will enter the supermarket door, shrinking into perspective and fading out
+        const doorY = this.roadTop - 16 * s;
 
         this.tweens.add({
           targets: this.player,
           y: doorY,
+          scaleX: startScaleX * 0.6,
+          scaleY: startScaleY * 0.6,
           alpha: 0,
           duration: 1000,
           ease: "Quad.easeIn",

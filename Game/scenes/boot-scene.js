@@ -47,6 +47,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('kotel-bg', 'assets/backgrounds/Kotel.png');
     this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
     this.load.image('kalpi', 'assets/Ellements/kalpi.png');
+    this.load.image('supermarket-outside', 'assets/backgrounds/supermarketOutside.png');
+    this.load.image('kalpi-bg', 'assets/backgrounds/KalpiSceneBackground.png');
+    this.load.image('telaviv-bg', 'assets/backgrounds/TelAvivBackground.png');
 
     const groceryFiles = [
       'vegetable.png',
