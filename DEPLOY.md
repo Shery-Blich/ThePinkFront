@@ -36,3 +36,15 @@ npm run dev:backend                    # http://localhost:3001
 ```
 
 Firebase Hosting itself does **not** run the backend. There is no Docker requirement for this stack.
+
+## Admin Auth0
+Protects **only** `/admin` (the React admin app). The public game at `/` stays open.
+
+1. Auth0 Application type: **SPA**
+2. Allowed Callback / Logout / Web Origins, for example:
+   - `https://thepinkfront.web.app/admin/`
+   - `http://localhost:5173/` (local admin dev)
+3. Create `frontend/.env` from `frontend/.env.example` (`VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`)
+4. For API lock (questions/analytics), set the same domain/client id on the backend:
+   - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `ADMIN_WHITELIST` in `backend/.env`
+5. Redeploy: `npm run deploy` (Auth0 vars must be available when building admin, or set them in the shell before deploy)
