@@ -57,12 +57,12 @@ export class Day5Scene extends Phaser.Scene {
   preload() {
     // ── Character portraits used in the Day 5 cat-catching scene ──
     const portraits = [
-      ['cashier-character', 'assets/Characters/kupaee.png'],
-      ['npc-yuval',         'assets/Characters/Yuval.png'],
-      ['npc-shiri',         'assets/Characters/Shiri.png'],
-      ['judge-portrait',    'assets/Characters/Judge.png'],
-      ['nassi-1',           'assets/Characters/Nassi-1.png'],
-      ['nassi-2',           'assets/Characters/Nassi-2.png'],
+      ['cashier-character', 'assets/Characters/kupaee.webp'],
+      ['npc-yuval',         'assets/Characters/Yuval.webp'],
+      ['npc-shiri',         'assets/Characters/Shiri.webp'],
+      ['judge-portrait',    'assets/Characters/Judge.webp'],
+      ['nassi-1',           'assets/Characters/Nassi-1.webp'],
+      ['nassi-2',           'assets/Characters/Nassi-2.webp'],
     ];
     portraits.forEach(([key, path]) => {
       if (!this.textures.exists(key)) this.load.image(key, path);

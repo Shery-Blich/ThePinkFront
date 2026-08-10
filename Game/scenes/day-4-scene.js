@@ -105,13 +105,13 @@ export class Day4Scene extends Phaser.Scene {
   preload() {
     // ── Sector character sprites ──
     const charAssets = [
-      ['char-arabia',   'assets/Characters/Arabia.png'],
-      ['char-ethiopia', 'assets/Characters/Etiopit.png'],
-      ['char-haredi',   'assets/Characters/haredi.png'],
-      ['char-dati',     'assets/Characters/Dati.png'],
-      ['char-shiri',    'assets/Characters/Shiri-front.png'],
-      ['char-gay',      'assets/Characters/Gay-Man.png'],
-      ['char-shlomi',   'assets/Characters/Shlomi.png'],
+      ['char-arabia',   'assets/Characters/Arabia.webp'],
+      ['char-ethiopia', 'assets/Characters/Etiopit.webp'],
+      ['char-haredi',   'assets/Characters/haredi.webp'],
+      ['char-dati',     'assets/Characters/Dati.webp'],
+      ['char-shiri',    'assets/Characters/Shiri-front.webp'],
+      ['char-gay',      'assets/Characters/Gay-Man.webp'],
+      ['char-shlomi',   'assets/Characters/Shlomi.webp'],
     ];
     charAssets.forEach(([key, path]) => {
       if (!this.textures.exists(key)) this.load.image(key, path);

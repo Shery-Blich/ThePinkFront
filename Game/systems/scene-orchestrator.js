@@ -20,16 +20,15 @@ export class SceneOrchestrator {
     this.sceneOrder = []; // Will store the resolved string keys of the scenes
 
     // Define level titles and subtitles for the loading screens
-    this.levelInfo = [
-      { title: "ההתחלה: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
-      { title: "ההכנה: סופר בארץ", subtitle: "יוקר המחייה בימנו..." },
-      { title: "יהיציאה: תחבצ בארץ", subtitle: "מתקדמים אל עבר הבירה!" },
-      { title: "הנסיעה: מי שבא ברוך הבא", subtitle: "מאבק על כל קול" },
-      { title: "ההגעה: הנשיא", subtitle: "רגע של תקווה ואחדות!" },
-      { title: "הרגע לפני האחרון: הקלפי", subtitle: "מממשים את זכות הבחירה!" },
-      { title: "הסיום: ההצבעה בירושלים", subtitle: "מממשים את זכות הבחירה!" },
-      { title: "הניצחון הוורוד", subtitle: "תוצאות האמת!" }
-    ];
+    this.levelInfo = {
+      Day1Scene: { title: "ההתחלה: קלפי קריית שמונה", subtitle: "מתחילים את המסע לירושלים!" },
+      Day2Scene: { title: "ההכנה: סופר בארץ", subtitle: "יוקר המחייה בימינו..." },
+      Day3Scene: { title: "היציאה: תחב\"צ בארץ", subtitle: "מתקדמים אל עבר הבירה!" },
+      Day4Scene: { title: "הנסיעה: מי שבא ברוך הבא", subtitle: "מאבק על כל קול" },
+      KotelScene: { title: "ההגעה: עולים לרגל", subtitle: "רגע של תקווה ואחדות!" },
+      KalpiScene: { title: "הרגע לפני האחרון: הקלפי", subtitle: "מממשים את זכות הבחירה!" },
+      FinalScene: { title: "הסיום: תוצאות האמת", subtitle: "תוצאות הבחירות!" },
+    };
 
     // Wait for the game instance to boot and be ready before initializing scene links
     this.game.events.once('ready', () => {
@@ -109,27 +108,36 @@ export class SceneOrchestrator {
             }
           });
 
-          this.game.scene.start(targetSceneKey);
-
-          // Get the newly started scene instance
           const sceneInstance = this.game.scene.getScene(targetSceneKey);
-          if (sceneInstance) {
-            // Pause the scene update/timers and pause all sounds
-            sceneInstance.scene.pause();
-            this.game.sound.pauseAll();
-          }
 
-          // Wait a brief delay (300ms) to ensure Phaser has completed its synchronous initialization (create() method)
-          setTimeout(() => {
+          let hidden = false;
+          const hideOverlay = () => {
+            if (hidden) return;
+            hidden = true;
             if (window.hideLoadingScreen) {
               window.hideLoadingScreen();
             }
-            // Resume the scene and sounds
-            if (sceneInstance) {
-              sceneInstance.scene.resume();
-              this.game.sound.resumeAll();
-            }
-          }, 300);
+          };
+
+          if (sceneInstance) {
+            // Track asset load progress on the progress bar
+            sceneInstance.load.off('progress');
+            sceneInstance.load.on('progress', (val) => {
+              if (window.updateLoadingProgress) {
+                window.updateLoadingProgress(Math.round(val * 100));
+              }
+            });
+
+            // Only hide loading overlay when scene creation (and asset loading) completes
+            sceneInstance.events.once('create', () => {
+              setTimeout(hideOverlay, 150);
+            });
+          }
+
+          // Fallback safety timeout in case of slow network/no assets
+          setTimeout(hideOverlay, 10000);
+
+          this.game.scene.start(targetSceneKey);
         });
       } else {
         // Fallback or direct transition without loading screen overlay

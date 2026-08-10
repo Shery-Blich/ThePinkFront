@@ -11,10 +11,8 @@
   <link rel="preload" as="image" href="assets/backgrounds/background.webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Rubik:wght@400;700;900&display=swap" />
   <style>
-    /* Menu Google Fonts Import */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Rubik:wght@400;700;900&display=swap');
-
     * {
       margin: 0;
       padding: 0;
@@ -1309,7 +1307,7 @@
     
     <div class="loading-middle">
       <div class="loading-icon-pixel">
-        <img src="assets/Ellements/kalpi.png" alt="קלפי" style="height: 72px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));" />
+        <img src="assets/Ellements/kalpi.webp" alt="קלפי" style="height: 72px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));" />
       </div>
       <div class="loading-progress-container">
         <div id="loading-progress-fill"></div>
@@ -1388,7 +1386,7 @@
         <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד 📢</button>
         <a class="popup-btn" href="https://www.instagram.com/ourknesset" target="_blank" rel="noopener noreferrer">עקבו אחרינו באינסטגרם</a>
         <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">בקרו באתר שלנו</a>
-        <a class="popup-btn" id="popup-itch-btn" href="https://sheryb.itch.io/" target="_blank" rel="noopener noreferrer">רוצים לשחק בעוד?</a>
+        <a class="popup-btn" id="popup-itch-btn" href="https://sheryb.itch.io/" target="_blank" rel="noopener noreferrer">רוצים לשחק בעוד משחקים?</a>
       </div>
 
       <div class="play-again-row">
@@ -1914,18 +1912,12 @@
         // Show loading screen
         screen.classList.add('visible');
         
-        // Start animation
-        setTimeout(() => {
-          progressFill.style.transition = 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
-          progressFill.style.width = '100%';
-        }, 50);
-
-        // Call onComplete after 1.5 seconds
+        // Invoke onComplete after overlay fade-in to start scene loading
         setTimeout(() => {
           if (typeof onComplete === 'function') {
             onComplete();
           }
-        }, 1550);
+        }, 50);
       } else {
         if (typeof onComplete === 'function') {
           onComplete();
@@ -1933,14 +1925,28 @@
       }
     };
 
+    window.updateLoadingProgress = function(percent) {
+      const progressFill = document.getElementById('loading-progress-fill');
+      if (progressFill) {
+        progressFill.style.transition = 'width 0.2s linear';
+        progressFill.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+      }
+    };
+
     window.hideLoadingScreen = function() {
       const screen = document.getElementById('html-loading-screen');
       if (screen) {
-        screen.classList.remove('visible');
+        const progressFill = document.getElementById('loading-progress-fill');
+        if (progressFill) {
+          progressFill.style.width = '100%';
+        }
         setTimeout(() => {
-          window.loadingScreenActive = false;
-          window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
-        }, 400);
+          screen.classList.remove('visible');
+          setTimeout(() => {
+            window.loadingScreenActive = false;
+            window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
+          }, 400);
+        }, 150);
       } else {
         window.loadingScreenActive = false;
         window.dispatchEvent(new CustomEvent('loading-screen-hidden'));

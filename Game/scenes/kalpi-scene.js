@@ -82,8 +82,8 @@ export class KalpiScene extends Phaser.Scene {
       ['day5-bg',        'assets/Ellements/kalpi.webp'],
       ['kalpi-bg',       'assets/backgrounds/KalpiSceneBackground.webp'],
       // Fallbacks used by kalpi-scene if kalpi-bg is missing
-      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png'],
-      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.png'],
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.webp'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.webp'],
     ];
     imgAssets.forEach(([key, path]) => {
       if (!this.textures.exists(key)) this.load.image(key, path);

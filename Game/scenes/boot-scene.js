@@ -20,30 +20,20 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    // ── Day 1 critical assets (everything needed before the first scene starts) ──
-    // Characters used in Day 1 NPCs
-    this.load.image('player',    'assets/Characters/Shiri-front.png');
-    this.load.image('npc-yuval', 'assets/Characters/Yuval.png');
-    this.load.image('npc-shiri', 'assets/Characters/Shiri.png');
-    this.load.image('npc-dana',  'assets/Characters/Dana.png');
+    // ── Day 1 critical assets (lightweight WebP visuals needed on boot) ──
+    this.load.image('player',    'assets/Characters/Shiri-front.webp');
+    this.load.image('npc-yuval', 'assets/Characters/Yuval.webp');
+    this.load.image('npc-shiri', 'assets/Characters/Shiri.webp');
+    this.load.image('npc-dana',  'assets/Characters/Dana.webp');
 
-    // Day 1 background
-    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
-
-    // Supermarket exterior — shown as the goal marker at the far end of Day 1
+    // Day 1 background & supermarket exterior
+    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.webp');
     this.load.image('supermarket-outside', 'assets/backgrounds/supermarketOutside.webp');
 
-    // ── Shared SFX used from Day 1 onward ──
+    // ── Shared light SFX ──
     this.load.audio('sfx-explosion', 'assets/sounds/drone_bomb.mp3');
     this.load.audio('sfx-gameover',  'assets/sounds/game-over.mp3');
     this.load.audio('sfx-levelup',   'assets/sounds/level-up.mp3');
-
-    // Day 1 & 3 background music
-    this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
-
-    // All other assets (characters, backgrounds, groceries, kotel, kalpi, audio)
-    // are lazy-loaded inside each scene's own preload() method so they only
-    // download when the player reaches that stage.
   }
 
   create() {
