@@ -20,69 +20,30 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
-    this.load.image('player', 'assets/Characters/Shiri-front.png');
-    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
-    this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
-    this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona.png');
-    this.load.image('cashier-character', 'assets/Characters/kupaee.png');
+    // ── Day 1 critical assets (everything needed before the first scene starts) ──
+    // Characters used in Day 1 NPCs
+    this.load.image('player',    'assets/Characters/Shiri-front.png');
     this.load.image('npc-yuval', 'assets/Characters/Yuval.png');
     this.load.image('npc-shiri', 'assets/Characters/Shiri.png');
-    this.load.image('npc-dana', 'assets/Characters/Dana.png');
-    this.load.image('judge-portrait', 'assets/Characters/Judge.png');
-    this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
-    this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
+    this.load.image('npc-dana',  'assets/Characters/Dana.png');
 
-    // Sector-specific characters for Day 4 catching game
-    this.load.image('char-arabia', 'assets/Characters/Arabia.png');
-    this.load.image('char-ethiopia', 'assets/Characters/Etiopit.png');
-    this.load.image('char-haredi', 'assets/Characters/haredi.png');
-    this.load.image('char-dati', 'assets/Characters/Dati.png');
-    this.load.image('char-shiri', 'assets/Characters/Shiri-front.png');
-    this.load.image('char-gay', 'assets/Characters/Gay-Man.png');
-    this.load.image('char-shlomi', 'assets/Characters/Shlomi.png');
+    // Day 1 background
+    this.load.image('day1-bg', 'assets/backgrounds/Kiryat shmona.png');
 
-    this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
-    this.load.image('day4-bg', 'assets/Ellements/bus_stop_jerusalem_transparent.png');
-    this.load.image('kotel-bg', 'assets/backgrounds/Kotel-panoramic.png');
-    this.load.image('kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png');
-    this.load.image('kotel-start', 'assets/backgrounds/kotel-start.png');
-    this.load.image('kotel-mid', 'assets/backgrounds/kotel-mid.png');
-    this.load.image('kotel-end', 'assets/backgrounds/kotel-end.png');
-    this.load.image('day5-bg', 'assets/Ellements/kalpi.png');
-    this.load.image('kalpi', 'assets/Ellements/kalpi.png');
-    this.load.image('supermarket-outside', 'assets/backgrounds/supermarketOutside.png');
-    this.load.image('kalpi-bg', 'assets/backgrounds/KalpiSceneBackground.png');
-    this.load.image('telaviv-bg', 'assets/backgrounds/TelAvivBackground.png');
+    // Supermarket exterior — shown as the goal marker at the far end of Day 1
+    this.load.image('supermarket-outside', 'assets/backgrounds/supermarketOutside.webp');
 
-    const groceryFiles = [
-      'vegetable.png',
-      'bread.png',
-      'milk.png',
-      'proteins.png',
-      'snack.png',
-    ];
+    // ── Shared SFX used from Day 1 onward ──
+    this.load.audio('sfx-explosion', 'assets/sounds/drone_bomb.mp3');
+    this.load.audio('sfx-gameover',  'assets/sounds/game-over.mp3');
+    this.load.audio('sfx-levelup',   'assets/sounds/level-up.mp3');
 
-    groceryFiles.forEach((file) => {
-      const key = `grocery-${file.replace(/\.[^/.]+$/, '')}`;
-      this.load.image(key, `assets/groceries/${file}`);
-    });
-
-    this.load.audio('sfx-explosion', 'assets/sounds/drone_bomb.wav');
-    this.load.audio('sfx-gameover',  'assets/sounds/game-over.wav');
-    this.load.audio('sfx-levelup',   'assets/sounds/level-up.wav');
+    // Day 1 & 3 background music
     this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
-    this.load.audio('bg-middle',   'assets/sounds/music-for-middle.wav');
-    this.load.audio('bg-end',      'assets/sounds/gaming-for-end.wav');
-    this.load.audio('bg-day4',     'assets/sounds/scene-4-music.wav');
-    // Day 5 SFX
-    this.load.audio('sfx-meow',   'assets/sounds/meow.mp3');
-    this.load.audio('sfx-catbag', 'assets/sounds/cat-in-a-bag.mp3');
-    this.load.audio('sfx-wrong',  'assets/sounds/wrong-answer .mp3');
-    this.load.audio('sfx-correct','assets/sounds/correct answer.mp3');
-    this.load.audio('sfx-catch-mix', 'assets/sounds/catch-mix.mp3');
-    this.load.audio('sfx-fail-gong', 'assets/sounds/fail-gong.mp3');
-    // Day 2 supermarket collect — key 'collect' is consumed by Day2Scene's existing sound system
-    this.load.audio('collect',    'assets/sounds/supermarket-collect.mp3');
+
+    // All other assets (characters, backgrounds, groceries, kotel, kalpi, audio)
+    // are lazy-loaded inside each scene's own preload() method so they only
+    // download when the player reaches that stage.
   }
 
   create() {

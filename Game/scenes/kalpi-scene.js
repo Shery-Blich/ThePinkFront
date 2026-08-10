@@ -71,6 +71,29 @@ export class KalpiScene extends Phaser.Scene {
 
   }
 
+  /**
+   * Defensive lazy-load for bg-end; KotelScene will normally have fetched
+   * this already, so this is a no-op on repeat visits to the end-game sequence.
+   */
+  preload() {
+    // ── Kalpi scene images ──
+    const imgAssets = [
+      ['kalpi',          'assets/Ellements/kalpi.webp'],
+      ['day5-bg',        'assets/Ellements/kalpi.webp'],
+      ['kalpi-bg',       'assets/backgrounds/KalpiSceneBackground.webp'],
+      // Fallbacks used by kalpi-scene if kalpi-bg is missing
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.png'],
+    ];
+    imgAssets.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-end')) {
+      this.load.audio('bg-end', 'assets/sounds/gaming-for-end.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 

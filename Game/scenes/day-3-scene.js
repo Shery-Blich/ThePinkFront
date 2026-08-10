@@ -29,6 +29,19 @@ export class Day3Scene extends Phaser.Scene {
     this.supermarketX = 0;
   }
 
+  /**
+   * Lazy-loads assets needed for the bus cutscene (Day 3).
+   * bg-sessions is already in cache from BootScene.
+   */
+  preload() {
+    if (!this.textures.exists('day3-bg')) {
+      this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona.png');
+    }
+    if (!this.textures.exists('bus-stop')) {
+      this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.webp');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 

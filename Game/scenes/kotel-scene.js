@@ -58,6 +58,31 @@ export class KotelScene extends Phaser.Scene {
     this.bananasHitCount = 0;
   }
 
+  /**
+   * Lazy-loads the shared end-game background music.
+   * bg-end is shared between KotelScene, KalpiScene, and FinalScene — only
+   * downloaded once; subsequent scenes find it in the audio cache.
+   */
+  preload() {
+    // ── Kotel panoramic background images ──
+    const imgAssets = [
+      ['kotel-start',        'assets/backgrounds/kotel-start.png'],
+      ['kotel-mid',          'assets/backgrounds/kotel-mid.png'],
+      ['kotel-end',          'assets/backgrounds/kotel-end.png'],
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.png'],
+      ['nassi-2',            'assets/Characters/Nassi-2.png'],
+      ['bus-stop',           'assets/Ellements/bus_stop_jerusalem_transparent.webp'],
+    ];
+    imgAssets.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-end')) {
+      this.load.audio('bg-end', 'assets/sounds/gaming-for-end.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 
