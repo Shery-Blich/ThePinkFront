@@ -500,6 +500,26 @@
       box-shadow: none;
     }
 
+    #html-score-popup #popup-share-btn {
+      background: #16a34a;
+      color: #ffffff;
+      animation: sharePulse 2s ease-in-out infinite alternate;
+    }
+
+    #html-score-popup #popup-share-btn:hover {
+      background: #22c55e;
+    }
+
+    @keyframes sharePulse {
+      0% {
+        box-shadow: 4px 4px 0px #000000;
+      }
+      100% {
+        box-shadow: 4px 4px 0px #000000, 0 0 14px rgba(34, 197, 94, 0.7);
+        transform: scale(1.02);
+      }
+    }
+
     #html-score-popup .play-again-link {
       font-size: 0.8rem;
       font-weight: 700;
@@ -516,6 +536,15 @@
     #html-score-popup .play-again-link:hover {
       color: #201c18;
       transform: scale(1.05);
+    }
+
+    #html-score-popup .play-again-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
     }
 
     /* HTML Toast Notification */
@@ -1351,12 +1380,15 @@
       <p class="popup-subtitle" id="popup-score-subtitle">0 תשובות נכונות</p>
 
       <div class="button-group">
-        <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד</button>
+        <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד 📢</button>
         <a class="popup-btn" href="https://www.instagram.com/ourknesset" target="_blank" rel="noopener noreferrer">עקבו אחרינו באינסטגרם</a>
-        <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">בקרו באתר שלנו למידע נוסף</a>
+        <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">בקרו באתר שלנו</a>
+        <a class="popup-btn" id="popup-itch-btn" href="https://sheryb.itch.io/" target="_blank" rel="noopener noreferrer">רוצים לשחק בעוד?</a>
       </div>
 
-      <button class="play-again-link" id="popup-replay-btn">שחקו שוב</button>
+      <div class="play-again-row">
+        <button class="play-again-link" id="popup-replay-btn">שחקו שוב</button>
+      </div>
       <button class="play-again-link" id="popup-credits-btn">Meet the Team 🎬</button>
     </div>
 
@@ -1421,6 +1453,7 @@
     import { trackEndLinkClicked } from './Game/analytics.js';
     document.getElementById('popup-share-btn').addEventListener('click', () => trackEndLinkClicked('share'));
     document.getElementById('popup-replay-btn').addEventListener('click', () => trackEndLinkClicked('replay'));
+    document.getElementById('popup-itch-btn')?.addEventListener('click', () => trackEndLinkClicked('itch_games'));
     document.querySelector('a[href*="instagram"]').addEventListener('click', () => trackEndLinkClicked('instagram'));
     document.querySelector('a[href*="ourknesset.org"]').addEventListener('click', () => trackEndLinkClicked('official_voting_info'));
   </script>

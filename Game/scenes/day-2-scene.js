@@ -382,6 +382,7 @@ export class Day2Scene extends Phaser.Scene {
       } else {
         body.velocity && (body.velocity.y = this._jumpVelocity);
       }
+      if (typeof this.player.playJump === 'function') this.player.playJump();
       this._canDoubleJump = true;
       this._hasDoubleJumped = false;
       return;
@@ -393,6 +394,7 @@ export class Day2Scene extends Phaser.Scene {
       } else {
         body.velocity && (body.velocity.y = this._jumpVelocity);
       }
+      if (typeof this.player.playJump === 'function') this.player.playJump();
       this._hasDoubleJumped = true;
       this._canDoubleJump = false;
       return;
@@ -746,6 +748,9 @@ export class Day2Scene extends Phaser.Scene {
     if (this.player && this.player.body) {
       this.player.body.setVelocity(0, 0);
       this.player.body.moves = false;
+    }
+    if (this.player && typeof this.player.suppressAnimation === 'function') {
+      this.player.suppressAnimation();
     }
 
     // Falling / grey out animation

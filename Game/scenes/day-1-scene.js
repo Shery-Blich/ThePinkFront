@@ -363,6 +363,7 @@ export class Day1Scene extends Phaser.Scene {
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
+    if (this.player) this.player.suppressAnimation();
 
     // Falling / grey out animation
     this.tweens.add({
@@ -437,6 +438,7 @@ export class Day1Scene extends Phaser.Scene {
       if (this.player.body) {
         this.player.body.checkCollision.none = true;
       }
+      this.player.suppressAnimation();
     }
     if (this.droneManager) this.droneManager.stop();
 

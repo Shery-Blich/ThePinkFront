@@ -210,6 +210,8 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   _playerExitsSupermarket(width, busStopX, busStopY) {
+    if (this.player) this.player.suppressAnimation();
+
     this.tweens.add({
       targets: this.player,
       y: this.roadCenterY,

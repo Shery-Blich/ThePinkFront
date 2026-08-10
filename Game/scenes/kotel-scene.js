@@ -8,6 +8,7 @@ import { LivesManager } from '../systems/lives-manager.js';
 import { addGlobalScore } from '../systems/score-manager.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
 import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { updateCharacterAnimation } from '../systems/character-animator.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -266,6 +267,11 @@ export class KotelScene extends Phaser.Scene {
         this.presidentLabel.setPosition(this.president.x, this.president.y - 24 * this.s);
         this.presidentLabel.setDepth(this.president.depth + 1);
       }
+
+      const presSpeed = this.president.body
+        ? Math.hypot(this.president.body.velocity.x, this.president.body.velocity.y)
+        : 0;
+      updateCharacterAnimation(this.president, presSpeed, 'crying');
     }
 
     // Update active landed bananas
