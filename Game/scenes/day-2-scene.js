@@ -51,6 +51,45 @@ export class Day2Scene extends Phaser.Scene {
     this._backgroundScrollX = 0;
   }
 
+  /**
+   * Lazy-loads audio assets specific to this scene.
+   * Called automatically by Phaser before create(); runs the Loader if assets
+   * are missing from cache, so the download happens only the first time this
+   * scene starts rather than blocking the initial boot.
+   */
+  preload() {
+    // ── Images ──
+    if (!this.textures.exists('day2-bg')) {
+      this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
+    }
+    if (!this.textures.exists('cashier-character')) {
+      this.load.image('cashier-character', 'assets/Characters/kupaee.png');
+    }
+    if (!this.textures.exists('judge-portrait')) {
+      this.load.image('judge-portrait', 'assets/Characters/Judge.png');
+    }
+    if (!this.textures.exists('nassi-1')) {
+      this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
+    }
+    if (!this.textures.exists('nassi-2')) {
+      this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
+    }
+    const groceryFiles = ['vegetable.png', 'bread.png', 'milk.png', 'proteins.png', 'snack.png'];
+    groceryFiles.forEach((file) => {
+      const key = `grocery-${file.replace(/\.[^/.]+$/, '')}`;
+      if (!this.textures.exists(key)) {
+        this.load.image(key, `assets/groceries/${file}`);
+      }
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-middle')) {
+      this.load.audio('bg-middle', 'assets/sounds/music-for-middle.mp3');
+    }
+    if (!this.cache.audio.exists('collect')) {
+      this.load.audio('collect', 'assets/sounds/supermarket-collect.mp3');
+    }
+  }
+
   create() {
     this.score = 67.0;
     this._totalShekelsSpent = 0;
@@ -382,6 +421,7 @@ export class Day2Scene extends Phaser.Scene {
       } else {
         body.velocity && (body.velocity.y = this._jumpVelocity);
       }
+      if (typeof this.player.playJump === 'function') this.player.playJump();
       this._canDoubleJump = true;
       this._hasDoubleJumped = false;
       return;
@@ -393,6 +433,7 @@ export class Day2Scene extends Phaser.Scene {
       } else {
         body.velocity && (body.velocity.y = this._jumpVelocity);
       }
+      if (typeof this.player.playJump === 'function') this.player.playJump();
       this._hasDoubleJumped = true;
       this._canDoubleJump = false;
       return;
@@ -746,6 +787,9 @@ export class Day2Scene extends Phaser.Scene {
     if (this.player && this.player.body) {
       this.player.body.setVelocity(0, 0);
       this.player.body.moves = false;
+    }
+    if (this.player && typeof this.player.suppressAnimation === 'function') {
+      this.player.suppressAnimation();
     }
 
     // Falling / grey out animation

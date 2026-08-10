@@ -98,6 +98,45 @@ export class Day4Scene extends Phaser.Scene {
     this.brakeHoldTimer = 0;
   }
 
+  /**
+   * Lazy-loads audio assets specific to Day 4 (the bus catching game).
+   * Only downloads assets the first time this scene is entered.
+   */
+  preload() {
+    // ── Sector character sprites ──
+    const charAssets = [
+      ['char-arabia',   'assets/Characters/Arabia.png'],
+      ['char-ethiopia', 'assets/Characters/Etiopit.png'],
+      ['char-haredi',   'assets/Characters/haredi.png'],
+      ['char-dati',     'assets/Characters/Dati.png'],
+      ['char-shiri',    'assets/Characters/Shiri-front.png'],
+      ['char-gay',      'assets/Characters/Gay-Man.png'],
+      ['char-shlomi',   'assets/Characters/Shlomi.png'],
+    ];
+    charAssets.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+    if (!this.textures.exists('bus-stop')) {
+      this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.webp');
+    }
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-day4')) {
+      this.load.audio('bg-day4', 'assets/sounds/scene-4-music.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-fail-gong')) {
+      this.load.audio('sfx-fail-gong', 'assets/sounds/fail-gong.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-wrong')) {
+      this.load.audio('sfx-wrong', 'assets/sounds/wrong-answer .mp3');
+    }
+    if (!this.cache.audio.exists('sfx-correct')) {
+      this.load.audio('sfx-correct', 'assets/sounds/correct answer.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-catch-mix')) {
+      this.load.audio('sfx-catch-mix', 'assets/sounds/catch-mix.mp3');
+    }
+  }
+
   create() {
     this.init();
 

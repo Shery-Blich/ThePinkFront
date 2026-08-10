@@ -1,5 +1,6 @@
 import { Character } from './character.js';
 import Phaser from 'phaser';
+import { updateCharacterAnimation } from '../systems/character-animator.js';
 
 /**
  * NPC — A non-player character.
@@ -62,6 +63,11 @@ export class NPC extends Character {
 
     if (this.isWandering && !this.isStatic) {
       this._updateWander(delta);
+    }
+
+    if (this.body) {
+      const speed = Math.hypot(this.body.velocity.x, this.body.velocity.y);
+      updateCharacterAnimation(this, speed, 'scared');
     }
   }
 
