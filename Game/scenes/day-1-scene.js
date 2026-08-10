@@ -118,8 +118,9 @@ export class Day1Scene extends Phaser.Scene {
     const { group, npcs } = NPC.spawnGroup(this, npcPositions, this.s);
     this.npcGroup = group;
     this.npcList = npcs;
+    const npcTextures = ["npc-yuval", "npc-shiri", "npc-dana"];
     this.npcList.forEach((npc, index) => {
-      const textureKey = index % 2 === 0 ? "npc-yuval" : "npc-shiri";
+      const textureKey = npcTextures[index % npcTextures.length];
       if (
         this.textures.exists(textureKey) &&
         typeof npc.setTexture === "function"

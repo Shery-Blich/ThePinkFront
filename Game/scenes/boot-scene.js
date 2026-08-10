@@ -27,6 +27,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('cashier-character', 'assets/Characters/kupaee.png');
     this.load.image('npc-yuval', 'assets/Characters/Yuval.png');
     this.load.image('npc-shiri', 'assets/Characters/Shiri.png');
+    this.load.image('npc-dana', 'assets/Characters/Dana.png');
     this.load.image('judge-portrait', 'assets/Characters/Judge.png');
     this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
     this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
