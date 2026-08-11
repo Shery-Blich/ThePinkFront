@@ -119,6 +119,9 @@ export class Day4Scene extends Phaser.Scene {
     if (!this.textures.exists('bus-stop')) {
       this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.webp');
     }
+    if (!this.textures.exists('jerusalem-skyline')) {
+      this.load.image('jerusalem-skyline', 'assets/backgrounds/JerusalemSkyline.webp');
+    }
     // ── Audio ──
     if (!this.cache.audio.exists('bg-day4')) {
       this.load.audio('bg-day4', 'assets/sounds/scene-4-music.mp3');
@@ -921,8 +924,8 @@ export class Day4Scene extends Phaser.Scene {
   /**
    * Jerusalem Entrance Cutscene:
    * 1. Bus centers smoothly on screen.
-   * 2. Jerusalem Entrance landmark building scrolls into view on the right.
-   * 3. Bus drives forward through the gate and off-screen right to Jerusalem!
+   * 2. The Jerusalem skyline artwork scrolls into view on the right, sitting on the horizon.
+   * 3. Bus keeps driving (no player control) past the skyline and off-screen right to Jerusalem!
    */
   _showJerusalemEntranceCutscene() {
     const { width } = this.scale;
@@ -935,44 +938,33 @@ export class Day4Scene extends Phaser.Scene {
       duration: 700,
       ease: 'Power1.easeInOut',
       onComplete: () => {
-        // Step 2. Build Jerusalem City Entrance Landmark Graphic off-screen right
-        const gateContainer = this.add.container(width + 200 * s, this.roadTop - 70 * s).setDepth(100);
+        // Step 2. Bring the Jerusalem skyline artwork into view off-screen right,
+        // bottom-anchored on the road's horizon line.
+        const skylineHeight = 110 * s;
+        const skyline = this.add.image(width + 260 * s, this.roadTop, 'jerusalem-skyline')
+          .setOrigin(0.5, 1)
+          .setDepth(100);
+        const tex = this.textures.get('jerusalem-skyline').getSourceImage();
+        const aspect = (tex && tex.height) ? tex.width / tex.height : (960 / 340);
+        skyline.setDisplaySize(skylineHeight * aspect, skylineHeight);
 
-        const gateGfx = this.add.graphics();
-        const w = 140 * s;
-        const h = 130 * s;
-
-        // Jerusalem stone wall structure
-        gateGfx.fillStyle(0xe6d5b8, 1);
-        gateGfx.fillRect(0, 0, w, h);
-        gateGfx.lineStyle(2 * s, 0xcfb99c, 1);
-        gateGfx.strokeRect(0, 0, w, h);
-
-        // Archway entrance
-        gateGfx.fillStyle(0x1a1a2e, 1);
-        gateGfx.fillRect(25 * s, 45 * s, 90 * s, 85 * s);
-
-        // Welcome Signboard
-        gateGfx.fillStyle(0x0284c7, 1);
-        gateGfx.fillRect(10 * s, 10 * s, 120 * s, 26 * s);
-
-        const signText = this.add.text(70 * s, 23 * s, 'ברוכים הבאים לירושלים 🇮🇱', {
+        const signText = this.add.text(width + 260 * s, this.roadTop - skylineHeight - 12 * s, 'ברוכים הבאים לירושלים 🇮🇱', {
           fontFamily: 'Arial, sans-serif',
           fontSize: `${Math.max(10, Math.round(11 * s))}px`,
           fontWeight: 'bold',
           color: '#ffffff',
-        }).setOrigin(0.5, 0.5);
+          stroke: '#000000',
+          strokeThickness: 3,
+        }).setOrigin(0.5, 1).setDepth(101);
 
-        gateContainer.add([gateGfx, signText]);
-
-        // Scroll Jerusalem Entrance landmark into view
+        // Scroll Jerusalem skyline into view
         this.tweens.add({
-          targets: gateContainer,
-          x: width - 130 * s,
+          targets: [skyline, signText],
+          x: width - 120 * s,
           duration: 1000,
           ease: 'Quad.easeOut',
           onComplete: () => {
-            // Step 3. Bus drives forward from center through the archway off-screen right to Jerusalem!
+            // Step 3. Bus drives forward from center, past the skyline, off-screen right to Jerusalem!
             this.tweens.add({
               targets: this.bus,
               x: width + 120 * s,
