@@ -1316,7 +1316,7 @@
 
     <div class="loading-tip-box">
       <div class="loading-tip-label">טיפ בחירות</div>
-      <div id="loading-tip-text">טוען טיפים מועילים...</div>
+      <div id="loading-tip-text">ההצבעה בקלפי היא סודית על פי חוק. אסור לצלם מאחורי הפרגוד!</div>
     </div>
   </div>
 
@@ -1868,26 +1868,71 @@
     // Global Loading Screen Overlay Logic
     window.loadingScreenActive = true;
 
-    const HEBREW_TIPS = [
-      "תעודת זהות כחולה היא המפתח שלכן לקלפי! אל תשכחו אותה בבית.",
-      "מזכיר הקלפי קשוח, אבל חיוך רחב יכול לרכך את האווירה בקלפי.",
-      "החזית הוורודה לא מוותרת! המשיכו לרוץ גם כשירושלים נראית רחוקה.",
-      "רק מעבר דירה רשמי במשרד הפנים משנה את קלפי ההצבעה שלכם! תכננו מראש.",
-      "אל תתנו לקולות רקע להסיח את דעתכם בדרך למימוש זכות הבחירה שלכם.",
-      "רעש וצלצולים זה נחמד, אבל הצבעה בקלפי היא מה שבאמת משפיע!",
-      "לכל אזרח קול אחד, וכל קול יכול להכריע את עתיד המדינה.",
-      "קלפי נגישה מיועדת למי שמוגבל בניידות. שמרו להם על הזכות הזו!"
+    // Specific tips per stage (1-based stage number or scene key)
+    const STAGE_SPECIFIC_TIPS = {
+      1: 'לא לשכוח תעודה מזהה ביום הבחירות!',
+      2: 'בדקו מראש איפה אתם מצביעים ואת מספר הקלפי',
+      3: 'התחבורה הציבורית הבין-עירונית חינמית ביום הבחירות!',
+      5: 'ודאו את אותיות המפלגה לה אתם מצביעים',
+      6: 'וודאו שהמעטפה שקיבלתם תקינה'
+    };
+
+    const SCENE_SPECIFIC_TIPS = {
+      'Day1Scene': 'לא לשכוח תעודה מזהה ביום הבחירות!',
+      'Day2Scene': 'בדקו מראש איפה אתם מצביעים ואת מספר הקלפי',
+      'Day3Scene': 'התחבורה הציבורית הבין-עירונית חינמית ביום הבחירות!',
+      'KotelScene': 'ודאו את אותיות המפלגה לה אתם מצביעים',
+      'Day5Scene': 'ודאו את אותיות המפלגה לה אתם מצביעים',
+      'KalpiScene': 'וודאו שהמעטפה שקיבלתם תקינה'
+    };
+
+    // 3 fallback tips cycled randomly for any unspecified stage/scene
+    const FALLBACK_TIPS = [
+      'ההצבעה בקלפי היא סודית על פי חוק. אסור לצלם מאחורי הפרגוד!',
+      'מצביעים עם מוגבלויות יכולים להצביע בכל קלפי המוגדרת כ"נגישה מיוחדת".',
+      'אם הפתק של המפלגה שלכם אזל מאחורי הפרגוד, זכותכם לדרוש מחברי הוועדה להשלים את המלאי.'
     ];
 
-    // Set initial random tip immediately on load
-    document.addEventListener('DOMContentLoaded', () => {
+    let tipCycleInterval = null;
+
+    function stopTipCycling() {
+      if (tipCycleInterval) {
+        clearInterval(tipCycleInterval);
+        tipCycleInterval = null;
+      }
+    }
+
+    function startTipCycling() {
+      stopTipCycling();
+      tipCycleInterval = setInterval(() => {
+        const tipTextEl = document.getElementById('loading-tip-text');
+        if (tipTextEl && window.loadingScreenActive !== false) {
+          tipTextEl.style.transition = 'opacity 0.25s ease';
+          tipTextEl.style.opacity = '0';
+          setTimeout(() => {
+            tipTextEl.textContent = getRandomFallbackTip();
+            tipTextEl.style.opacity = '1';
+          }, 250);
+        }
+      }, 4000);
+    }
+
+    // Set initial tip immediately on load (or as soon as DOM is ready) and start 4s cycling
+    function setInitialTip() {
       const tipTextEl = document.getElementById('loading-tip-text');
       if (tipTextEl) {
-        tipTextEl.textContent = HEBREW_TIPS[Math.floor(Math.random() * HEBREW_TIPS.length)];
+        tipTextEl.textContent = getRandomFallbackTip();
       }
-    });
+      startTipCycling();
+    }
 
-    window.showLoadingScreen = function(title, subtitle, onComplete) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setInitialTip);
+    } else {
+      setInitialTip();
+    }
+
+    window.showLoadingScreen = function(title, subtitle, onComplete, stageNumber, sceneKey) {
       window.loadingScreenActive = true;
       
       const screen = document.getElementById('html-loading-screen');
@@ -1900,9 +1945,17 @@
         titleEl.textContent = title || 'טוען...';
         subtitleEl.textContent = subtitle || 'הכנות אחרונות לשלב הבא';
         
-        // Pick random tip
-        const randomTip = HEBREW_TIPS[Math.floor(Math.random() * HEBREW_TIPS.length)];
-        tipTextEl.textContent = randomTip;
+        // Pick specific tip or fallback tip with 4s cycling
+        const specificTip = (stageNumber && STAGE_SPECIFIC_TIPS[stageNumber]) || (sceneKey && SCENE_SPECIFIC_TIPS[sceneKey]);
+        if (specificTip) {
+          stopTipCycling();
+          tipTextEl.style.opacity = '1';
+          tipTextEl.textContent = specificTip;
+        } else {
+          tipTextEl.style.opacity = '1';
+          tipTextEl.textContent = getRandomFallbackTip();
+          startTipCycling();
+        }
         
         // Reset progress bar width
         progressFill.style.transition = 'none';
@@ -1934,6 +1987,7 @@
     };
 
     window.hideLoadingScreen = function() {
+      stopTipCycling();
       const screen = document.getElementById('html-loading-screen');
       if (screen) {
         const progressFill = document.getElementById('loading-progress-fill');

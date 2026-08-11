@@ -99,6 +99,7 @@ export class SceneOrchestrator {
 
       const info = this.levelInfo[targetSceneKey] || { title: "טוען...", subtitle: "הכנות אחרונות" };
 
+      const stageNumber = index + 1;
       if (!skipLoadingScreen && window.showLoadingScreen) {
         window.showLoadingScreen(info.title, info.subtitle, () => {
           // Ensure BootScene or other scenes are stopped before starting the target
@@ -138,7 +139,7 @@ export class SceneOrchestrator {
           setTimeout(hideOverlay, 10000);
 
           this.game.scene.start(targetSceneKey);
-        });
+        }, stageNumber, targetSceneKey);
       } else {
         // Fallback or direct transition without loading screen overlay
         this.game.scene.scenes.forEach(scene => {
