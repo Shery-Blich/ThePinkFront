@@ -119,6 +119,7 @@ export class KalpiScene extends Phaser.Scene {
     const roadCenterY = this.roadTop + roadHeight / 2;
 
     this.cameras.main.setBackgroundColor(0x1a1a2e);
+    this.cameras.main.fadeIn(400, 18, 18, 28);
 
     // 1. Kotel background
     this._buildBackground(worldWidth, this.roadTop);
@@ -144,7 +145,7 @@ export class KalpiScene extends Phaser.Scene {
     this.kalpi = this.physics.add.sprite(kalpiX, kalpiY, kalpiTex);
     this.kalpi.setOrigin(0.5, 1);
     
-    const kHeight = 36 * this.s;
+    const kHeight = 64 * this.s;
     const kAspect = (this.kalpi.width || 32) / (this.kalpi.height || 32);
     this.kalpi.setDisplaySize(kAspect * kHeight, kHeight);
     this.kalpi.setDepth(this.kalpi.y);

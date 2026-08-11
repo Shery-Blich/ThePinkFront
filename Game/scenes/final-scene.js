@@ -39,6 +39,9 @@ export class FinalScene extends Phaser.Scene {
 
     startSceneMusic(this, 'bg-end');
 
+    // Reset camera fade from previous scene transition
+    this.cameras.main.fadeIn(400, 18, 18, 28);
+
     // --- Background Styling ---
     this.cameras.main.setBackgroundColor('#1a1a2e');
     if (this.textures.exists('telaviv-bg')) {
