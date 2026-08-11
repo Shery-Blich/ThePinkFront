@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { LivesManager } from './lives-manager.js';
+import { recordStageStartScore, resetGlobalScore } from './score-manager.js';
 
 /**
  * SceneOrchestrator — Connects and manages scene flow.
@@ -93,8 +94,10 @@ export class SceneOrchestrator {
 
       if (index === 0) {
         LivesManager.resetLives();
+        resetGlobalScore();
       } else {
         LivesManager.recordStageStartLives();
+        recordStageStartScore();
       }
 
       const info = this.levelInfo[targetSceneKey] || { title: "טוען...", subtitle: "הכנות אחרונות" };

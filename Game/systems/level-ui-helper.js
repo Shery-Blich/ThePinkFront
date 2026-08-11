@@ -1,5 +1,6 @@
 import { runLevelTrivia, hasLevelTrivia } from './level-trivia.js';
 import { LivesManager } from './lives-manager.js';
+import { restoreStageStartScore } from './score-manager.js';
 
 /**
  * Helper to show victory screen and handle the transition to the level trivia.
@@ -41,12 +42,14 @@ export function showGameOverHelper(scene, title, message) {
       message,
       () => {
         LivesManager.restoreStageStartLives();
+        restoreStageStartScore();
         scene.scene.restart();
       }
     );
   } else {
     scene.time.delayedCall(1000, () => {
       LivesManager.restoreStageStartLives();
+      restoreStageStartScore();
       scene.scene.restart();
     });
   }

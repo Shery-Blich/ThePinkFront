@@ -395,6 +395,7 @@
       left: 0;
       width: 100%;
       height: 100%;
+      height: 100dvh;
       z-index: 1001; /* Above welcome menu */
       background: rgba(18, 16, 28, 0.85);
       backdrop-filter: blur(8px);
@@ -406,6 +407,28 @@
       opacity: 0;
       transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
       direction: ltr; /* Force Left-to-Right layout grid flow */
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 1.5rem 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #html-score-popup::-webkit-scrollbar {
+      width: 8px;
+    }
+    #html-score-popup::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    #html-score-popup::-webkit-scrollbar-thumb {
+      background: #6b5a43;
+      border-radius: 4px;
+    }
+    #html-score-popup::-webkit-scrollbar-thumb:hover {
+      background: #201c18;
+    }
+    #html-score-popup {
+      scrollbar-width: thin;
+      scrollbar-color: #6b5a43 rgba(0, 0, 0, 0.2);
     }
 
     #html-score-popup.active {
@@ -419,15 +442,17 @@
       padding: 1.75rem;
       width: 90%;
       max-width: 440px;
+      margin: auto;
       text-align: center;
       position: relative;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1rem;
       border-radius: 8px;
       direction: rtl; /* Keep endgame menu RTL for Hebrew text layout support */
+      box-sizing: border-box;
+      flex-shrink: 0;
     }
 
     #html-score-popup .popup-container::before {
@@ -1046,52 +1071,87 @@
       }
     }
 
-    /* Responsive scaling for mobile devices in landscape mode */
-    @media (max-height: 480px) and (orientation: landscape) {
-      #html-victory-box, #html-gameover-box, #html-score-popup .popup-container {
-        padding: 0.6rem 1rem;
-        max-width: 480px;
-        width: 95%;
-        max-height: 95vh;
-        overflow-y: auto;
-        border-width: 2.5px;
-        gap: 0.4rem;
-      }
-      #html-victory-title, #html-gameover-title {
-        font-size: clamp(1.2rem, 3.5vw, 1.6rem);
-        margin-bottom: 0.3rem;
-      }
-      #html-victory-message, #html-gameover-message {
-        font-size: clamp(0.8rem, 2vw, 0.95rem);
-        margin-bottom: 0.6rem;
-        line-height: 1.3;
-      }
-      #html-victory-btn, #html-gameover-btn, #html-score-popup .popup-btn {
-        padding: 0.4rem 1rem;
-        font-size: 0.9rem;
-        margin-top: 0.1rem;
-        max-width: 220px;
+    /* Responsive scaling for mobile devices & small height/width screens */
+    @media (max-height: 720px) {
+      #html-score-popup .popup-container {
+        padding: 1rem 1.15rem;
+        gap: 0.6rem;
       }
       #html-score-popup .star-badge {
-        font-size: 1rem;
+        font-size: 1.05rem;
       }
       #html-score-popup .popup-title {
-        font-size: 1.1rem;
+        font-size: clamp(1.1rem, 3.2vw, 1.4rem);
+        margin-bottom: 0px;
       }
       #html-score-popup .popup-subtitle {
-        font-size: 0.8rem;
+        font-size: clamp(0.78rem, 1.5vw, 0.88rem);
       }
       #html-score-popup .button-group {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
+        margin-top: 0.15rem;
+      }
+      #html-score-popup .popup-btn {
+        padding: 0.5rem 0.85rem;
+        font-size: 0.8rem;
+      }
+      #html-score-popup .play-again-link {
+        font-size: 0.75rem;
+        margin-top: 0.15rem;
+      }
+    }
+
+    @media (max-height: 560px) {
+      #html-victory-box, #html-gameover-box, #html-score-popup .popup-container {
+        padding: 0.6rem 0.8rem;
+        max-width: 480px;
+        width: 95%;
+        border-width: 2.5px;
+        gap: 0.35rem;
+      }
+      #html-victory-title, #html-gameover-title {
+        font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+        margin-bottom: 0.2rem;
+      }
+      #html-victory-message, #html-gameover-message {
+        font-size: clamp(0.75rem, 2vw, 0.85rem);
+        margin-bottom: 0.4rem;
+        line-height: 1.25;
+      }
+      #html-victory-btn, #html-gameover-btn, #html-score-popup .popup-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.78rem;
+        margin-top: 0.1rem;
+      }
+      #html-score-popup .star-badge {
+        font-size: 0.95rem;
+      }
+      #html-score-popup .popup-title {
+        font-size: 1rem;
+      }
+      #html-score-popup .popup-subtitle {
+        font-size: 0.75rem;
+      }
+      #html-score-popup .button-group {
+        gap: 0.3rem;
         margin-top: 0.1rem;
       }
       #html-score-popup .play-again-link {
         margin-top: 0.1rem;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         padding: 0.1rem;
+      }
+    }
+
+    @media (max-width: 420px) {
+      #html-score-popup .popup-container {
+        width: 94%;
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+      }
+      #html-score-popup .popup-btn {
+        font-size: 0.8rem;
+        padding: 0.55rem 0.75rem;
       }
     }
 
@@ -1959,6 +2019,10 @@
       'מצביעים עם מוגבלויות יכולים להצביע בכל קלפי המוגדרת כ"נגישה מיוחדת".',
       'אם הפתק של המפלגה שלכם אזל מאחורי הפרגוד, זכותכם לדרוש מחברי הוועדה להשלים את המלאי.'
     ];
+
+    function getRandomFallbackTip() {
+      return FALLBACK_TIPS[Math.floor(Math.random() * FALLBACK_TIPS.length)];
+    }
 
     let tipCycleInterval = null;
 
