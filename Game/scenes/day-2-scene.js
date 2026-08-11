@@ -60,21 +60,21 @@ export class Day2Scene extends Phaser.Scene {
   preload() {
     // ── Images ──
     if (!this.textures.exists('day2-bg')) {
-      this.load.image('day2-bg', 'assets/backgrounds/supermarket.png');
+      this.load.image('day2-bg', 'assets/backgrounds/supermarket.webp');
     }
     if (!this.textures.exists('cashier-character')) {
-      this.load.image('cashier-character', 'assets/Characters/kupaee.png');
+      this.load.image('cashier-character', 'assets/Characters/kupaee.webp');
     }
     if (!this.textures.exists('judge-portrait')) {
-      this.load.image('judge-portrait', 'assets/Characters/Judge.png');
+      this.load.image('judge-portrait', 'assets/Characters/Judge.webp');
     }
     if (!this.textures.exists('nassi-1')) {
-      this.load.image('nassi-1', 'assets/Characters/Nassi-1.png');
+      this.load.image('nassi-1', 'assets/Characters/Nassi-1.webp');
     }
     if (!this.textures.exists('nassi-2')) {
-      this.load.image('nassi-2', 'assets/Characters/Nassi-2.png');
+      this.load.image('nassi-2', 'assets/Characters/Nassi-2.webp');
     }
-    const groceryFiles = ['vegetable.png', 'bread.png', 'milk.png', 'proteins.png', 'snack.png'];
+    const groceryFiles = ['vegetable.webp', 'bread.webp', 'milk.webp', 'proteins.webp', 'snack.webp'];
     groceryFiles.forEach((file) => {
       const key = `grocery-${file.replace(/\.[^/.]+$/, '')}`;
       if (!this.textures.exists(key)) {

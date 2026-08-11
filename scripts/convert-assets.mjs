@@ -1,64 +1,49 @@
 /**
  * convert-assets.mjs
  *
- * Converts large WAV audio files → MP3 (128 kbps) and large PNG/JPG images → WebP
- * using ffmpeg-static (bundled binary) and sharp.
+ * Converts WAV audio files → MP3, re-compresses high-bitrate MP3s → 96 kbps,
+ * converts all PNG/JPG images → WebP at 85% quality, and isolates raw WAV/PNG files
+ * out of public/ assets to raw-assets/.
  *
  * Run: node scripts/convert-assets.mjs
  */
 
 import { createRequire } from 'module';
 import { spawn } from 'child_process';
-import { existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, renameSync, readdirSync, statSync } from 'fs';
+import { join, dirname, relative, extname } from 'path';
 import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const SOUNDS_DIR = join(ROOT, 'public', 'assets', 'sounds');
-const IMAGES_DIR = join(ROOT, 'public', 'assets');
+const PUBLIC_ASSETS_DIR = join(ROOT, 'public', 'assets');
+const RAW_ASSETS_DIR = join(ROOT, 'raw-assets');
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Audio: WAV → MP3 at 128 kbps
-// ──────────────────────────────────────────────────────────────────────────────
-const WAV_TO_MP3 = [
-  { src: 'music-for-middle.wav',         dst: 'music-for-middle.mp3' },
-  { src: 'gaming-for-end.wav',           dst: 'gaming-for-end.mp3' },
-  { src: 'scene-4-music.wav',            dst: 'scene-4-music.mp3' },
-  { src: 'level-up.wav',                 dst: 'level-up.mp3' },
-  { src: 'game-over.wav',                dst: 'game-over.mp3' },
-  { src: 'drone_bomb.wav',               dst: 'drone_bomb.mp3' },
-];
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Images: PNG/JPG → WebP at 85% quality
-// ──────────────────────────────────────────────────────────────────────────────
-const IMAGES_TO_WEBP = [
-  { src: 'Ellements/kalpi.png',                            dst: 'Ellements/kalpi.webp' },
-  { src: 'backgrounds/KalpiSceneBackground.png',           dst: 'backgrounds/KalpiSceneBackground.webp' },
-  { src: 'backgrounds/TelAvivBackground.png',              dst: 'backgrounds/TelAvivBackground.webp' },
-  { src: 'Ellements/bus_stop_jerusalem_transparent.png',   dst: 'Ellements/bus_stop_jerusalem_transparent.webp' },
-  { src: 'backgrounds/supermarketOutside.png',             dst: 'backgrounds/supermarketOutside.webp' },
-  { src: 'backgrounds/background.jpg',                     dst: 'backgrounds/background.webp' },
-];
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Helper: run ffmpeg for audio conversion
-// ──────────────────────────────────────────────────────────────────────────────
-function convertAudio(ffmpegBin, src, dst) {
-  return new Promise((resolve, reject) => {
-    if (existsSync(dst)) {
-      console.log(`  ✓ already exists: ${dst}`);
-      resolve();
-      return;
+function getFilesRecursively(dir) {
+  let results = [];
+  if (!existsSync(dir)) return results;
+  const list = readdirSync(dir);
+  for (const file of list) {
+    const filePath = join(dir, file);
+    const stat = statSync(filePath);
+    if (stat && stat.isDirectory()) {
+      results = results.concat(getFilesRecursively(filePath));
+    } else {
+      results.push(filePath);
     }
-    console.log(`  ⟳ ${src} → ${dst}`);
+  }
+  return results;
+}
+
+function convertAudio(ffmpegBin, src, dst, bitrate = '96k') {
+  return new Promise((resolve, reject) => {
+    console.log(`  ⟳ Optimizing audio: ${relative(ROOT, src)} → ${relative(ROOT, dst)} (${bitrate})`);
     const proc = spawn(ffmpegBin, [
       '-y', '-i', src,
       '-codec:a', 'libmp3lame',
-      '-b:a', '128k',
-      '-q:a', '2',
+      '-b:a', bitrate,
+      '-ac', '2',
       dst,
     ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
@@ -66,8 +51,8 @@ function convertAudio(ffmpegBin, src, dst) {
     proc.stderr.on('data', (d) => { stderr += d.toString(); });
     proc.on('close', (code) => {
       if (code === 0) {
-        const srcKB = (require('fs').statSync(src).size / 1024).toFixed(1);
-        const dstKB = (require('fs').statSync(dst).size / 1024).toFixed(1);
+        const srcKB = (statSync(src).size / 1024).toFixed(1);
+        const dstKB = (statSync(dst).size / 1024).toFixed(1);
         console.log(`  ✅ done: ${srcKB}KB → ${dstKB}KB`);
         resolve();
       } else {
@@ -77,25 +62,15 @@ function convertAudio(ffmpegBin, src, dst) {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Helper: sharp for WebP conversion
-// ──────────────────────────────────────────────────────────────────────────────
 async function convertImage(srcPath, dstPath) {
-  if (existsSync(dstPath)) {
-    console.log(`  ✓ already exists: ${dstPath}`);
-    return;
-  }
-  console.log(`  ⟳ ${srcPath} → ${dstPath}`);
+  console.log(`  ⟳ Converting image: ${relative(ROOT, srcPath)} → ${relative(ROOT, dstPath)}`);
   const sharp = (await import('sharp')).default;
-  await sharp(srcPath).webp({ quality: 85 }).toFile(dstPath);
-  const srcSize = (require('fs').statSync(srcPath).size / 1024).toFixed(1);
-  const dstSize = (require('fs').statSync(dstPath).size / 1024).toFixed(1);
+  await sharp(srcPath).webp({ quality: 85, effort: 6 }).toFile(dstPath);
+  const srcSize = (statSync(srcPath).size / 1024).toFixed(1);
+  const dstSize = (statSync(dstPath).size / 1024).toFixed(1);
   console.log(`  ✅ done: ${srcSize}KB → ${dstSize}KB`);
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Main
-// ──────────────────────────────────────────────────────────────────────────────
 async function main() {
   let ffmpegBin;
   try {
@@ -104,31 +79,71 @@ async function main() {
     console.error('❌ ffmpeg-static not found — run: npm install --save-dev ffmpeg-static');
     process.exit(1);
   }
-  console.log(`Using ffmpeg: ${ffmpegBin}\n`);
 
-  console.log('=== Audio: WAV → MP3 ===');
-  for (const { src, dst } of WAV_TO_MP3) {
-    const srcPath = join(SOUNDS_DIR, src);
-    const dstPath = join(SOUNDS_DIR, dst);
-    if (!existsSync(srcPath)) {
-      console.log(`  ⚠ skipping (not found): ${src}`);
-      continue;
+  const allFiles = getFilesRecursively(PUBLIC_ASSETS_DIR);
+
+  console.log('=== Step 1: Images PNG/JPG → WebP ===');
+  for (const filePath of allFiles) {
+    const ext = extname(filePath).toLowerCase();
+    if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
+      const dstPath = filePath.substring(0, filePath.lastIndexOf('.')) + '.webp';
+      if (!existsSync(dstPath)) {
+        await convertImage(filePath, dstPath);
+      }
     }
-    await convertAudio(ffmpegBin, srcPath, dstPath);
   }
 
-  console.log('\n=== Images: PNG/JPG → WebP ===');
-  for (const { src, dst } of IMAGES_TO_WEBP) {
-    const srcPath = join(IMAGES_DIR, src);
-    const dstPath = join(IMAGES_DIR, dst);
-    if (!existsSync(srcPath)) {
-      console.log(`  ⚠ skipping (not found): ${src}`);
-      continue;
+  console.log('\n=== Step 2: Optimizing MP3 Bitrates (96kbps) ===');
+  const soundsDir = join(ROOT, 'public', 'assets', 'sounds');
+  const mp3Files = getFilesRecursively(soundsDir).filter(f => f.endsWith('.mp3') && !f.endsWith('.tmp.mp3'));
+  for (const mp3Path of mp3Files) {
+    if (!existsSync(mp3Path)) continue;
+    const sizeKB = statSync(mp3Path).size / 1024;
+    // Only re-compress MP3s larger than 100KB to 96kbps
+    if (sizeKB > 100 && !mp3Path.endsWith('.tmp.mp3')) {
+      const tmpPath = mp3Path + '.tmp.mp3';
+      try {
+        await convertAudio(ffmpegBin, mp3Path, tmpPath, '96k');
+        if (existsSync(tmpPath)) {
+          const { copyFileSync, unlinkSync } = await import('fs');
+          copyFileSync(tmpPath, mp3Path);
+          unlinkSync(tmpPath);
+        }
+      } catch (err) {
+        console.warn(`  ⚠️ Failed to optimize ${relative(ROOT, mp3Path)}: ${err.message}`);
+      }
     }
-    await convertImage(srcPath, dstPath);
   }
 
-  console.log('\n✅ All conversions complete!');
+  console.log('\n=== Step 3: Isolating RAW WAV & source PNG/JPG files to raw-assets/ ===');
+  if (!existsSync(RAW_ASSETS_DIR)) {
+    mkdirSync(RAW_ASSETS_DIR, { recursive: true });
+  }
+
+  const updatedFileList = getFilesRecursively(PUBLIC_ASSETS_DIR);
+  for (const filePath of updatedFileList) {
+    const ext = extname(filePath).toLowerCase();
+    // Move WAV files and PNG/JPG files (if a WebP counterpart exists) to raw-assets/
+    if (ext === '.wav') {
+      const rel = relative(PUBLIC_ASSETS_DIR, filePath);
+      const targetPath = join(RAW_ASSETS_DIR, rel);
+      mkdirSync(dirname(targetPath), { recursive: true });
+      renameSync(filePath, targetPath);
+      console.log(`  📦 Moved WAV: ${rel} → raw-assets/`);
+    } else if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
+      const webpPath = filePath.substring(0, filePath.lastIndexOf('.')) + '.webp';
+      if (existsSync(webpPath)) {
+        const rel = relative(PUBLIC_ASSETS_DIR, filePath);
+        const targetPath = join(RAW_ASSETS_DIR, rel);
+        mkdirSync(dirname(targetPath), { recursive: true });
+        renameSync(filePath, targetPath);
+        console.log(`  📦 Moved source image: ${rel} → raw-assets/`);
+      }
+    }
+  }
+
+  console.log('\n✅ All asset optimization and isolation complete!');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
+

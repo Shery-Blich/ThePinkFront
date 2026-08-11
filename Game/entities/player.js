@@ -42,6 +42,8 @@ export class Player extends Character {
       const targetHeight = 20 * s;
       const targetWidth = targetHeight * aspectRatio;
       this.setDisplaySize(targetWidth, targetHeight);
+      this._baseScaleX = this.scaleX;
+      this._baseScaleY = this.scaleY;
       this._setupCollisionBody();
     }
 
@@ -315,12 +317,21 @@ export class Player extends Character {
   }
 
   /**
+   * Reset internal jump tracking flags.
+   */
+  _resetJumpFlags() {
+    this._isJumping = false;
+    this._jumpLanding = false;
+    this._jumpLeftGround = false;
+  }
+
+  /**
    * Trigger the jump launch animation. Call once per jump/double-jump when
    * the physics velocity is set (e.g. from a scene's jump input handler).
    */
   playJump() {
+    this._resetJumpFlags();
     this._isJumping = true;
-    this._jumpLeftGround = false;
     playJumpAnimation(this);
   }
 
@@ -334,15 +345,22 @@ export class Player extends Character {
 
     if (this._isJumping) {
       const grounded = !!(this.body && (this.body.blocked.down || this.body.touching.down));
-      if (!grounded) {
+      const movingUp = !!(this.body && this.body.velocity.y < -20);
+
+      if (movingUp || !grounded) {
         this._jumpLeftGround = true;
-      } else if (this._jumpLeftGround && !this._jumpLanding) {
-        this._jumpLanding = true;
-        playJumpLandAnimation(this, () => {
-          this._isJumping = false;
-          this._jumpLanding = false;
-          this._jumpLeftGround = false;
-        });
+      }
+
+      if (grounded && !movingUp) {
+        if (!this._jumpLanding) {
+          this._jumpLanding = true;
+          playJumpLandAnimation(this, () => {
+            this._resetJumpFlags();
+          });
+        } else if (this._animState !== 'jump-land' && (!this._animTweens || this._animTweens.length === 0)) {
+          // Safety recovery: landing animation ended or was stopped without callback
+          resetCharacterVisual(this);
+        }
       }
     } else if (!this.isSliding && !this._animationSuppressed && this.body) {
       const speed = Math.hypot(this.body.velocity.x, this.body.velocity.y);

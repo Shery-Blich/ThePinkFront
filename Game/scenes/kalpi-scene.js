@@ -82,8 +82,8 @@ export class KalpiScene extends Phaser.Scene {
       ['day5-bg',        'assets/Ellements/kalpi.webp'],
       ['kalpi-bg',       'assets/backgrounds/KalpiSceneBackground.webp'],
       // Fallbacks used by kalpi-scene if kalpi-bg is missing
-      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png'],
-      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.png'],
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.webp'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.webp'],
     ];
     imgAssets.forEach(([key, path]) => {
       if (!this.textures.exists(key)) this.load.image(key, path);
@@ -119,6 +119,7 @@ export class KalpiScene extends Phaser.Scene {
     const roadCenterY = this.roadTop + roadHeight / 2;
 
     this.cameras.main.setBackgroundColor(0x1a1a2e);
+    this.cameras.main.fadeIn(400, 18, 18, 28);
 
     // 1. Kotel background
     this._buildBackground(worldWidth, this.roadTop);
@@ -144,7 +145,7 @@ export class KalpiScene extends Phaser.Scene {
     this.kalpi = this.physics.add.sprite(kalpiX, kalpiY, kalpiTex);
     this.kalpi.setOrigin(0.5, 1);
     
-    const kHeight = 36 * this.s;
+    const kHeight = 64 * this.s;
     const kAspect = (this.kalpi.width || 32) / (this.kalpi.height || 32);
     this.kalpi.setDisplaySize(kAspect * kHeight, kHeight);
     this.kalpi.setDepth(this.kalpi.y);

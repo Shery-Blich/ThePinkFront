@@ -6,6 +6,7 @@ function getScoreState() {
     window.__globalScoreState = {
       score: 0,
       maxScore: 100,
+      stageStartScore: 0,
     };
   }
   return window.__globalScoreState;
@@ -25,6 +26,24 @@ export function getGlobalScore() {
 export function resetGlobalScore() {
   const state = getScoreState();
   state.score = 0;
+  state.stageStartScore = 0;
+  dispatchGlobalScoreUpdate();
+}
+
+/**
+ * Records current global score at the start of a stage.
+ */
+export function recordStageStartScore() {
+  const state = getScoreState();
+  state.stageStartScore = state.score;
+}
+
+/**
+ * Restores global score to what it was at the start of the current stage on Game Over retry.
+ */
+export function restoreStageStartScore() {
+  const state = getScoreState();
+  state.score = state.stageStartScore;
   dispatchGlobalScoreUpdate();
 }
 

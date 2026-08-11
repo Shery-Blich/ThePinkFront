@@ -36,12 +36,14 @@ function setAnimationState(sprite, state, style = 'default') {
 
   const scene = sprite.scene;
 
-  if (sprite._baseScaleX === undefined) {
-    sprite._baseScaleX = sprite.scaleX;
-    sprite._baseScaleY = sprite.scaleY;
+  if (sprite._baseScaleX === undefined || sprite._baseScaleY === undefined) {
+    if (!sprite._animState) {
+      sprite._baseScaleX = sprite.scaleX;
+      sprite._baseScaleY = sprite.scaleY;
+    }
   }
-  const bx = sprite._baseScaleX;
-  const by = sprite._baseScaleY;
+  const bx = sprite._baseScaleX ?? sprite.scaleX;
+  const by = sprite._baseScaleY ?? sprite.scaleY;
 
   sprite.setAngle(0);
   sprite.setScale(bx, by);
@@ -157,12 +159,14 @@ export function playJumpAnimation(sprite) {
   sprite._animState = 'jump';
 
   const scene = sprite.scene;
-  if (sprite._baseScaleX === undefined) {
-    sprite._baseScaleX = sprite.scaleX;
-    sprite._baseScaleY = sprite.scaleY;
+  if (sprite._baseScaleX === undefined || sprite._baseScaleY === undefined) {
+    if (!sprite._animState) {
+      sprite._baseScaleX = sprite.scaleX;
+      sprite._baseScaleY = sprite.scaleY;
+    }
   }
-  const bx = sprite._baseScaleX;
-  const by = sprite._baseScaleY;
+  const bx = sprite._baseScaleX ?? sprite.scaleX;
+  const by = sprite._baseScaleY ?? sprite.scaleY;
   sprite.setAngle(0);
   sprite.setScale(bx, by);
 
@@ -199,32 +203,43 @@ export function playJumpLandAnimation(sprite, onComplete) {
   const by = sprite._baseScaleY ?? sprite.scaleY;
   sprite.setAngle(0);
 
-  const tweens = [];
-  tweens.push(
-    scene.tweens.add({
-      targets: sprite,
-      scaleX: bx * 1.2,
-      scaleY: by * 0.75,
-      duration: JUMP_LAND_SQUASH_MS,
-      ease: 'Quad.easeOut',
-      onComplete: () => {
-        tweens.push(
-          scene.tweens.add({
-            targets: sprite,
-            scaleX: bx,
-            scaleY: by,
-            duration: JUMP_LAND_RECOVER_MS,
-            ease: 'Back.easeOut',
-            onComplete: () => {
-              sprite._animState = null;
-              if (onComplete) onComplete();
-            },
-          }),
-        );
-      },
-    }),
-  );
-  sprite._animTweens = tweens;
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (sprite.active) {
+      sprite.setScale(bx, by);
+      sprite._animState = null;
+    }
+    if (onComplete) onComplete();
+  };
+
+  const recoverTween = scene.tweens.add({
+    targets: sprite,
+    scaleX: bx,
+    scaleY: by,
+    duration: JUMP_LAND_RECOVER_MS,
+    ease: 'Back.easeOut',
+    paused: true,
+    onComplete: finish,
+  });
+
+  const squashTween = scene.tweens.add({
+    targets: sprite,
+    scaleX: bx * 1.2,
+    scaleY: by * 0.75,
+    duration: JUMP_LAND_SQUASH_MS,
+    ease: 'Quad.easeOut',
+    onComplete: () => {
+      if (sprite.active && recoverTween && recoverTween.play) {
+        recoverTween.play();
+      } else {
+        finish();
+      }
+    },
+  });
+
+  sprite._animTweens = [squashTween, recoverTween];
 }
 
 /**
@@ -233,7 +248,12 @@ export function playJumpLandAnimation(sprite, onComplete) {
  */
 export function stopCharacterAnimation(sprite) {
   stopAnimTweens(sprite);
-  if (sprite) sprite._animState = null;
+  if (sprite) {
+    sprite._animState = null;
+    if (typeof sprite._resetJumpFlags === 'function') {
+      sprite._resetJumpFlags();
+    }
+  }
 }
 
 /**
@@ -248,7 +268,7 @@ export function resetCharacterVisual(sprite) {
   stopCharacterAnimation(sprite);
   if (!sprite) return;
   sprite.setAngle(0);
-  if (sprite._baseScaleX !== undefined) {
+  if (sprite._baseScaleX !== undefined && sprite._baseScaleY !== undefined) {
     sprite.setScale(sprite._baseScaleX, sprite._baseScaleY);
   }
 }

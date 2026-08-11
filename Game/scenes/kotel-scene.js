@@ -66,12 +66,12 @@ export class KotelScene extends Phaser.Scene {
   preload() {
     // ── Kotel panoramic background images ──
     const imgAssets = [
-      ['kotel-start',        'assets/backgrounds/kotel-start.png'],
-      ['kotel-mid',          'assets/backgrounds/kotel-mid.png'],
-      ['kotel-end',          'assets/backgrounds/kotel-end.png'],
-      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.png'],
-      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.png'],
-      ['nassi-2',            'assets/Characters/Nassi-2.png'],
+      ['kotel-start',        'assets/backgrounds/kotel-start.webp'],
+      ['kotel-mid',          'assets/backgrounds/kotel-mid.webp'],
+      ['kotel-end',          'assets/backgrounds/kotel-end.webp'],
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.webp'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.webp'],
+      ['nassi-2',            'assets/Characters/Nassi-2.webp'],
       ['bus-stop',           'assets/Ellements/bus_stop_jerusalem_transparent.webp'],
     ];
     imgAssets.forEach(([key, path]) => {

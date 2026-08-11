@@ -67,6 +67,12 @@ export class Day1Scene extends Phaser.Scene {
     this.superLabel = null;
   }
 
+  preload() {
+    if (!this.cache.audio.exists('bg-sessions')) {
+      this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 
