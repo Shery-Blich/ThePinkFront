@@ -30,11 +30,11 @@ export class Banana {
     this.scale = scale;
     this.config = config;
 
-    /** Warning reticle duration in ms */
+    /** Warning reticle duration in ms (original 1.0s throw speed) */
     this.warningDuration = 1000;
 
-    /** Hitbox radius on floor */
-    this.hitRadius = 24 * scale;
+    /** Hitbox radius on floor (75% of original 24 * scale = 18 * scale) */
+    this.hitRadius = 18 * scale;
 
     /** Floor life duration in ms before safely expiring and awarding +3 points */
     this.floorDuration = 3500;
@@ -46,6 +46,9 @@ export class Banana {
 
     /** @type {Phaser.GameObjects.Graphics | null} */
     this.indicator = null;
+
+    /** @type {Phaser.Tweens.Tween | null} */
+    this.indicatorPulseTween = null;
 
     /** @type {Phaser.GameObjects.Image | Phaser.GameObjects.Graphics | null} */
     this.bananaImage = null;
@@ -89,12 +92,45 @@ export class Banana {
         this.indicator.lineBetween(0, -6 * this.scale, 0, 6 * this.scale);
       },
       onComplete: () => {
-        if (this.indicator) {
-          this.indicator.destroy();
-          this.indicator = null;
+        if (this.indicator && this.indicator.active) {
+          this.drawLandedIndicator();
         }
       }
     });
+  }
+
+  /**
+   * Draws and maintains landed banana mine hitbox circle on the floor until despawn.
+   * @private
+   */
+  drawLandedIndicator() {
+    if (!this.indicator || !this.indicator.active) return;
+    this.indicator.clear();
+
+    // Clear outer boundary circle indicating exact banana mine hitbox area
+    this.indicator.lineStyle(2.5 * this.scale, 0xffd700, 0.85);
+    this.indicator.strokeCircle(0, 0, this.hitRadius);
+
+    // Hazard warning fill
+    this.indicator.fillStyle(0xffff00, 0.25);
+    this.indicator.fillCircle(0, 0, this.hitRadius);
+
+    // Crosshair lines in yellow
+    this.indicator.lineStyle(1.5 * this.scale, 0xffd700, 0.6);
+    this.indicator.lineBetween(-4 * this.scale, 0, 4 * this.scale, 0);
+    this.indicator.lineBetween(0, -4 * this.scale, 0, 4 * this.scale);
+
+    // Subtle pulsing animation so the banana mine zone stays clearly visible
+    if (!this.indicatorPulseTween && this.scene && this.scene.tweens) {
+      this.indicatorPulseTween = this.scene.tweens.add({
+        targets: this.indicator,
+        alpha: { from: 1, to: 0.5 },
+        duration: 400,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
   }
 
   /**
@@ -167,6 +203,7 @@ export class Banana {
         this.bananaImage.setDepth(this.ty);
         this.bananaImage.setScale(this.scale * 1.3);
       }
+      this.drawLandedIndicator();
     }
   }
 
@@ -232,9 +269,13 @@ export class Banana {
     // Player avoided banana! Award +3 points & floating popup text
     addGlobalScore(this.scene, 3, this.tx, this.ty);
 
-    if (this.bananaImage && this.bananaImage.active) {
+    const fadeTargets = [];
+    if (this.bananaImage && this.bananaImage.active) fadeTargets.push(this.bananaImage);
+    if (this.indicator && this.indicator.active) fadeTargets.push(this.indicator);
+
+    if (fadeTargets.length > 0) {
       this.scene.tweens.add({
-        targets: this.bananaImage,
+        targets: fadeTargets,
         alpha: 0,
         scale: 0.2,
         duration: 300,
@@ -253,6 +294,10 @@ export class Banana {
    * Cleanup method.
    */
   destroy() {
+    if (this.indicatorPulseTween) {
+      this.indicatorPulseTween.stop();
+      this.indicatorPulseTween = null;
+    }
     if (this.indicator) {
       this.indicator.destroy();
       this.indicator = null;

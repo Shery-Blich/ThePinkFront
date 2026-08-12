@@ -535,7 +535,13 @@ export class KotelScene extends Phaser.Scene {
     this.gameplayStarted = false;
 
     if (this.activeBananas) {
-      this.activeBananas.forEach((b) => b.destroy());
+      this.activeBananas.forEach((b) => {
+        if (b && !b.isResolved) {
+          b.triggerAvoid();
+        } else if (b) {
+          b.destroy();
+        }
+      });
       this.activeBananas = [];
     }
 

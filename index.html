@@ -1513,11 +1513,10 @@
         <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד 📢</button>
         <a class="popup-btn" href="https://www.instagram.com/ourknesset" target="_blank" rel="noopener noreferrer">עקבו אחרינו באינסטגרם</a>
         <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">בקרו באתר שלנו</a>
-        <a class="popup-btn" id="popup-itch-btn" href="https://sheryb.itch.io/" target="_blank" rel="noopener noreferrer">רוצים לשחק בעוד משחקים?</a>
       </div>
 
       <div class="play-again-row">
-        <button class="play-again-link" id="popup-replay-btn">שחקו שוב</button>
+        <a class="play-again-link" id="popup-itch-btn" href="https://sheryb.itch.io/" target="_blank" rel="noopener noreferrer">עוד משחקים</a>
       </div>
       <button class="play-again-link" id="popup-credits-btn">Meet the Team 🎬</button>
     </div>
@@ -1981,16 +1980,19 @@
     });
 
     // Replay Game action
-    document.getElementById('popup-replay-btn').addEventListener('click', () => {
-      window.hideScorePopup();
-      // Hide all HUDs
-      const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
-      huds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+    const replayBtn = document.getElementById('popup-replay-btn');
+    if (replayBtn) {
+      replayBtn.addEventListener('click', () => {
+        window.hideScorePopup();
+        // Hide all HUDs
+        const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
+        huds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        window.dispatchEvent(new Event('replay-game-event'));
       });
-      window.dispatchEvent(new Event('replay-game-event'));
-    });
+    }
 
     // Global Loading Screen Overlay Logic
     window.loadingScreenActive = true;
