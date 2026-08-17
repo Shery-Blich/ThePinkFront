@@ -76,6 +76,23 @@
       }
     }
 
+    /* Once gameplay has started, a JS-driven (debounced) fallback takes
+       over #orientation-warning / #game-container visibility instead of the
+       instant media query above — see the dedicated orientation-warning
+       <script> near the end of <body>. These overrides neutralize the
+       media query's effect on those two elements for the rest of the
+       session; the script then drives their actual display via inline
+       styles. (Higher specificity than the plain #id selectors above, and
+       matches regardless of source order.) #html-menu is intentionally
+       left alone — it's expected to already be hidden by the time
+       gameplay starts, and forcing it hidden in portrait is harmless. */
+    body.js-orientation-control #orientation-warning {
+      display: none;
+    }
+    body.js-orientation-control #game-container {
+      display: flex;
+    }
+
     .warning-content {
       display: flex;
       flex-direction: column;
@@ -853,6 +870,55 @@
       color: #d97706;
     }
 
+    #fullscreen-toggle-btn {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      background: #ff007f;
+      color: #ffffff;
+      border: 3px solid #ffffff;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px #000000;
+      transition: all 0.15s steps(4, end);
+    }
+
+    #fullscreen-toggle-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: #e60072;
+    }
+
+    #fullscreen-toggle-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
+    #fullscreen-toggle-btn svg {
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+
+    #fullscreen-toggle-btn .fs-icon-exit {
+      display: none;
+    }
+
+    #fullscreen-toggle-btn.is-fullscreen .fs-icon-enter {
+      display: none;
+    }
+
+    #fullscreen-toggle-btn.is-fullscreen .fs-icon-exit {
+      display: block;
+    }
+
     /* Credits styles */
     .credits-column {
       position: absolute;
@@ -1546,6 +1612,22 @@
   <div id="html-stats-hud" class="hud-chip"></div>
   <div id="html-speed-hud" class="hud-chip"></div>
 
+  <!-- Fullscreen Toggle Button -->
+  <button id="fullscreen-toggle-btn" type="button" aria-label="מסך מלא" title="מסך מלא">
+    <svg class="fs-icon fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    <svg class="fs-icon fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 14 10 14 10 20"></polyline>
+      <polyline points="20 10 14 10 14 4"></polyline>
+      <line x1="14" y1="10" x2="21" y2="3"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+  </button>
+
   <!-- HTML Dialogue System overlay -->
   <div id="html-dialog-container">
     <div id="html-dialog-box">
@@ -2188,6 +2270,255 @@
     // Load credits data immediately on page load to prevent delay/pop-in
     initCredits();
     window.showToastNotification = showToastNotification;
+  </script>
+
+  <script>
+    // Fullscreen toggle (Fullscreen API with vendor-prefixed fallbacks)
+    (function () {
+      const fsBtn = document.getElementById('fullscreen-toggle-btn');
+      const docEl = document.documentElement;
+
+      const requestFullscreenFn =
+        docEl.requestFullscreen ||
+        docEl.webkitRequestFullscreen ||
+        docEl.msRequestFullscreen;
+
+      // Feature-detect support before showing the button.
+      // iOS Safari doesn't support the Fullscreen API on arbitrary elements, only <video>.
+      if (!requestFullscreenFn) {
+        return;
+      }
+
+      fsBtn.style.display = 'flex';
+
+      function getFullscreenElement() {
+        return (
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement ||
+          null
+        );
+      }
+
+      function enterFullscreen() {
+        const fn = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+        if (fn) fn.call(docEl);
+      }
+
+      function exitFullscreen() {
+        const fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+        if (fn) fn.call(document);
+      }
+
+      function updateButtonState() {
+        const isFullscreen = !!getFullscreenElement();
+        // Stays visible in both states; the class swaps the icon between
+        // "enter fullscreen" and "exit fullscreen" so it reflects real state.
+        fsBtn.classList.toggle('is-fullscreen', isFullscreen);
+        fsBtn.setAttribute('aria-label', isFullscreen ? 'יציאה ממסך מלא' : 'מסך מלא');
+        fsBtn.setAttribute('title', isFullscreen ? 'יציאה ממסך מלא' : 'מסך מלא');
+        fsBtn.style.display = 'flex';
+      }
+
+      // --- Hardware/gesture back-button handling while in fullscreen ---
+      //
+      // Mobile browsers don't uniformly map the back gesture/button to "exit
+      // fullscreen". We emulate it with the History API guard pattern: push a
+      // harmless same-document history entry when entering fullscreen so the
+      // back button has something local to consume (triggering `popstate`
+      // instead of leaving the page), and pop that entry ourselves if
+      // fullscreen is exited some other way (Esc, browser UI) so it doesn't
+      // linger and silently eat the next back press.
+      function handlePopState() {
+        // If back navigation happened while we were fullscreen, treat it as
+        // an exit request. If we're not fullscreen, this popstate is either
+        // unrelated or is the one we triggered ourselves below (see
+        // handleFullscreenChange) — either way, do nothing.
+        if (getFullscreenElement()) {
+          exitFullscreen();
+        }
+      }
+
+      let lastKnownFullscreen = false;
+
+      // --- Best-effort landscape orientation lock, tied to fullscreen ---
+      //
+      // screen.orientation.lock() only reliably works while the document is
+      // fullscreen (and only on browsers that implement it at all — notably
+      // Safari on iOS and macOS support neither the property nor the
+      // method). Feature-detect and swallow rejections; this is purely an
+      // enhancement, the debounced portrait-warning fallback below (see the
+      // separate orientation-warning script) is what actually protects
+      // players when this isn't available or doesn't hold.
+      let orientationLockActive = false;
+
+      function lockOrientation() {
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+          screen.orientation
+            .lock('landscape')
+            .then(() => {
+              orientationLockActive = true;
+            })
+            .catch(() => {
+              // Permission denied, unsupported orientation type, browser
+              // quirks, etc. — no error UI, just fall back silently.
+              orientationLockActive = false;
+            });
+        } else {
+          orientationLockActive = false;
+        }
+      }
+
+      function unlockOrientation() {
+        if (screen.orientation && typeof screen.orientation.unlock === 'function') {
+          try {
+            screen.orientation.unlock();
+          } catch (e) {
+            // Ignore — best-effort only.
+          }
+        }
+        orientationLockActive = false;
+      }
+
+      function handleFullscreenChange() {
+        const isFullscreen = !!getFullscreenElement();
+        updateButtonState();
+
+        // Guard against redundant firings (e.g. a browser that happens to
+        // dispatch more than one of the fullscreenchange/webkit/ms event
+        // names for the same transition) re-running the push/back logic
+        // below for a state that hasn't actually changed.
+        if (isFullscreen === lastKnownFullscreen) {
+          return;
+        }
+        lastKnownFullscreen = isFullscreen;
+
+        if (isFullscreen) {
+          lockOrientation();
+          // Entered fullscreen: push a guard entry for the back button to consume.
+          try {
+            history.pushState({ fsGuard: true }, '', location.href);
+          } catch (e) {
+            // Ignore (e.g. sandboxed iframe restrictions on history mutation).
+          }
+        } else {
+          unlockOrientation();
+          if (history.state && history.state.fsGuard) {
+            // Exited fullscreen while the guard entry is still current, meaning
+            // this exit did NOT come from the popstate handler above (that path
+            // already consumes the guard entry via the browser's own back
+            // navigation before this handler runs, so history.state.fsGuard
+            // would no longer be set here). This is the Esc-key/browser-UI exit
+            // path — clean up the now-stale guard entry immediately so the next
+            // real back press isn't silently swallowed by it.
+            history.back();
+          }
+        }
+      }
+
+      fsBtn.addEventListener('click', () => {
+        if (getFullscreenElement()) {
+          exitFullscreen();
+        } else {
+          enterFullscreen();
+        }
+      });
+
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('msfullscreenchange', handleFullscreenChange);
+      window.addEventListener('popstate', handlePopState);
+
+      updateButtonState();
+    })();
+  </script>
+
+  <script>
+    // Debounced portrait-warning fallback, active only during gameplay.
+    //
+    // Before gameplay starts (window.gameStarted still false), visibility of
+    // #orientation-warning / #game-container / #html-menu is governed
+    // entirely by the instant `@media (orientation: portrait)` CSS rule in
+    // <style> above — untouched by this script.
+    //
+    // Once window.gameStarted becomes true (see the 'start-game' event
+    // dispatched by the #cta-btn click handler), a brief accidental tilt
+    // away from landscape shouldn't yank the warning up and interrupt play.
+    // So instead we debounce: only show the warning if portrait persists for
+    // ~1s, but restore instantly the moment it's landscape again. This is
+    // the fallback for browsers/devices where the fullscreen orientation
+    // lock (see the fullscreen <script> above) isn't supported or wasn't
+    // engaged (e.g. all of iOS Safari, or any player who never entered
+    // fullscreen), and a safety net if a lock silently doesn't hold.
+    (function () {
+      const orientationWarningEl = document.getElementById('orientation-warning');
+      const gameContainerEl = document.getElementById('game-container');
+      const mq = window.matchMedia('(orientation: portrait)');
+
+      const PORTRAIT_DEBOUNCE_MS = 1000;
+      let portraitDebounceTimer = null;
+
+      function applyOrientationState(isPortrait) {
+        orientationWarningEl.style.display = isPortrait ? 'flex' : 'none';
+        gameContainerEl.style.display = isPortrait ? 'none' : 'flex';
+      }
+
+      function activateJsControl() {
+        if (document.body.classList.contains('js-orientation-control')) {
+          return; // Already active — nothing to do.
+        }
+        document.body.classList.add('js-orientation-control');
+        // Sync immediately to the real current state (no debounce here —
+        // this just mirrors what the CSS rule would already be showing at
+        // this exact instant, e.g. a stretched/awkward dev-tools viewport
+        // caught in portrait right as the CTA is clicked). Debouncing only
+        // applies to *changes* that happen from here on.
+        applyOrientationState(mq.matches);
+      }
+
+      function handleOrientationMqChange(e) {
+        if (!window.gameStarted) {
+          // Gameplay hasn't started — leave this entirely to the CSS rule.
+          return;
+        }
+        if (portraitDebounceTimer) {
+          clearTimeout(portraitDebounceTimer);
+          portraitDebounceTimer = null;
+        }
+        if (e.matches) {
+          // Went to portrait: wait to see if it sticks before disrupting play.
+          portraitDebounceTimer = setTimeout(() => {
+            portraitDebounceTimer = null;
+            applyOrientationState(true);
+          }, PORTRAIT_DEBOUNCE_MS);
+        } else {
+          // Back to landscape: restore instantly, no debounce.
+          applyOrientationState(false);
+        }
+      }
+
+      // Registered unconditionally at page load — i.e. before gameplay can
+      // possibly start, since window.gameStarted only flips from a later
+      // user click on #cta-btn. handleOrientationMqChange itself no-ops
+      // until then.
+      if (mq.addEventListener) {
+        mq.addEventListener('change', handleOrientationMqChange);
+      } else if (mq.addListener) {
+        // Safari < 14 fallback (deprecated but still needed for old iOS).
+        mq.addListener(handleOrientationMqChange);
+      }
+
+      // Fires synchronously right after window.gameStarted = true (see the
+      // #cta-btn click handler) — this is what performs the handoff from
+      // CSS control to JS control, including the initial state sync.
+      window.addEventListener('start-game', activateJsControl);
+
+      // Extra safety net in case window.gameStarted is ever set true
+      // through some other path without the 'start-game' event firing.
+      if (window.gameStarted) {
+        activateJsControl();
+      }
+    })();
   </script>
 </body>
 </html>
