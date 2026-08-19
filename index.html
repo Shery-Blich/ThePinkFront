@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>החזית הוורודה</title>
@@ -634,24 +634,24 @@
     }
 
     #html-score-hud {
-      top: 16px;
-      right: 16px;
+      top: calc(16px + env(safe-area-inset-top));
+      right: calc(16px + env(safe-area-inset-right));
     }
 
     #html-lives-hud {
-      top: 70px;
-      right: 16px;
+      top: calc(70px + env(safe-area-inset-top));
+      right: calc(16px + env(safe-area-inset-right));
       color: #dc2626;
     }
 
     #html-stats-hud {
-      top: 16px;
-      left: 16px;
+      top: calc(16px + env(safe-area-inset-top));
+      left: calc(16px + env(safe-area-inset-left));
     }
 
     #html-dialog-container {
       position: fixed;
-      bottom: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
@@ -863,7 +863,7 @@
     }
 
     #html-speed-hud {
-      bottom: 90px;
+      bottom: calc(90px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
@@ -872,8 +872,8 @@
 
     #fullscreen-toggle-btn {
       position: fixed;
-      bottom: 16px;
-      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      right: calc(16px + env(safe-area-inset-right));
       z-index: 1000;
       display: none;
       align-items: center;
@@ -2461,6 +2461,16 @@
       function applyOrientationState(isPortrait) {
         orientationWarningEl.style.display = isPortrait ? 'flex' : 'none';
         gameContainerEl.style.display = isPortrait ? 'none' : 'flex';
+        // Toggling #game-container's display changes its on-screen box, but
+        // Phaser only recomputes its cached canvas bounds/pointer coordinate
+        // mapping on native resize/orientationchange events — neither of
+        // which this display toggle fires. Without an explicit refresh here,
+        // Phaser keeps using the pre-toggle bounds, so touch/click
+        // coordinates end up mapped to the wrong place on screen (e.g. after
+        // a landscape-to-portrait-to-landscape transition of the container).
+        if (window.game && window.game.scale) {
+          window.game.scale.refresh();
+        }
       }
 
       function activateJsControl() {

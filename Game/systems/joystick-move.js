@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import VirtualJoyStick from 'phaser3-rex-plugins/plugins/virtualjoystick.js';
+import VirtualJoyStick from 'phaser4-rex-plugins/plugins/virtualjoystick.js';
 
 /**
- * JoystickMove — Virtual joystick movement system for Phaser.js using phaser3-rex-plugins.
+ * JoystickMove — Virtual joystick movement system for Phaser.js using phaser4-rex-plugins.
  *
  * Fixed in the bottom-left of the screen. Controls character velocity
  * and direction proportionally to drag distance.
