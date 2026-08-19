@@ -215,7 +215,8 @@ export class KotelScene extends Phaser.Scene {
    */
   _runKotelIntroCutscene(busStopX, presStartX) {
     // 1. Bus drives in and stops at upper sidewalk bus stop (bus set on top depth layer 2000)
-    const bus = this.add.image(-120 * this.s, this.roadTop + 10 * this.s, 'egged_bus');
+    const busTextureKey = this.textures.exists('egged_bus_no_doors') ? 'egged_bus_no_doors' : 'egged_bus';
+    const bus = this.add.image(-120 * this.s, this.roadTop + 10 * this.s, busTextureKey);
     bus.setScale(this.s).setDepth(2000);
 
     this.tweens.add({

@@ -164,8 +164,6 @@ export class Day2Scene extends Phaser.Scene {
     // Initialize joystick
     this.joystick = new JoystickMove(this, this.player, {
       speed: this._baseRunSpeed,
-      leftOffset: 60,
-      bottomOffset: 60,
       horizontalOnly: true,
     });
 
