@@ -41,6 +41,15 @@ const config = {
   },
   input: {
     activePointers: 2,
+    // Force touch support on rather than relying on Phaser's one-time
+    // Device.input.touch capability snapshot (taken when the library first
+    // loads). If the page happens to load before touch is detectable — e.g.
+    // a desktop-sized viewport that's later resized into a touch-emulated
+    // or hybrid-device mode — that snapshot stays false for the rest of the
+    // page's life and Phaser never attaches its touch listeners at all,
+    // silently breaking touch/drag input (joystick, pedals, etc.) even
+    // though touchstart events are reaching the canvas just fine.
+    touch: true,
   },
   scene: [
     BootScene,
