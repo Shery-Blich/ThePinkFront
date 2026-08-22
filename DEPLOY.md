@@ -25,7 +25,8 @@ npm run deploy
 # then: firebase deploy --only hosting
 ```
 
-Live site: https://thepinkfront.web.app
+Live site: https://readysetvote.ourknesset.org  
+Legacy Firebase URL: https://thepinkfront.web.app
 
 ## Backend (optional, local Node — not Docker)
 Admin Google login and Mongo analytics need the Express API running separately:
@@ -42,6 +43,7 @@ Protects **only** `/admin` (the React admin app). The public game at `/` stays o
 
 1. Auth0 Application type: **SPA**
 2. Allowed Callback / Logout / Web Origins, for example:
+   - `https://readysetvote.ourknesset.org/admin/`
    - `https://thepinkfront.web.app/admin/`
    - `http://localhost:5173/` (local admin dev)
 3. Create `frontend/.env` from `frontend/.env.example` (`VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`)
