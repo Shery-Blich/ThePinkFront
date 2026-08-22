@@ -1,5 +1,6 @@
 import { runLevelTrivia, hasLevelTrivia } from './level-trivia.js';
 import { LivesManager } from './lives-manager.js';
+import { restoreStageStartScore } from './score-manager.js';
 
 /**
  * Helper to show victory screen and handle the transition to the level trivia.
@@ -14,35 +15,16 @@ export function showVictoryHelper(scene, sceneKey, title, message, buttonText = 
   
   const hasTrivia = hasLevelTrivia(sceneKey);
 
-  if (typeof window.showVictoryScreen === 'function') {
-    window.showVictoryScreen(
-      title,
-      message,
-      buttonText,
-      async () => {
-        try {
-          if (hasTrivia) {
-            await runLevelTrivia(scene, sceneKey);
-          }
-        } catch (err) {
-          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
-        } finally {
-          scene.events.emit('complete');
-        }
-      }
-    );
+  if (hasTrivia) {
+    runLevelTrivia(scene, sceneKey)
+      .catch((err) => {
+        console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
+      })
+      .finally(() => {
+        scene.events.emit('complete');
+      });
   } else {
-    if (hasTrivia) {
-      runLevelTrivia(scene, sceneKey)
-        .catch((err) => {
-          console.warn('[Trivia Warning] Fallback triggered on trivia error:', err);
-        })
-        .finally(() => {
-          scene.events.emit('complete');
-        });
-    } else {
-      scene.events.emit('complete');
-    }
+    scene.events.emit('complete');
   }
 }
 
@@ -59,11 +41,15 @@ export function showGameOverHelper(scene, title, message) {
       title,
       message,
       () => {
+        LivesManager.restoreStageStartLives();
+        restoreStageStartScore();
         scene.scene.restart();
       }
     );
   } else {
     scene.time.delayedCall(1000, () => {
+      LivesManager.restoreStageStartLives();
+      restoreStageStartScore();
       scene.scene.restart();
     });
   }

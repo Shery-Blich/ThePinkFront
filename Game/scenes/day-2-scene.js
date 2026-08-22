@@ -8,7 +8,7 @@ import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helpe
 import { LivesManager } from '../systems/lives-manager.js';
 import { MovementTutorial } from '../systems/movement-tutorial.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
-import { DAY_2_INTRO_DIALOG } from '../data/dialog-data.js';
+import { DAY_2_INTRO_DIALOG, DAY_2_VICTORY_DIALOG } from '../data/dialog-data.js';
 
 import { addGlobalScore } from '../systems/score-manager.js';
 
@@ -49,6 +49,45 @@ export class Day2Scene extends Phaser.Scene {
     this._ambientSoundEvent = null;
     this.backgroundImage = null;
     this._backgroundScrollX = 0;
+  }
+
+  /**
+   * Lazy-loads audio assets specific to this scene.
+   * Called automatically by Phaser before create(); runs the Loader if assets
+   * are missing from cache, so the download happens only the first time this
+   * scene starts rather than blocking the initial boot.
+   */
+  preload() {
+    // ── Images ──
+    if (!this.textures.exists('day2-bg')) {
+      this.load.image('day2-bg', 'assets/backgrounds/supermarket.webp');
+    }
+    if (!this.textures.exists('cashier-character')) {
+      this.load.image('cashier-character', 'assets/Characters/kupaee.webp');
+    }
+    if (!this.textures.exists('judge-portrait')) {
+      this.load.image('judge-portrait', 'assets/Characters/Judge.webp');
+    }
+    if (!this.textures.exists('nassi-1')) {
+      this.load.image('nassi-1', 'assets/Characters/Nassi-1.webp');
+    }
+    if (!this.textures.exists('nassi-2')) {
+      this.load.image('nassi-2', 'assets/Characters/Nassi-2.webp');
+    }
+    const groceryFiles = ['vegetable.webp', 'bread.webp', 'milk.webp', 'proteins.webp', 'snack.webp'];
+    groceryFiles.forEach((file) => {
+      const key = `grocery-${file.replace(/\.[^/.]+$/, '')}`;
+      if (!this.textures.exists(key)) {
+        this.load.image(key, `assets/groceries/${file}`);
+      }
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-middle')) {
+      this.load.audio('bg-middle', 'assets/sounds/music-for-middle.mp3');
+    }
+    if (!this.cache.audio.exists('collect')) {
+      this.load.audio('collect', 'assets/sounds/supermarket-collect.mp3');
+    }
   }
 
   create() {
@@ -127,8 +166,6 @@ export class Day2Scene extends Phaser.Scene {
     // Initialize joystick
     this.joystick = new JoystickMove(this, this.player, {
       speed: this._baseRunSpeed,
-      leftOffset: 60,
-      bottomOffset: 60,
       horizontalOnly: true,
     });
 
@@ -384,6 +421,7 @@ export class Day2Scene extends Phaser.Scene {
       } else {
         body.velocity && (body.velocity.y = this._jumpVelocity);
       }
+      if (typeof this.player.playJump === 'function') this.player.playJump();
       this._canDoubleJump = true;
       this._hasDoubleJumped = false;
       return;
@@ -395,6 +433,7 @@ export class Day2Scene extends Phaser.Scene {
       } else {
         body.velocity && (body.velocity.y = this._jumpVelocity);
       }
+      if (typeof this.player.playJump === 'function') this.player.playJump();
       this._hasDoubleJumped = true;
       this._canDoubleJump = false;
       return;
@@ -523,8 +562,9 @@ export class Day2Scene extends Phaser.Scene {
       this.player.body.moves = false;
     }
 
-    // Skip dialog and trigger scene over immediately
-    this.triggerSceneOver();
+    playDialogOnce('Day2Scene-victory', this, DAY_2_VICTORY_DIALOG, () => {
+      this.triggerSceneOver();
+    });
   }
 
   /**
@@ -696,10 +736,6 @@ export class Day2Scene extends Phaser.Scene {
           productObj.priceLabel.setColor('#ef4444');
         }
       });
-
-      if (typeof window.showToastNotification === 'function') {
-        window.showToastNotification('פיו! סיימתי את הקניות להיום!');
-      }
     }
   }
 
@@ -751,6 +787,9 @@ export class Day2Scene extends Phaser.Scene {
     if (this.player && this.player.body) {
       this.player.body.setVelocity(0, 0);
       this.player.body.moves = false;
+    }
+    if (this.player && typeof this.player.suppressAnimation === 'function') {
+      this.player.suppressAnimation();
     }
 
     // Falling / grey out animation

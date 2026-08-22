@@ -18,11 +18,29 @@ export class FinalScene extends Phaser.Scene {
     this.s = 1; // scale factor
   }
 
+  /**
+   * Defensive lazy-load for bg-end in case KotelScene was skipped.
+   * When the cache already has the key this is a no-op.
+   */
+  preload() {
+    // ── Final scene background ──
+    if (!this.textures.exists('telaviv-bg')) {
+      this.load.image('telaviv-bg', 'assets/backgrounds/TelAvivBackground.webp');
+    }
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-end')) {
+      this.load.audio('bg-end', 'assets/sounds/gaming-for-end.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
     this.s = Character.computeScale(height);
 
     startSceneMusic(this, 'bg-end');
+
+    // Reset camera fade from previous scene transition
+    this.cameras.main.fadeIn(400, 18, 18, 28);
 
     // --- Background Styling ---
     this.cameras.main.setBackgroundColor('#1a1a2e');

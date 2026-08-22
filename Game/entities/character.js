@@ -96,5 +96,7 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.setScale(scale);
     }
+    this._baseScaleX = this.scaleX;
+    this._baseScaleY = this.scaleY;
   }
 }

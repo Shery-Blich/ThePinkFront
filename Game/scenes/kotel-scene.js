@@ -8,6 +8,7 @@ import { LivesManager } from '../systems/lives-manager.js';
 import { addGlobalScore } from '../systems/score-manager.js';
 import { playDialogOnce } from '../systems/dialog-system.js';
 import { KOTEL_INTRO_DIALOG, KOTEL_VICTORY_DIALOG } from '../data/dialog-data.js';
+import { updateCharacterAnimation } from '../systems/character-animator.js';
 
 // How many character-widths wide the world is
 const WORLD_CHARS_WIDE = 120;
@@ -55,6 +56,31 @@ export class KotelScene extends Phaser.Scene {
     this.activeBananas = [];
     /** @type {number} Total bananas that hit/slid the player */
     this.bananasHitCount = 0;
+  }
+
+  /**
+   * Lazy-loads the shared end-game background music.
+   * bg-end is shared between KotelScene, KalpiScene, and FinalScene — only
+   * downloaded once; subsequent scenes find it in the audio cache.
+   */
+  preload() {
+    // ── Kotel panoramic background images ──
+    const imgAssets = [
+      ['kotel-start',        'assets/backgrounds/kotel-start.webp'],
+      ['kotel-mid',          'assets/backgrounds/kotel-mid.webp'],
+      ['kotel-end',          'assets/backgrounds/kotel-end.webp'],
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.webp'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.webp'],
+      ['nassi-2',            'assets/Characters/Nassi-2.webp'],
+      ['bus-stop',           'assets/Ellements/bus_stop_jerusalem_transparent.webp'],
+    ];
+    imgAssets.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-end')) {
+      this.load.audio('bg-end', 'assets/sounds/gaming-for-end.mp3');
+    }
   }
 
   create() {
@@ -189,7 +215,8 @@ export class KotelScene extends Phaser.Scene {
    */
   _runKotelIntroCutscene(busStopX, presStartX) {
     // 1. Bus drives in and stops at upper sidewalk bus stop (bus set on top depth layer 2000)
-    const bus = this.add.image(-120 * this.s, this.roadTop + 10 * this.s, 'egged_bus');
+    const busTextureKey = this.textures.exists('egged_bus_no_doors') ? 'egged_bus_no_doors' : 'egged_bus';
+    const bus = this.add.image(-120 * this.s, this.roadTop + 10 * this.s, busTextureKey);
     bus.setScale(this.s).setDepth(2000);
 
     this.tweens.add({
@@ -266,6 +293,11 @@ export class KotelScene extends Phaser.Scene {
         this.presidentLabel.setPosition(this.president.x, this.president.y - 24 * this.s);
         this.presidentLabel.setDepth(this.president.depth + 1);
       }
+
+      const presSpeed = this.president.body
+        ? Math.hypot(this.president.body.velocity.x, this.president.body.velocity.y)
+        : 0;
+      updateCharacterAnimation(this.president, presSpeed, 'crying');
     }
 
     // Update active landed bananas
@@ -302,16 +334,44 @@ export class KotelScene extends Phaser.Scene {
   }
 
   _buildKotelBackground(worldWidth, groundY) {
-    if (!this.textures.exists('kotel-bg')) return;
-    const texture = this.textures.get('kotel-bg').getSourceImage();
-    const scale = groundY / texture.height;
-    const displayWidth = texture.width * scale;
+    if (this.textures.exists('kotel-start') && this.textures.exists('kotel-mid') && this.textures.exists('kotel-end')) {
+      const sectionW = groundY * (16 / 9);
 
-    for (let x = displayWidth / 2; x < worldWidth + displayWidth / 2; x += displayWidth) {
-      const bg = this.add.image(x, groundY / 2, 'kotel-bg');
-      bg.setDisplaySize(displayWidth, groundY);
-      bg.setDepth(1);
+      // 1. Start section on far left (plaza entrance)
+      const startBg = this.add.image(sectionW / 2, groundY / 2, 'kotel-start');
+      startBg.setDisplaySize(sectionW, groundY);
+      startBg.setDepth(1);
+
+      // 2. End section on far right (golden dome view)
+      const endBg = this.add.image(worldWidth - sectionW / 2, groundY / 2, 'kotel-end');
+      endBg.setDisplaySize(sectionW, groundY);
+      endBg.setDepth(1);
+
+      // 3. Middle loopable section (tileable Kotel wall facade)
+      const midStartX = sectionW;
+      const midEndX = worldWidth - sectionW;
+      const midWidth = midEndX - midStartX;
+
+      if (midWidth > 0) {
+        const midBg = this.add.tileSprite(midStartX + midWidth / 2, groundY / 2, midWidth, groundY, 'kotel-mid');
+        const texture = this.textures.get('kotel-mid').getSourceImage();
+        if (texture && texture.height) {
+          const scaleY = groundY / texture.height;
+          midBg.setTileScale(scaleY, scaleY);
+        }
+        midBg.setDepth(1);
+      }
+      return;
     }
+
+    const bgKey = this.textures.exists('kotel-panoramic-bg')
+      ? 'kotel-panoramic-bg'
+      : (this.textures.exists('kotel-bg') ? 'kotel-bg' : null);
+    if (!bgKey) return;
+
+    const bg = this.add.image(worldWidth / 2, groundY / 2, bgKey);
+    bg.setDisplaySize(worldWidth, groundY);
+    bg.setDepth(1);
   }
 
   _buildJerusalemPlaza(worldWidth, roadHeight) {
@@ -476,7 +536,13 @@ export class KotelScene extends Phaser.Scene {
     this.gameplayStarted = false;
 
     if (this.activeBananas) {
-      this.activeBananas.forEach((b) => b.destroy());
+      this.activeBananas.forEach((b) => {
+        if (b && !b.isResolved) {
+          b.triggerAvoid();
+        } else if (b) {
+          b.destroy();
+        }
+      });
       this.activeBananas = [];
     }
 

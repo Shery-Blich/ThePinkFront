@@ -29,6 +29,52 @@ export class Day3Scene extends Phaser.Scene {
     this.supermarketX = 0;
   }
 
+  /**
+   * Lazy-loads assets for Day 3 cutscene, and background loads Day 4 assets
+   * so transition to Day 4 catching game is instant.
+   */
+  preload() {
+    if (!this.textures.exists('day3-bg')) {
+      this.load.image('day3-bg', 'assets/backgrounds/Kiryat shmona.webp');
+    }
+    if (!this.textures.exists('bus-stop')) {
+      this.load.image('bus-stop', 'assets/Ellements/bus_stop_jerusalem_transparent.webp');
+    }
+    if (!this.cache.audio.exists('bg-sessions')) {
+      this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
+    }
+
+    // ── Preload Day 4 assets in background while Day 3 plays ──
+    const day4CharAssets = [
+      ['char-arabia',   'assets/Characters/Arabia.webp'],
+      ['char-ethiopia', 'assets/Characters/Etiopit.webp'],
+      ['char-haredi',   'assets/Characters/haredi.webp'],
+      ['char-dati',     'assets/Characters/Dati.webp'],
+      ['char-shiri',    'assets/Characters/Shiri-front.webp'],
+      ['char-gay',      'assets/Characters/Gay-Man.webp'],
+      ['char-shlomi',   'assets/Characters/Shlomi.webp'],
+    ];
+    day4CharAssets.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+
+    if (!this.cache.audio.exists('bg-day4')) {
+      this.load.audio('bg-day4', 'assets/sounds/scene-4-music.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-fail-gong')) {
+      this.load.audio('sfx-fail-gong', 'assets/sounds/fail-gong.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-wrong')) {
+      this.load.audio('sfx-wrong', 'assets/sounds/wrong-answer .mp3');
+    }
+    if (!this.cache.audio.exists('sfx-correct')) {
+      this.load.audio('sfx-correct', 'assets/sounds/correct answer.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-catch-mix')) {
+      this.load.audio('sfx-catch-mix', 'assets/sounds/catch-mix.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 
@@ -210,6 +256,8 @@ export class Day3Scene extends Phaser.Scene {
   }
 
   _playerExitsSupermarket(width, busStopX, busStopY) {
+    if (this.player) this.player.suppressAnimation();
+
     this.tweens.add({
       targets: this.player,
       y: this.roadCenterY,
@@ -362,7 +410,7 @@ export class Day3Scene extends Phaser.Scene {
       this,
       'Day3Scene',
       'לירושלים!',
-      'לירושלים!'
+      'עולים לעיר הבירה לממש את זכות הבחירה!'
     );
   }
 }

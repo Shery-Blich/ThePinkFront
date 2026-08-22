@@ -7,6 +7,7 @@
 export class LivesManager {
   static maxLives = 5;
   static currentLives = 5;
+  static stageStartLives = 5;
 
   /**
    * Get the current remaining lives count.
@@ -26,10 +27,26 @@ export class LivesManager {
   }
 
   /**
-   * Reset lives to maximum (3) and update HUD.
+   * Reset lives to maximum (5) when starting a new game.
    */
   static resetLives() {
     this.currentLives = this.maxLives;
+    this.stageStartLives = this.maxLives;
+    this.updateHUD();
+  }
+
+  /**
+   * Record current lives at the start of a stage.
+   */
+  static recordStageStartLives() {
+    this.stageStartLives = this.currentLives;
+  }
+
+  /**
+   * Restore lives to what they were at the start of the current stage on Game Over retry.
+   */
+  static restoreStageStartLives() {
+    this.currentLives = Math.max(1, this.stageStartLives);
     this.updateHUD();
   }
 

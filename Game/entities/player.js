@@ -1,5 +1,12 @@
 import { Character } from './character.js';
 import { JoystickMove } from '../systems/joystick-move.js';
+import {
+  updateCharacterAnimation,
+  stopCharacterAnimation,
+  resetCharacterVisual,
+  playJumpAnimation,
+  playJumpLandAnimation,
+} from '../systems/character-animator.js';
 
 /**
  * Player — The player-controlled character.
@@ -35,6 +42,8 @@ export class Player extends Character {
       const targetHeight = 20 * s;
       const targetWidth = targetHeight * aspectRatio;
       this.setDisplaySize(targetWidth, targetHeight);
+      this._baseScaleX = this.scaleX;
+      this._baseScaleY = this.scaleY;
       this._setupCollisionBody();
     }
 
@@ -136,6 +145,7 @@ export class Player extends Character {
   slide(durationMs = 300) {
     if (this.isSliding) return;
     this.isSliding = true;
+    resetCharacterVisual(this);
 
     // Temporarily disable input
     this.disable();
@@ -202,6 +212,7 @@ export class Player extends Character {
 
     this.isSliding = true;
     this.isInvulnerable = true;
+    resetCharacterVisual(this);
 
     // Disable input during knockback
     this.disable();
@@ -288,12 +299,74 @@ export class Player extends Character {
   }
 
   /**
+   * Stop the run/idle tween animator and hold it off (angle/scale reset to
+   * base). Use before a scripted cutscene tween takes over the same
+   * properties (game-over falls, shrink-into-doorway fades, etc.) — the
+   * looping animator tween would otherwise keep fighting it every frame.
+   */
+  suppressAnimation() {
+    this._animationSuppressed = true;
+    resetCharacterVisual(this);
+  }
+
+  /**
+   * Resume the run/idle tween animator after suppressAnimation().
+   */
+  resumeAnimation() {
+    this._animationSuppressed = false;
+  }
+
+  /**
+   * Reset internal jump tracking flags.
+   */
+  _resetJumpFlags() {
+    this._isJumping = false;
+    this._jumpLanding = false;
+    this._jumpLeftGround = false;
+  }
+
+  /**
+   * Trigger the jump launch animation. Call once per jump/double-jump when
+   * the physics velocity is set (e.g. from a scene's jump input handler).
+   */
+  playJump() {
+    this._resetJumpFlags();
+    this._isJumping = true;
+    playJumpAnimation(this);
+  }
+
+  /**
    * Update lifecycle (called each frame).
    */
   update() {
     if (this.movement) {
       this.movement.update();
     }
+
+    if (this._isJumping) {
+      const grounded = !!(this.body && (this.body.blocked.down || this.body.touching.down));
+      const movingUp = !!(this.body && this.body.velocity.y < -20);
+
+      if (movingUp || !grounded) {
+        this._jumpLeftGround = true;
+      }
+
+      if (grounded && !movingUp) {
+        if (!this._jumpLanding) {
+          this._jumpLanding = true;
+          playJumpLandAnimation(this, () => {
+            this._resetJumpFlags();
+          });
+        } else if (this._animState !== 'jump-land' && (!this._animTweens || this._animTweens.length === 0)) {
+          // Safety recovery: landing animation ended or was stopped without callback
+          resetCharacterVisual(this);
+        }
+      }
+    } else if (!this.isSliding && !this._animationSuppressed && this.body) {
+      const speed = Math.hypot(this.body.velocity.x, this.body.velocity.y);
+      updateCharacterAnimation(this, speed, 'breathe');
+    }
+
     this.depthSort();
   }
 
@@ -356,6 +429,7 @@ export class Player extends Character {
    * Clean up movement resources on destruction.
    */
   destroy(fromScene) {
+    stopCharacterAnimation(this);
     if (this.movement) {
       this.movement.destroy();
       this.movement = null;

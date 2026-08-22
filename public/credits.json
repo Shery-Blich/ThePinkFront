@@ -3,11 +3,26 @@
   "subtitle": "A game by Our Knesset",
   "roles": [
     {
+      "role": "Project and Product Manager",
+      "names": [
+        "Yuval Cohen Tal"
+      ]
+    },
+    {
+      "role": "Lead Concept Artist",
+      "names": [
+        {
+          "name": "Shira Noc",
+          "link": "https://shira-noc.com/"
+        }
+      ]
+    },
+    {
       "role": "Lead Game Developer & Game Designer",
       "names": [
         {
-          "name": "SheryB\nWant to play more games?",
-          "link": "https://sheryb.itch.io/"
+          "name": "SheryB",
+          "link": "https://github.com/Shery-Blich"
         }
       ]
     },
@@ -27,15 +42,6 @@
       ]
     },
     {
-      "role": "Lead Concept Artist",
-      "names": [
-        {
-          "name": "Shira Noc",
-          "link": "https://shira-noc.com/"
-        }
-      ]
-    },
-    {
       "role": "Software Developers",
       "names": [
         "GuyNa",
@@ -44,7 +50,7 @@
       ]
     },
     {
-      "role": "Product Manager",
+      "role": "Dyekathon Product Manager",
       "names": [
         "Sharon David"
       ]

@@ -71,6 +71,29 @@ export class KalpiScene extends Phaser.Scene {
 
   }
 
+  /**
+   * Defensive lazy-load for bg-end; KotelScene will normally have fetched
+   * this already, so this is a no-op on repeat visits to the end-game sequence.
+   */
+  preload() {
+    // ── Kalpi scene images ──
+    const imgAssets = [
+      ['kalpi',          'assets/Ellements/kalpi.webp'],
+      ['day5-bg',        'assets/Ellements/kalpi.webp'],
+      ['kalpi-bg',       'assets/backgrounds/KalpiSceneBackground.webp'],
+      // Fallbacks used by kalpi-scene if kalpi-bg is missing
+      ['kotel-panoramic-bg', 'assets/backgrounds/Kotel-panoramic.webp'],
+      ['kotel-bg',           'assets/backgrounds/Kotel-panoramic.webp'],
+    ];
+    imgAssets.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('bg-end')) {
+      this.load.audio('bg-end', 'assets/sounds/gaming-for-end.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 
@@ -96,6 +119,7 @@ export class KalpiScene extends Phaser.Scene {
     const roadCenterY = this.roadTop + roadHeight / 2;
 
     this.cameras.main.setBackgroundColor(0x1a1a2e);
+    this.cameras.main.fadeIn(400, 18, 18, 28);
 
     // 1. Kotel background
     this._buildBackground(worldWidth, this.roadTop);
@@ -121,7 +145,7 @@ export class KalpiScene extends Phaser.Scene {
     this.kalpi = this.physics.add.sprite(kalpiX, kalpiY, kalpiTex);
     this.kalpi.setOrigin(0.5, 1);
     
-    const kHeight = 36 * this.s;
+    const kHeight = 64 * this.s;
     const kAspect = (this.kalpi.width || 32) / (this.kalpi.height || 32);
     this.kalpi.setDisplaySize(kAspect * kHeight, kHeight);
     this.kalpi.setDepth(this.kalpi.y);
@@ -137,10 +161,14 @@ export class KalpiScene extends Phaser.Scene {
     // 7. HUD setup
     this._createHUD();
 
-    // 8. Dialogue & gameplay start
+    // 8. Opening dialogue popup before gameplay starts
+    this.gameplayStarted = false;
+
     playDialogOnce("KalpiScene-intro", this, KALPI_INTRO_DIALOG, () => {
-      this.player.enable();
       this.gameplayStarted = true;
+      if (this.player) {
+        this.player.enable();
+      }
 
       // Start 2-second predictive block destruction timer
       this.predictiveTimerEvent = this.time.addEvent({
@@ -188,7 +216,11 @@ export class KalpiScene extends Phaser.Scene {
 
   /** @private */
   _buildBackground(worldWidth, groundY) {
-    const bgKey = this.textures.exists('kalpi-bg') ? 'kalpi-bg' : 'kotel-bg';
+    const bgKey = this.textures.exists('kalpi-bg')
+      ? 'kalpi-bg'
+      : (this.textures.exists('kotel-panoramic-bg') ? 'kotel-panoramic-bg' : 'kotel-bg');
+    if (!this.textures.exists(bgKey)) return;
+
     const bgTile = this.add.tileSprite(0, 0, worldWidth, groundY, bgKey);
     bgTile.setOrigin(0, 0);
     const texture = this.textures.get(bgKey).getSourceImage();

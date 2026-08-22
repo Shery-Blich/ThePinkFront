@@ -67,6 +67,12 @@ export class Day1Scene extends Phaser.Scene {
     this.superLabel = null;
   }
 
+  preload() {
+    if (!this.cache.audio.exists('bg-sessions')) {
+      this.load.audio('bg-sessions', 'assets/sounds/session-1-3-background.mp3');
+    }
+  }
+
   create() {
     const { width, height } = this.scale;
 
@@ -118,8 +124,9 @@ export class Day1Scene extends Phaser.Scene {
     const { group, npcs } = NPC.spawnGroup(this, npcPositions, this.s);
     this.npcGroup = group;
     this.npcList = npcs;
+    const npcTextures = ["npc-yuval", "npc-shiri", "npc-dana"];
     this.npcList.forEach((npc, index) => {
-      const textureKey = index % 2 === 0 ? "npc-yuval" : "npc-shiri";
+      const textureKey = npcTextures[index % npcTextures.length];
       if (
         this.textures.exists(textureKey) &&
         typeof npc.setTexture === "function"
@@ -363,6 +370,7 @@ export class Day1Scene extends Phaser.Scene {
 
     if (this.player) this.player.disable();
     if (this.droneManager) this.droneManager.stop();
+    if (this.player) this.player.suppressAnimation();
 
     // Falling / grey out animation
     this.tweens.add({
@@ -437,6 +445,7 @@ export class Day1Scene extends Phaser.Scene {
       if (this.player.body) {
         this.player.body.checkCollision.none = true;
       }
+      this.player.suppressAnimation();
     }
     if (this.droneManager) this.droneManager.stop();
 

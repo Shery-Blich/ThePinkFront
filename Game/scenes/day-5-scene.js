@@ -50,6 +50,32 @@ export class Day5Scene extends Phaser.Scene {
     this._comboDecayTimer = null;
   }
 
+  /**
+   * Lazy-loads audio assets exclusive to Day 5 (cat-catching mini-game).
+   * Only downloads assets the first time this scene is entered.
+   */
+  preload() {
+    // ── Character portraits used in the Day 5 cat-catching scene ──
+    const portraits = [
+      ['cashier-character', 'assets/Characters/kupaee.webp'],
+      ['npc-yuval',         'assets/Characters/Yuval.webp'],
+      ['npc-shiri',         'assets/Characters/Shiri.webp'],
+      ['judge-portrait',    'assets/Characters/Judge.webp'],
+      ['nassi-1',           'assets/Characters/Nassi-1.webp'],
+      ['nassi-2',           'assets/Characters/Nassi-2.webp'],
+    ];
+    portraits.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    });
+    // ── Audio ──
+    if (!this.cache.audio.exists('sfx-meow')) {
+      this.load.audio('sfx-meow', 'assets/sounds/meow.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-catbag')) {
+      this.load.audio('sfx-catbag', 'assets/sounds/cat-in-a-bag.mp3');
+    }
+  }
+
   create() {
     this._score = 0;
     this._cats = [];

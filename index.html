@@ -2,16 +2,19 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>החזית הוורודה</title>
+  <!-- Preload critical above-the-fold resources so they start downloading
+       in parallel with HTML parsing rather than waiting for CSS to be parsed. -->
+  <link rel="preload" as="image" href="assets/backgrounds/background.webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Rubik:wght@400;700;900&display=swap" />
   <style>
-    /* Menu Google Fonts Import */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Rubik:wght@400;700;900&display=swap');
-
     * {
       margin: 0;
       padding: 0;
@@ -78,6 +81,23 @@
       #html-menu {
         display: none !important;
       }
+    }
+
+    /* Once gameplay has started, a JS-driven (debounced) fallback takes
+       over #orientation-warning / #game-container visibility instead of the
+       instant media query above — see the dedicated orientation-warning
+       <script> near the end of <body>. These overrides neutralize the
+       media query's effect on those two elements for the rest of the
+       session; the script then drives their actual display via inline
+       styles. (Higher specificity than the plain #id selectors above, and
+       matches regardless of source order.) #html-menu is intentionally
+       left alone — it's expected to already be hidden by the time
+       gameplay starts, and forcing it hidden in portrait is harmless. */
+    body.js-orientation-control #orientation-warning {
+      display: none;
+    }
+    body.js-orientation-control #game-container {
+      display: flex;
     }
 
     .warning-content {
@@ -160,9 +180,9 @@
       left: 0;
       width: 100%;
       height: 100%;
-      /* Relative path works with Vite base `./` (local / GitHub Pages) */
+      /* Relative path works with Vite base `./` (local / GitHub Pages / Firebase) */
       background-color: #241442;
-      background-image: url('assets/backgrounds/background.jpg');
+      background-image: url('assets/backgrounds/background.webp');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -434,6 +454,7 @@
       left: 0;
       width: 100%;
       height: 100%;
+      height: 100dvh;
       z-index: 1001; /* Above welcome menu */
       background: rgba(18, 16, 28, 0.85);
       backdrop-filter: blur(8px);
@@ -445,6 +466,28 @@
       opacity: 0;
       transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
       direction: ltr; /* Force Left-to-Right layout grid flow */
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 1.5rem 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #html-score-popup::-webkit-scrollbar {
+      width: 8px;
+    }
+    #html-score-popup::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    #html-score-popup::-webkit-scrollbar-thumb {
+      background: #6b5a43;
+      border-radius: 4px;
+    }
+    #html-score-popup::-webkit-scrollbar-thumb:hover {
+      background: #201c18;
+    }
+    #html-score-popup {
+      scrollbar-width: thin;
+      scrollbar-color: #6b5a43 rgba(0, 0, 0, 0.2);
     }
 
     #html-score-popup.active {
@@ -458,15 +501,17 @@
       padding: 1.75rem;
       width: 90%;
       max-width: 440px;
+      margin: auto;
       text-align: center;
       position: relative;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1rem;
       border-radius: 8px;
       direction: rtl; /* Keep endgame menu RTL for Hebrew text layout support */
+      box-sizing: border-box;
+      flex-shrink: 0;
     }
 
     #html-score-popup .popup-container::before {
@@ -542,6 +587,26 @@
       box-shadow: none;
     }
 
+    #html-score-popup #popup-share-btn {
+      background: #16a34a;
+      color: #ffffff;
+      animation: sharePulse 2s ease-in-out infinite alternate;
+    }
+
+    #html-score-popup #popup-share-btn:hover {
+      background: #22c55e;
+    }
+
+    @keyframes sharePulse {
+      0% {
+        box-shadow: 4px 4px 0px #000000;
+      }
+      100% {
+        box-shadow: 4px 4px 0px #000000, 0 0 14px rgba(34, 197, 94, 0.7);
+        transform: scale(1.02);
+      }
+    }
+
     #html-score-popup .play-again-link {
       font-size: 0.8rem;
       font-weight: 700;
@@ -558,6 +623,15 @@
     #html-score-popup .play-again-link:hover {
       color: #201c18;
       transform: scale(1.05);
+    }
+
+    #html-score-popup .play-again-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
     }
 
     /* HTML Toast Notification */
@@ -602,24 +676,24 @@
     }
 
     #html-score-hud {
-      top: 16px;
-      right: 16px;
+      top: calc(16px + env(safe-area-inset-top));
+      right: calc(16px + env(safe-area-inset-right));
     }
 
     #html-lives-hud {
-      top: 70px;
-      right: 16px;
+      top: calc(70px + env(safe-area-inset-top));
+      right: calc(16px + env(safe-area-inset-right));
       color: #dc2626;
     }
 
     #html-stats-hud {
-      top: 16px;
-      left: 16px;
+      top: calc(16px + env(safe-area-inset-top));
+      left: calc(16px + env(safe-area-inset-left));
     }
 
     #html-dialog-container {
       position: fixed;
-      bottom: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
@@ -831,11 +905,60 @@
     }
 
     #html-speed-hud {
-      bottom: 90px;
+      bottom: calc(90px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
       color: #d97706;
+    }
+
+    #fullscreen-toggle-btn {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      right: calc(16px + env(safe-area-inset-right));
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      background: #ff007f;
+      color: #ffffff;
+      border: 3px solid #ffffff;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px #000000;
+      transition: all 0.15s steps(4, end);
+    }
+
+    #fullscreen-toggle-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: #e60072;
+    }
+
+    #fullscreen-toggle-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
+    #fullscreen-toggle-btn svg {
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+
+    #fullscreen-toggle-btn .fs-icon-exit {
+      display: none;
+    }
+
+    #fullscreen-toggle-btn.is-fullscreen .fs-icon-enter {
+      display: none;
+    }
+
+    #fullscreen-toggle-btn.is-fullscreen .fs-icon-exit {
+      display: block;
     }
 
     /* Credits styles */
@@ -1056,52 +1179,87 @@
       }
     }
 
-    /* Responsive scaling for mobile devices in landscape mode */
-    @media (max-height: 480px) and (orientation: landscape) {
-      #html-victory-box, #html-gameover-box, #html-score-popup .popup-container {
-        padding: 0.6rem 1rem;
-        max-width: 480px;
-        width: 95%;
-        max-height: 95vh;
-        overflow-y: auto;
-        border-width: 2.5px;
-        gap: 0.4rem;
-      }
-      #html-victory-title, #html-gameover-title {
-        font-size: clamp(1.2rem, 3.5vw, 1.6rem);
-        margin-bottom: 0.3rem;
-      }
-      #html-victory-message, #html-gameover-message {
-        font-size: clamp(0.8rem, 2vw, 0.95rem);
-        margin-bottom: 0.6rem;
-        line-height: 1.3;
-      }
-      #html-victory-btn, #html-gameover-btn, #html-score-popup .popup-btn {
-        padding: 0.4rem 1rem;
-        font-size: 0.9rem;
-        margin-top: 0.1rem;
-        max-width: 220px;
+    /* Responsive scaling for mobile devices & small height/width screens */
+    @media (max-height: 720px) {
+      #html-score-popup .popup-container {
+        padding: 1rem 1.15rem;
+        gap: 0.6rem;
       }
       #html-score-popup .star-badge {
-        font-size: 1rem;
+        font-size: 1.05rem;
       }
       #html-score-popup .popup-title {
-        font-size: 1.1rem;
+        font-size: clamp(1.1rem, 3.2vw, 1.4rem);
+        margin-bottom: 0px;
       }
       #html-score-popup .popup-subtitle {
-        font-size: 0.8rem;
+        font-size: clamp(0.78rem, 1.5vw, 0.88rem);
       }
       #html-score-popup .button-group {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
+        margin-top: 0.15rem;
+      }
+      #html-score-popup .popup-btn {
+        padding: 0.5rem 0.85rem;
+        font-size: 0.8rem;
+      }
+      #html-score-popup .play-again-link {
+        font-size: 0.75rem;
+        margin-top: 0.15rem;
+      }
+    }
+
+    @media (max-height: 560px) {
+      #html-victory-box, #html-gameover-box, #html-score-popup .popup-container {
+        padding: 0.6rem 0.8rem;
+        max-width: 480px;
+        width: 95%;
+        border-width: 2.5px;
+        gap: 0.35rem;
+      }
+      #html-victory-title, #html-gameover-title {
+        font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+        margin-bottom: 0.2rem;
+      }
+      #html-victory-message, #html-gameover-message {
+        font-size: clamp(0.75rem, 2vw, 0.85rem);
+        margin-bottom: 0.4rem;
+        line-height: 1.25;
+      }
+      #html-victory-btn, #html-gameover-btn, #html-score-popup .popup-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.78rem;
+        margin-top: 0.1rem;
+      }
+      #html-score-popup .star-badge {
+        font-size: 0.95rem;
+      }
+      #html-score-popup .popup-title {
+        font-size: 1rem;
+      }
+      #html-score-popup .popup-subtitle {
+        font-size: 0.75rem;
+      }
+      #html-score-popup .button-group {
+        gap: 0.3rem;
         margin-top: 0.1rem;
       }
       #html-score-popup .play-again-link {
         margin-top: 0.1rem;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         padding: 0.1rem;
+      }
+    }
+
+    @media (max-width: 420px) {
+      #html-score-popup .popup-container {
+        width: 94%;
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+      }
+      #html-score-popup .popup-btn {
+        font-size: 0.8rem;
+        padding: 0.55rem 0.75rem;
       }
     }
 
@@ -1174,7 +1332,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: #12121c;
+      background-color: #0b192c;
       font-family: 'Outfit', 'Rubik', sans-serif;
       color: #ffffff;
       display: flex;
@@ -1207,27 +1365,100 @@
     #loading-day-title {
       font-size: clamp(1.8rem, 4vw, 2.8rem);
       font-weight: 900;
-      color: #ff007f;
+      color: #38bdf8;
       text-shadow: 2px 2px 0px #000000;
     }
 
     #loading-day-subtitle {
       font-size: clamp(1rem, 2vw, 1.4rem);
       font-weight: 700;
-      color: #f48fb1;
+      color: #bae6fd;
     }
 
     .loading-icon-pixel {
-      font-size: clamp(2.5rem, 6vw, 4rem);
-      animation: loadingBounce 0.8s infinite alternate ease-in-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       user-select: none;
+      animation: loaderPunchContainer 1.6s infinite ease-in-out;
+    }
+
+    .loader-anim-container {
+      position: relative;
+      width: clamp(76px, 12vw, 96px);
+      height: clamp(106px, 17vw, 135px);
+    }
+
+    .loader-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
+      will-change: opacity, transform;
+    }
+
+    .loader-in {
+      animation: loaderPunchIn 1.6s infinite ease-in-out;
+    }
+
+    .loader-out {
+      animation: loaderPunchOut 1.6s infinite ease-in-out;
+    }
+
+    /* Container bounce + punch pulse right at the frame switch */
+    @keyframes loaderPunchContainer {
+      0%, 100% {
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+      40% {
+        transform: translateY(-4px) scale(0.94) rotate(-1deg);
+      }
+      46% {
+        transform: translateY(-10px) scale(1.16) rotate(3deg);
+      }
+      52% {
+        transform: translateY(-6px) scale(1) rotate(0deg);
+      }
+      90% {
+        transform: translateY(-4px) scale(0.94) rotate(1deg);
+      }
+      96% {
+        transform: translateY(-10px) scale(1.16) rotate(-3deg);
+      }
+    }
+
+    @keyframes loaderPunchIn {
+      0%, 42% {
+        opacity: 1;
+      }
+      46%, 92% {
+        opacity: 0;
+      }
+      96%, 100% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes loaderPunchOut {
+      0%, 42% {
+        opacity: 0;
+      }
+      46%, 92% {
+        opacity: 1;
+      }
+      96%, 100% {
+        opacity: 0;
+      }
     }
 
     .loading-progress-container {
       width: 300px;
       height: 16px;
-      border: 2px solid #ffffff;
-      background: #1e1e2f;
+      border: 2px solid #0ea5e9;
+      background: #0b192c;
       border-radius: 8px;
       position: relative;
       overflow: hidden;
@@ -1240,14 +1471,14 @@
       top: 0;
       bottom: 0;
       width: 0%;
-      background: linear-gradient(270deg, #ff007f, #f48fb1);
+      background: linear-gradient(270deg, #0284c7, #0ea5e9);
       transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .loading-tip-box {
       max-width: 480px;
-      background: rgba(30, 30, 47, 0.6);
-      border: 2px dashed #ff007f;
+      background: rgba(11, 25, 44, 0.7);
+      border: 2px dashed #0ea5e9;
       border-radius: 8px;
       padding: 1rem;
       box-shadow: 4px 4px 0px #000000;
@@ -1257,7 +1488,7 @@
     .loading-tip-label {
       font-size: 0.8rem;
       font-weight: 900;
-      color: #ff007f;
+      color: #38bdf8;
       text-transform: uppercase;
       margin-bottom: 0.4rem;
       letter-spacing: 1px;
@@ -1266,17 +1497,8 @@
     #loading-tip-text {
       font-size: clamp(0.85rem, 1.8vw, 1.05rem);
       font-weight: 700;
-      color: #a0a0b0;
+      color: #bae6fd;
       line-height: 1.4;
-    }
-
-    @keyframes loadingBounce {
-      0% {
-        transform: translateY(0) scale(1);
-      }
-      100% {
-        transform: translateY(-10px) scale(0.95);
-      }
     }
 
     /* Responsive adjustments for landscape / low-height mobile viewports */
@@ -1316,7 +1538,12 @@
     </div>
     
     <div class="loading-middle">
-      <div class="loading-icon-pixel">💖</div>
+      <div class="loading-icon-pixel">
+        <div class="loader-anim-container">
+          <img src="assets/Ellements/loader-in.webp" alt="Loader In" class="loader-img loader-in" />
+          <img src="assets/Ellements/loader-out.webp" alt="Loader Out" class="loader-img loader-out" />
+        </div>
+      </div>
       <div class="loading-progress-container">
         <div id="loading-progress-fill"></div>
       </div>
@@ -1324,7 +1551,7 @@
 
     <div class="loading-tip-box">
       <div class="loading-tip-label">טיפ בחירות</div>
-      <div id="loading-tip-text">טוען טיפים מועילים...</div>
+      <div id="loading-tip-text">ההצבעה בקלפי היא סודית על פי חוק. אסור לצלם מאחורי הפרגוד!</div>
     </div>
   </div>
 
@@ -1391,12 +1618,14 @@
       <p class="popup-subtitle" id="popup-score-subtitle">0 תשובות נכונות</p>
 
       <div class="button-group">
-        <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד</button>
+        <button class="popup-btn" id="popup-share-btn">שתפו את הניקוד 📢</button>
         <a class="popup-btn" href="https://www.instagram.com/ourknesset" target="_blank" rel="noopener noreferrer">עקבו אחרינו באינסטגרם</a>
-        <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">בקרו באתר שלנו למידע נוסף</a>
+        <a class="popup-btn" href="https://www.ourknesset.org" target="_blank" rel="noopener noreferrer">בקרו באתר שלנו</a>
       </div>
 
-      <button class="play-again-link" id="popup-replay-btn">שחקו שוב</button>
+      <div class="play-again-row">
+        <a class="play-again-link" id="popup-itch-btn" href="https://sheryb.itch.io/" target="_blank" rel="noopener noreferrer">עוד משחקים</a>
+      </div>
       <button class="play-again-link" id="popup-credits-btn">Meet the Team 🎬</button>
     </div>
 
@@ -1424,6 +1653,22 @@
   <div id="html-lives-hud" class="hud-chip">♥ ♥ ♥ ♥ ♥</div>
   <div id="html-stats-hud" class="hud-chip"></div>
   <div id="html-speed-hud" class="hud-chip"></div>
+
+  <!-- Fullscreen Toggle Button -->
+  <button id="fullscreen-toggle-btn" type="button" aria-label="מסך מלא" title="מסך מלא">
+    <svg class="fs-icon fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    <svg class="fs-icon fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 14 10 14 10 20"></polyline>
+      <polyline points="20 10 14 10 14 4"></polyline>
+      <line x1="14" y1="10" x2="21" y2="3"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+  </button>
 
   <!-- HTML Dialogue System overlay -->
   <div id="html-dialog-container">
@@ -1461,6 +1706,7 @@
     import { trackEndLinkClicked } from './Game/analytics.js';
     document.getElementById('popup-share-btn').addEventListener('click', () => trackEndLinkClicked('share'));
     document.getElementById('popup-replay-btn').addEventListener('click', () => trackEndLinkClicked('replay'));
+    document.getElementById('popup-itch-btn')?.addEventListener('click', () => trackEndLinkClicked('itch_games'));
     document.querySelector('a[href*="instagram"]').addEventListener('click', () => trackEndLinkClicked('instagram'));
     document.querySelector('a[href*="ourknesset.org"]').addEventListener('click', () => trackEndLinkClicked('official_voting_info'));
   </script>
@@ -1858,40 +2104,92 @@
     });
 
     // Replay Game action
-    document.getElementById('popup-replay-btn').addEventListener('click', () => {
-      window.hideScorePopup();
-      // Hide all HUDs
-      const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
-      huds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+    const replayBtn = document.getElementById('popup-replay-btn');
+    if (replayBtn) {
+      replayBtn.addEventListener('click', () => {
+        window.hideScorePopup();
+        // Hide all HUDs
+        const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
+        huds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        window.dispatchEvent(new Event('replay-game-event'));
       });
-      window.dispatchEvent(new Event('replay-game-event'));
-    });
+    }
 
     // Global Loading Screen Overlay Logic
     window.loadingScreenActive = true;
 
-    const HEBREW_TIPS = [
-      "תעודת זהות כחולה היא המפתח שלכן לקלפי! אל תשכחו אותה בבית.",
-      "מזכיר הקלפי קשוח, אבל חיוך רחב יכול לרכך את האווירה בקלפי.",
-      "החזית הוורודה לא מוותרת! המשיכו לרוץ גם כשירושלים נראית רחוקה.",
-      "רק מעבר דירה רשמי במשרד הפנים משנה את קלפי ההצבעה שלכם! תכננו מראש.",
-      "אל תתנו לקולות רקע להסיח את דעתכם בדרך למימוש זכות הבחירה שלכם.",
-      "רעש וצלצולים זה נחמד, אבל הצבעה בקלפי היא מה שבאמת משפיע!",
-      "לכל אזרח קול אחד, וכל קול יכול להכריע את עתיד המדינה.",
-      "קלפי נגישה מיועדת למי שמוגבל בניידות. שמרו להם על הזכות הזו!"
+    // Specific tips per stage (1-based stage number or scene key)
+    const STAGE_SPECIFIC_TIPS = {
+      1: 'לא לשכוח תעודה מזהה ביום הבחירות!',
+      2: 'בדקו מראש איפה אתם מצביעים ואת מספר הקלפי',
+      3: 'התחבורה הציבורית הבין-עירונית חינמית ביום הבחירות!',
+      5: 'ודאו את אותיות המפלגה לה אתם מצביעים',
+      6: 'וודאו שהמעטפה שקיבלתם תקינה'
+    };
+
+    const SCENE_SPECIFIC_TIPS = {
+      'Day1Scene': 'לא לשכוח תעודה מזהה ביום הבחירות!',
+      'Day2Scene': 'בדקו מראש איפה אתם מצביעים ואת מספר הקלפי',
+      'Day3Scene': 'התחבורה הציבורית הבין-עירונית חינמית ביום הבחירות!',
+      'KotelScene': 'ודאו את אותיות המפלגה לה אתם מצביעים',
+      'Day5Scene': 'ודאו את אותיות המפלגה לה אתם מצביעים',
+      'KalpiScene': 'וודאו שהמעטפה שקיבלתם תקינה'
+    };
+
+    // 3 fallback tips cycled randomly for any unspecified stage/scene
+    const FALLBACK_TIPS = [
+      'ההצבעה בקלפי היא סודית על פי חוק. אסור לצלם מאחורי הפרגוד!',
+      'מצביעים עם מוגבלויות יכולים להצביע בכל קלפי המוגדרת כ"נגישה מיוחדת".',
+      'אם הפתק של המפלגה שלכם אזל מאחורי הפרגוד, זכותכם לדרוש מחברי הוועדה להשלים את המלאי.'
     ];
 
-    // Set initial random tip immediately on load
-    document.addEventListener('DOMContentLoaded', () => {
+    function getRandomFallbackTip() {
+      return FALLBACK_TIPS[Math.floor(Math.random() * FALLBACK_TIPS.length)];
+    }
+
+    let tipCycleInterval = null;
+
+    function stopTipCycling() {
+      if (tipCycleInterval) {
+        clearInterval(tipCycleInterval);
+        tipCycleInterval = null;
+      }
+    }
+
+    function startTipCycling() {
+      stopTipCycling();
+      tipCycleInterval = setInterval(() => {
+        const tipTextEl = document.getElementById('loading-tip-text');
+        if (tipTextEl && window.loadingScreenActive !== false) {
+          tipTextEl.style.transition = 'opacity 0.25s ease';
+          tipTextEl.style.opacity = '0';
+          setTimeout(() => {
+            tipTextEl.textContent = getRandomFallbackTip();
+            tipTextEl.style.opacity = '1';
+          }, 250);
+        }
+      }, 4000);
+    }
+
+    // Set initial tip immediately on load (or as soon as DOM is ready) and start 4s cycling
+    function setInitialTip() {
       const tipTextEl = document.getElementById('loading-tip-text');
       if (tipTextEl) {
-        tipTextEl.textContent = HEBREW_TIPS[Math.floor(Math.random() * HEBREW_TIPS.length)];
+        tipTextEl.textContent = getRandomFallbackTip();
       }
-    });
+      startTipCycling();
+    }
 
-    window.showLoadingScreen = function(title, subtitle, onComplete) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setInitialTip);
+    } else {
+      setInitialTip();
+    }
+
+    window.showLoadingScreen = function(title, subtitle, onComplete, stageNumber, sceneKey) {
       window.loadingScreenActive = true;
       
       const screen = document.getElementById('html-loading-screen');
@@ -1904,9 +2202,17 @@
         titleEl.textContent = title || 'טוען...';
         subtitleEl.textContent = subtitle || 'הכנות אחרונות לשלב הבא';
         
-        // Pick random tip
-        const randomTip = HEBREW_TIPS[Math.floor(Math.random() * HEBREW_TIPS.length)];
-        tipTextEl.textContent = randomTip;
+        // Pick specific tip or fallback tip with 4s cycling
+        const specificTip = (stageNumber && STAGE_SPECIFIC_TIPS[stageNumber]) || (sceneKey && SCENE_SPECIFIC_TIPS[sceneKey]);
+        if (specificTip) {
+          stopTipCycling();
+          tipTextEl.style.opacity = '1';
+          tipTextEl.textContent = specificTip;
+        } else {
+          tipTextEl.style.opacity = '1';
+          tipTextEl.textContent = getRandomFallbackTip();
+          startTipCycling();
+        }
         
         // Reset progress bar width
         progressFill.style.transition = 'none';
@@ -1916,18 +2222,12 @@
         // Show loading screen
         screen.classList.add('visible');
         
-        // Start animation
-        setTimeout(() => {
-          progressFill.style.transition = 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
-          progressFill.style.width = '100%';
-        }, 50);
-
-        // Call onComplete after 1.5 seconds
+        // Invoke onComplete after overlay fade-in to start scene loading
         setTimeout(() => {
           if (typeof onComplete === 'function') {
             onComplete();
           }
-        }, 1550);
+        }, 50);
       } else {
         if (typeof onComplete === 'function') {
           onComplete();
@@ -1935,14 +2235,29 @@
       }
     };
 
+    window.updateLoadingProgress = function(percent) {
+      const progressFill = document.getElementById('loading-progress-fill');
+      if (progressFill) {
+        progressFill.style.transition = 'width 0.2s linear';
+        progressFill.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+      }
+    };
+
     window.hideLoadingScreen = function() {
+      stopTipCycling();
       const screen = document.getElementById('html-loading-screen');
       if (screen) {
-        screen.classList.remove('visible');
+        const progressFill = document.getElementById('loading-progress-fill');
+        if (progressFill) {
+          progressFill.style.width = '100%';
+        }
         setTimeout(() => {
-          window.loadingScreenActive = false;
-          window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
-        }, 400);
+          screen.classList.remove('visible');
+          setTimeout(() => {
+            window.loadingScreenActive = false;
+            window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
+          }, 400);
+        }, 150);
       } else {
         window.loadingScreenActive = false;
         window.dispatchEvent(new CustomEvent('loading-screen-hidden'));
@@ -1997,6 +2312,265 @@
     // Load credits data immediately on page load to prevent delay/pop-in
     initCredits();
     window.showToastNotification = showToastNotification;
+  </script>
+
+  <script>
+    // Fullscreen toggle (Fullscreen API with vendor-prefixed fallbacks)
+    (function () {
+      const fsBtn = document.getElementById('fullscreen-toggle-btn');
+      const docEl = document.documentElement;
+
+      const requestFullscreenFn =
+        docEl.requestFullscreen ||
+        docEl.webkitRequestFullscreen ||
+        docEl.msRequestFullscreen;
+
+      // Feature-detect support before showing the button.
+      // iOS Safari doesn't support the Fullscreen API on arbitrary elements, only <video>.
+      if (!requestFullscreenFn) {
+        return;
+      }
+
+      fsBtn.style.display = 'flex';
+
+      function getFullscreenElement() {
+        return (
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement ||
+          null
+        );
+      }
+
+      function enterFullscreen() {
+        const fn = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+        if (fn) fn.call(docEl);
+      }
+
+      function exitFullscreen() {
+        const fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+        if (fn) fn.call(document);
+      }
+
+      function updateButtonState() {
+        const isFullscreen = !!getFullscreenElement();
+        // Stays visible in both states; the class swaps the icon between
+        // "enter fullscreen" and "exit fullscreen" so it reflects real state.
+        fsBtn.classList.toggle('is-fullscreen', isFullscreen);
+        fsBtn.setAttribute('aria-label', isFullscreen ? 'יציאה ממסך מלא' : 'מסך מלא');
+        fsBtn.setAttribute('title', isFullscreen ? 'יציאה ממסך מלא' : 'מסך מלא');
+        fsBtn.style.display = 'flex';
+      }
+
+      // --- Hardware/gesture back-button handling while in fullscreen ---
+      //
+      // Mobile browsers don't uniformly map the back gesture/button to "exit
+      // fullscreen". We emulate it with the History API guard pattern: push a
+      // harmless same-document history entry when entering fullscreen so the
+      // back button has something local to consume (triggering `popstate`
+      // instead of leaving the page), and pop that entry ourselves if
+      // fullscreen is exited some other way (Esc, browser UI) so it doesn't
+      // linger and silently eat the next back press.
+      function handlePopState() {
+        // If back navigation happened while we were fullscreen, treat it as
+        // an exit request. If we're not fullscreen, this popstate is either
+        // unrelated or is the one we triggered ourselves below (see
+        // handleFullscreenChange) — either way, do nothing.
+        if (getFullscreenElement()) {
+          exitFullscreen();
+        }
+      }
+
+      let lastKnownFullscreen = false;
+
+      // --- Best-effort landscape orientation lock, tied to fullscreen ---
+      //
+      // screen.orientation.lock() only reliably works while the document is
+      // fullscreen (and only on browsers that implement it at all — notably
+      // Safari on iOS and macOS support neither the property nor the
+      // method). Feature-detect and swallow rejections; this is purely an
+      // enhancement, the debounced portrait-warning fallback below (see the
+      // separate orientation-warning script) is what actually protects
+      // players when this isn't available or doesn't hold.
+      let orientationLockActive = false;
+
+      function lockOrientation() {
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+          screen.orientation
+            .lock('landscape')
+            .then(() => {
+              orientationLockActive = true;
+            })
+            .catch(() => {
+              // Permission denied, unsupported orientation type, browser
+              // quirks, etc. — no error UI, just fall back silently.
+              orientationLockActive = false;
+            });
+        } else {
+          orientationLockActive = false;
+        }
+      }
+
+      function unlockOrientation() {
+        if (screen.orientation && typeof screen.orientation.unlock === 'function') {
+          try {
+            screen.orientation.unlock();
+          } catch (e) {
+            // Ignore — best-effort only.
+          }
+        }
+        orientationLockActive = false;
+      }
+
+      function handleFullscreenChange() {
+        const isFullscreen = !!getFullscreenElement();
+        updateButtonState();
+
+        // Guard against redundant firings (e.g. a browser that happens to
+        // dispatch more than one of the fullscreenchange/webkit/ms event
+        // names for the same transition) re-running the push/back logic
+        // below for a state that hasn't actually changed.
+        if (isFullscreen === lastKnownFullscreen) {
+          return;
+        }
+        lastKnownFullscreen = isFullscreen;
+
+        if (isFullscreen) {
+          lockOrientation();
+          // Entered fullscreen: push a guard entry for the back button to consume.
+          try {
+            history.pushState({ fsGuard: true }, '', location.href);
+          } catch (e) {
+            // Ignore (e.g. sandboxed iframe restrictions on history mutation).
+          }
+        } else {
+          unlockOrientation();
+          if (history.state && history.state.fsGuard) {
+            // Exited fullscreen while the guard entry is still current, meaning
+            // this exit did NOT come from the popstate handler above (that path
+            // already consumes the guard entry via the browser's own back
+            // navigation before this handler runs, so history.state.fsGuard
+            // would no longer be set here). This is the Esc-key/browser-UI exit
+            // path — clean up the now-stale guard entry immediately so the next
+            // real back press isn't silently swallowed by it.
+            history.back();
+          }
+        }
+      }
+
+      fsBtn.addEventListener('click', () => {
+        if (getFullscreenElement()) {
+          exitFullscreen();
+        } else {
+          enterFullscreen();
+        }
+      });
+
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('msfullscreenchange', handleFullscreenChange);
+      window.addEventListener('popstate', handlePopState);
+
+      updateButtonState();
+    })();
+  </script>
+
+  <script>
+    // Debounced portrait-warning fallback, active only during gameplay.
+    //
+    // Before gameplay starts (window.gameStarted still false), visibility of
+    // #orientation-warning / #game-container / #html-menu is governed
+    // entirely by the instant `@media (orientation: portrait)` CSS rule in
+    // <style> above — untouched by this script.
+    //
+    // Once window.gameStarted becomes true (see the 'start-game' event
+    // dispatched by the #cta-btn click handler), a brief accidental tilt
+    // away from landscape shouldn't yank the warning up and interrupt play.
+    // So instead we debounce: only show the warning if portrait persists for
+    // ~1s, but restore instantly the moment it's landscape again. This is
+    // the fallback for browsers/devices where the fullscreen orientation
+    // lock (see the fullscreen <script> above) isn't supported or wasn't
+    // engaged (e.g. all of iOS Safari, or any player who never entered
+    // fullscreen), and a safety net if a lock silently doesn't hold.
+    (function () {
+      const orientationWarningEl = document.getElementById('orientation-warning');
+      const gameContainerEl = document.getElementById('game-container');
+      const mq = window.matchMedia('(orientation: portrait)');
+
+      const PORTRAIT_DEBOUNCE_MS = 1000;
+      let portraitDebounceTimer = null;
+
+      function applyOrientationState(isPortrait) {
+        orientationWarningEl.style.display = isPortrait ? 'flex' : 'none';
+        gameContainerEl.style.display = isPortrait ? 'none' : 'flex';
+        // Toggling #game-container's display changes its on-screen box, but
+        // Phaser only recomputes its cached canvas bounds/pointer coordinate
+        // mapping on native resize/orientationchange events — neither of
+        // which this display toggle fires. Without an explicit refresh here,
+        // Phaser keeps using the pre-toggle bounds, so touch/click
+        // coordinates end up mapped to the wrong place on screen (e.g. after
+        // a landscape-to-portrait-to-landscape transition of the container).
+        if (window.game && window.game.scale) {
+          window.game.scale.refresh();
+        }
+      }
+
+      function activateJsControl() {
+        if (document.body.classList.contains('js-orientation-control')) {
+          return; // Already active — nothing to do.
+        }
+        document.body.classList.add('js-orientation-control');
+        // Sync immediately to the real current state (no debounce here —
+        // this just mirrors what the CSS rule would already be showing at
+        // this exact instant, e.g. a stretched/awkward dev-tools viewport
+        // caught in portrait right as the CTA is clicked). Debouncing only
+        // applies to *changes* that happen from here on.
+        applyOrientationState(mq.matches);
+      }
+
+      function handleOrientationMqChange(e) {
+        if (!window.gameStarted) {
+          // Gameplay hasn't started — leave this entirely to the CSS rule.
+          return;
+        }
+        if (portraitDebounceTimer) {
+          clearTimeout(portraitDebounceTimer);
+          portraitDebounceTimer = null;
+        }
+        if (e.matches) {
+          // Went to portrait: wait to see if it sticks before disrupting play.
+          portraitDebounceTimer = setTimeout(() => {
+            portraitDebounceTimer = null;
+            applyOrientationState(true);
+          }, PORTRAIT_DEBOUNCE_MS);
+        } else {
+          // Back to landscape: restore instantly, no debounce.
+          applyOrientationState(false);
+        }
+      }
+
+      // Registered unconditionally at page load — i.e. before gameplay can
+      // possibly start, since window.gameStarted only flips from a later
+      // user click on #cta-btn. handleOrientationMqChange itself no-ops
+      // until then.
+      if (mq.addEventListener) {
+        mq.addEventListener('change', handleOrientationMqChange);
+      } else if (mq.addListener) {
+        // Safari < 14 fallback (deprecated but still needed for old iOS).
+        mq.addListener(handleOrientationMqChange);
+      }
+
+      // Fires synchronously right after window.gameStarted = true (see the
+      // #cta-btn click handler) — this is what performs the handoff from
+      // CSS control to JS control, including the initial state sync.
+      window.addEventListener('start-game', activateJsControl);
+
+      // Extra safety net in case window.gameStarted is ever set true
+      // through some other path without the 'start-game' event firing.
+      if (window.gameStarted) {
+        activateJsControl();
+      }
+    })();
   </script>
 </body>
 </html>
