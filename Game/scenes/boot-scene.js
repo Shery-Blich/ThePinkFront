@@ -20,6 +20,7 @@ export class BootScene extends Phaser.Scene {
       }
     });
 
+    // Relative paths for Vite base `./` (local + GitHub Pages / Firebase).
     // ── Day 1 critical assets (lightweight WebP visuals needed on boot) ──
     this.load.image('player',    'assets/Characters/Shiri-front.webp');
     this.load.image('npc-yuval', 'assets/Characters/Yuval.webp');
@@ -37,7 +38,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Player texture is now preloaded from assets/Characters/Shlomi.png
+    // Player texture is preloaded from assets/Characters/Shiri-front.webp
     this._generateNpcTexture();
     this._generateBuildingTextures();
     this._generateRoadTexture();
