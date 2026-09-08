@@ -2,7 +2,7 @@
  * Dialogue transcript data for game scenes.
  */
 
-export const SPEAKER_NAME = "אלה";
+export const SPEAKER_NAME = "מנחה";
 export const PLAYER_NAME = "שירי";
 
 export const DAY_1_INTRO_DIALOG = [

@@ -53,6 +53,8 @@ export class Day4Scene extends Phaser.Scene {
     this.brakeBtn = null;
     this.gasPedalSprite = null;
     this.brakePedalSprite = null;
+    this.gasHit = null;
+    this.brakeHit = null;
 
     // Sector tracking for bonus
     this.sectorsCaught = new Set();
@@ -84,6 +86,8 @@ export class Day4Scene extends Phaser.Scene {
     this.brakeBtn = null;
     this.gasPedalSprite = null;
     this.brakePedalSprite = null;
+    this.gasHit = null;
+    this.brakeHit = null;
 
     this.sectorsCaught = new Set();
     this.bonusAwarded = false;
@@ -216,6 +220,10 @@ export class Day4Scene extends Phaser.Scene {
     this.input.on("pointerdown", this._onPointerDown);
     this.input.on("pointerup", this._onPointerUp);
 
+    // Keep the pedals pinned to the screen edges through fullscreen / rotation
+    this._onResize = () => this._repositionPedals();
+    this.scale.on("resize", this._onResize);
+
     this.cameras.main.fadeIn(500);
 
     // Shutdown / Destroy listeners to cleanup scene state properly
@@ -257,6 +265,7 @@ export class Day4Scene extends Phaser.Scene {
       if (this._onPointerDown) this.input.off("pointerdown", this._onPointerDown);
       if (this._onPointerUp) this.input.off("pointerup", this._onPointerUp);
     }
+    if (this._onResize) this.scale.off("resize", this._onResize);
 
     for (const event of this.spawnEvents) {
       if (event) this.time.removeEvent(event);
@@ -488,12 +497,12 @@ export class Day4Scene extends Phaser.Scene {
         .setDepth(2000)
         .setScrollFactor(0);
 
-      const gasHit = this.add.zone(gasX, btnY, 44 * s, 54 * s)
+      this.gasHit = this.add.zone(gasX, btnY, 44 * s, 54 * s)
         .setInteractive({ useHandCursor: true });
 
-      gasHit.on("pointerdown", () => this._pressGasPedal());
-      gasHit.on("pointerup", () => this._releaseGasPedal());
-      gasHit.on("pointerout", () => this._releaseGasPedal());
+      this.gasHit.on("pointerdown", () => this._pressGasPedal());
+      this.gasHit.on("pointerup", () => this._releaseGasPedal());
+      this.gasHit.on("pointerout", () => this._releaseGasPedal());
     }
 
     // --- Left Button: Brake Pedal Pixel Art ---
@@ -505,13 +514,25 @@ export class Day4Scene extends Phaser.Scene {
         .setDepth(2000)
         .setScrollFactor(0);
 
-      const brakeHit = this.add.zone(brakeX, btnY, 54 * s, 44 * s)
+      this.brakeHit = this.add.zone(brakeX, btnY, 54 * s, 44 * s)
         .setInteractive({ useHandCursor: true });
 
-      brakeHit.on("pointerdown", () => this._pressBrakePedal());
-      brakeHit.on("pointerup", () => this._releaseBrakePedal());
-      brakeHit.on("pointerout", () => this._releaseBrakePedal());
+      this.brakeHit.on("pointerdown", () => this._pressBrakePedal());
+      this.brakeHit.on("pointerup", () => this._releaseBrakePedal());
+      this.brakeHit.on("pointerout", () => this._releaseBrakePedal());
     }
+  }
+
+  /** Re-anchor the pedals to the current screen edges after a resize/fullscreen. */
+  _repositionPedals() {
+    const s = this.s;
+    const btnY = this.scale.height - 32 * s;
+    const gasX = this.scale.width - 42 * s;
+    const brakeX = 42 * s;
+    if (this.gasPedalSprite) this.gasPedalSprite.setPosition(gasX, btnY);
+    if (this.gasHit) this.gasHit.setPosition(gasX, btnY);
+    if (this.brakePedalSprite) this.brakePedalSprite.setPosition(brakeX, btnY);
+    if (this.brakeHit) this.brakeHit.setPosition(brakeX, btnY);
   }
 
   _pressGasPedal() {

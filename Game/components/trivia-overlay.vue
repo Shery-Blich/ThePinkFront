@@ -68,7 +68,7 @@ export default {
       theme: 'stone',
 
       // State trackers
-      selectedIndex: 0,
+      selectedIndex: -1, // -1 = nothing highlighted until the player hovers or uses the keyboard
       isAnswered: false,
       feedbackActive: false,
       questionStartTime: 0
@@ -100,7 +100,7 @@ export default {
       this.theme = data.theme || 'stone';
 
       // Reset states
-      this.selectedIndex = 0;
+      this.selectedIndex = -1;
       this.isAnswered = false;
       this.feedbackActive = false;
       this.questionStartTime = Date.now();
@@ -193,13 +193,14 @@ export default {
           break;
         case 'Enter':
         case ' ':
-          this.confirmAnswer(this.selectedIndex);
+          if (this.selectedIndex !== -1) this.confirmAnswer(this.selectedIndex);
           event.preventDefault();
           break;
       }
     },
 
     navigateVertical(dir) {
+      if (this.selectedIndex === -1) { this.selectedIndex = 0; return; }
       let row = Math.floor(this.selectedIndex / 2);
       const col = this.selectedIndex % 2;
       row = (row + dir + 2) % 2; // Wrap rows
@@ -207,6 +208,7 @@ export default {
     },
 
     navigateHorizontal(dir) {
+      if (this.selectedIndex === -1) { this.selectedIndex = 0; return; }
       const row = Math.floor(this.selectedIndex / 2);
       let col = this.selectedIndex % 2;
       col = (col + dir + 2) % 2; // Wrap columns
