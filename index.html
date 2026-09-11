@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>החזית הוורודה</title>
@@ -22,6 +24,9 @@
     html, body {
       width: 100%;
       height: 100%;
+      height: 100dvh;
+      min-height: 100%;
+      min-height: -webkit-fill-available;
       overflow: hidden;
       background-color: #1a1a2e;
       /* Prevent pull-to-refresh and overscroll on mobile */
@@ -52,6 +57,7 @@
       left: 0;
       width: 100%;
       height: 100%;
+      height: 100dvh;
       background: linear-gradient(135deg, #0f0c1b, #241442);
       color: #ffffff;
       z-index: 99999;
@@ -63,8 +69,9 @@
       padding: 20px;
     }
 
-    /* Show only in portrait mode on mobile/touch devices */
-    @media (orientation: portrait) {
+    /* Force landscape only on real phones/tablets — NOT when Chrome DevTools
+       or a narrow desktop window makes the viewport "portrait". */
+    @media (orientation: portrait) and (hover: none) and (pointer: coarse) {
       #orientation-warning {
         display: flex;
       }
@@ -152,6 +159,8 @@
       left: 0;
       width: 100%;
       height: 100%;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
       z-index: 1000; /* Under orientation-warning (99999) but above game-container */
       background-color: #12121c;
       font-family: 'Rubik', sans-serif;
@@ -161,6 +170,8 @@
       align-items: center;
       overflow: hidden;
       transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+      /* Isolate stacking so positive z-index layers paint correctly on mobile Safari */
+      isolation: isolate;
     }
 
     #html-menu .hero-background {
@@ -169,15 +180,21 @@
       left: 0;
       width: 100%;
       height: 100%;
+      /* Relative path works with Vite base `./` (local / GitHub Pages / Firebase) */
+      background-color: #241442;
       background-image: url('assets/backgrounds/background.webp');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      z-index: -2;
+      z-index: 0;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
       transform: scale(1.05);
+      transform-origin: center center;
       animation: slowZoom 20s infinite alternate ease-in-out;
+      /* Promote compositor layer so mobile WebKit paints bg image */
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     #html-menu .hero-overlay {
@@ -187,7 +204,8 @@
       width: 100%;
       height: 100%;
       background: rgba(18, 18, 28, 0.4);
-      z-index: -1;
+      z-index: 1;
+      pointer-events: none;
     }
 
     #html-menu .crt-overlay {
@@ -201,7 +219,7 @@
         rgba(0, 0, 0, 0.25) 50%
       );
       background-size: 100% 4px;
-      z-index: 10;
+      z-index: 3;
       pointer-events: none;
     }
 
@@ -209,13 +227,14 @@
       display: grid;
       grid-template-columns: 1.1fr 0.9fr;
       width: 100%;
-      height: 100%;
+      height: auto;
       max-width: 960px;
-      max-height: 480px;
+      max-height: min(90vh, 560px);
       padding: 1.5rem;
       gap: 1.5rem;
       align-items: center;
-      z-index: 1;
+      z-index: 2;
+      position: relative;
     }
 
     #html-menu header {
@@ -224,7 +243,8 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100%;
+      height: auto;
+      min-height: 0;
       padding: 1rem;
     }
 
@@ -245,6 +265,8 @@
       animation: bounceRetro 1.5s infinite alternate ease-in-out;
     }
 
+    /* Flex column: story scrolls if needed, CTA button always stays visible.
+       (Chrome measures Hebrew line-height larger than Edge — fixed max-height was clipping the button.) */
     #html-menu .content-card {
       background: rgba(18, 18, 28, 0.85);
       border: 4px solid #ffffff;
@@ -252,12 +274,24 @@
       padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      height: 90%;
-      max-height: 320px;
+      justify-content: flex-start;
+      gap: 0.85rem;
+      height: auto;
+      max-height: min(80vh, 420px);
       width: 100%;
       position: relative;
       overflow: hidden;
+      min-height: 0;
+    }
+
+    #html-menu .content-card > div:first-child {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    #html-menu .content-card > div:last-child {
+      flex: 0 0 auto;
     }
 
     #html-menu .content-card::before {
@@ -274,7 +308,7 @@
       font-size: clamp(0.85rem, 1.8vw, 0.95rem);
       line-height: 1.5;
       color: #a0a0b0;
-      margin-bottom: 1rem;
+      margin-bottom: 0;
       text-align: right;
     }
 
@@ -318,6 +352,14 @@
       transform: translateX(-4px);
     }
 
+    @media (hover: none) and (pointer: coarse) {
+      #html-menu .hero-background {
+        /* Lighter animation on phones — less risk of WebKit dropping the layer */
+        animation: none;
+        transform: scale(1.03);
+      }
+    }
+
     @keyframes slowZoom {
       0% {
         transform: scale(1.03) translate(0, 0);
@@ -336,7 +378,7 @@
       }
     }
 
-    @media (max-width: 600px) or (orientation: portrait) {
+    @media (max-width: 600px) {
       #html-menu {
         overflow-y: auto;
       }

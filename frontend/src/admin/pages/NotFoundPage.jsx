@@ -9,7 +9,7 @@ export default function NotFoundPage() {
           העמוד שחיפשת לא נמצא ברשימות הוועדה. אולי הוא מעולם לא עודכן...
         </p>
         <Link 
-          to="/admin/questions" 
+          to="/questions" 
           className="admin-pink-btn"
           aria-label="חזרה ללוח השאלות"
         >
