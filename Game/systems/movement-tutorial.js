@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { isDesktopDevice } from './joystick-move.js';
 
 /**
  * MovementTutorial — Interactive tutorial overlay for teaching movement/jumping.
@@ -12,6 +13,10 @@ export class MovementTutorial {
    * @param {Player} player 
    */
   static showJoystickTutorial(scene, player) {
+    // Desktop players use keyboard controls by default; the joystick graphic
+    // itself is hidden there too (see JoystickMove), so this tutorial doesn't apply.
+    if (isDesktopDevice(scene)) return;
+
     // 1. Create the HTML Card overlay
     const card = document.createElement('div');
     card.className = 'tutorial-card';
@@ -131,16 +136,25 @@ export class MovementTutorial {
    * @param {Phaser.Scene} scene 
    */
   static showJumpTutorial(scene) {
+    const isDesktop = isDesktopDevice(scene);
+
     // 1. Create the HTML Card overlay
     const card = document.createElement('div');
     card.className = 'tutorial-card';
     card.style.left = '50%';
     card.style.transform = 'translate(-50%, 20px)'; // Center horizontally
     card.style.bottom = '120px';
-    card.innerHTML = `
-      <div class="highlight-text">לחצו על המסך כדי לקפוץ!</div>
-      <div class="sub-text">לחצו בכל מקום מחוץ לג'ויסטיק כדי לאסוף מצרכים</div>
-    `;
+    if (isDesktop) {
+      card.innerHTML = `
+        <div class="highlight-text">לחצו על מקש רווח או חץ למעלה כדי לקפוץ!</div>
+        <div class="sub-text">אספו מצרכים והתקדמו בסופרמרקט</div>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="highlight-text">לחצו על המסך כדי לקפוץ!</div>
+        <div class="sub-text">לחצו בכל מקום מחוץ לג'ויסטיק כדי לאסוף מצרכים</div>
+      `;
+    }
     document.body.appendChild(card);
     
     // Trigger transition (preserving centering)

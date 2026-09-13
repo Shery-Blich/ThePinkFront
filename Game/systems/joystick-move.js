@@ -7,6 +7,26 @@ import VirtualJoyStick from 'phaser4-rex-plugins/plugins/virtualjoystick.js';
  * Fixed in the bottom-left of the screen. Controls character velocity
  * and direction proportionally to drag distance.
  */
+/**
+ * Detects whether the current environment is a genuine desktop device (PC / Mac / Linux / Chromebook with mouse/keyboard).
+ * Handles iPadOS Safari edge cases where iPads report a desktop 'Macintosh' user agent to Phaser.
+ *
+ * @param {Phaser.Scene} scene
+ * @returns {boolean}
+ */
+export function isDesktopDevice(scene) {
+  const isPhaserDesktop = !!(scene?.sys?.game?.device?.os?.desktop);
+  // iPadOS Safari sends a 'Macintosh' user agent string, making Phaser classify it as macOS desktop.
+  // However, genuine Macs never have multi-touch screens (maxTouchPoints is 0), whereas iPads have touch.
+  const isTouchOnly = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse) and (hover: none)').matches;
+  const isIPad = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0) && /Macintosh/i.test(navigator.userAgent);
+
+  if (isTouchOnly || isIPad) {
+    return false;
+  }
+  return isPhaserDesktop;
+}
+
 export class JoystickMove extends Phaser.Events.EventEmitter {
   /**
    * @param {Phaser.Scene} scene — The scene this system belongs to
@@ -55,6 +75,9 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
     /** @type {boolean} Whether movement input is currently accepted */
     this._enabled = false;
 
+    /** @type {boolean} True on desktop OSes — the on-screen joystick graphic is hidden there since keyboard input already covers movement */
+    this.isDesktop = isDesktopDevice(this.scene);
+
     /** @type {boolean} Whether the player is currently moving */
     this.isMoving = false;
 
@@ -98,7 +121,9 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
   enable() {
     if (this._enabled) return;
     this._enabled = true;
-    this.joystick.visible = true;
+    // Keep the on-screen graphic hidden on desktop; keyboard input (handled in update())
+    // still works regardless, since it doesn't depend on joystick visibility.
+    this.joystick.visible = !this.isDesktop;
   }
 
   /**
