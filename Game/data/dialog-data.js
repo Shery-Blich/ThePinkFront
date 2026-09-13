@@ -12,6 +12,17 @@ export const DAY_1_INTRO_DIALOG = [
   },
 ];
 
+export const DAY_1_INTRO_DIALOG_DESKTOP = [
+  {
+    speaker: SPEAKER_NAME,
+    text: `השתמשו בחיצים כדי לזוז וברחו מהר מהכטב"מים!`,
+  },
+];
+
+export function getDay1IntroDialog(isDesktop = false) {
+  return isDesktop ? DAY_1_INTRO_DIALOG_DESKTOP : DAY_1_INTRO_DIALOG;
+}
+
 export const DAY_1_VICTORY_DIALOG = [
   {
     speaker: SPEAKER_NAME,

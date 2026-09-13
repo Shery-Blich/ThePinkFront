@@ -16,7 +16,12 @@ import {
 
 import { addGlobalScore } from "../systems/score-manager.js";
 import { playDialogOnce } from "../systems/dialog-system.js";
-import { DAY_1_INTRO_DIALOG, DAY_1_VICTORY_DIALOG } from "../data/dialog-data.js";
+import {
+  DAY_1_INTRO_DIALOG,
+  DAY_1_INTRO_DIALOG_DESKTOP,
+  DAY_1_VICTORY_DIALOG,
+} from "../data/dialog-data.js";
+import { isDesktopDevice } from "../systems/joystick-move.js";
 
 /**
  * Day1Scene — Kiryat Shmona: Dodging Journalists
@@ -217,7 +222,8 @@ export class Day1Scene extends Phaser.Scene {
     });
 
     // Show intro dialog, then enable player
-    playDialogOnce("Day1Scene-intro", this, DAY_1_INTRO_DIALOG, () => {
+    const introDialog = isDesktopDevice(this) ? DAY_1_INTRO_DIALOG_DESKTOP : DAY_1_INTRO_DIALOG;
+    playDialogOnce("Day1Scene-intro", this, introDialog, () => {
       this.player.enable();
       MovementTutorial.showJoystickTutorial(this, this.player);
     });
