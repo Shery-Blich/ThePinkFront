@@ -1,7 +1,7 @@
 {
   "name": "thepinkfront-game",
   "version": "1.0.0",
-  "description": "Dykeathon Pink Front game",
+  "description": "Dykeathon Pink Front game — Node.js + Firebase Hosting",
   "homepage": "https://github.com/Shery-Blich/ThePinkFront#readme",
   "bugs": {
     "url": "https://github.com/Shery-Blich/ThePinkFront/issues"
@@ -13,17 +13,16 @@
   "license": "ISC",
   "author": "",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000 --strictPort",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --port 3000 --strictPort",
     "convert-assets": "node scripts/convert-assets.mjs",
     "dev:admin": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
     "build:firebase": "node scripts/build-firebase.mjs",
     "deploy:hosting": "npm run build:firebase && firebase deploy --only hosting",
-    "deploy:api": "node scripts/deploy-api.mjs",
-    "deploy": "npm run deploy:api && npm run deploy:hosting"
+    "deploy": "npm run deploy:hosting"
   },
   "dependencies": {
     "phaser": "^4.2.1",

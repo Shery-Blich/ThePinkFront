@@ -72,7 +72,6 @@ web_modules/
 .env
 .env.*
 !.env.example
-!.env.docker.example
 !.env.firebase.example
 .env.firebase
 backend/.cloudrun.env.yaml

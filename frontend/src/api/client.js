@@ -8,8 +8,8 @@ const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && !window.location.pathname.includes('/admin/login')) {
-      window.location.href = '/admin/login';
+    if (err.response?.status === 401 && !window.location.pathname.includes('/login')) {
+      window.location.href = `${import.meta.env.BASE_URL || '/'}login`.replace(/\/+/g, '/');
     }
     return Promise.reject(err);
   }

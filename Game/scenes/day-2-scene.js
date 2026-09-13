@@ -133,16 +133,18 @@ export class Day2Scene extends Phaser.Scene {
 
     if (this.textures.exists('day2-bg')) {
       const bgSource = this.textures.get('day2-bg').getSourceImage();
-      const texW = bgSource.width;
-      const texH = bgSource.height;
-      const scale = Math.max(width / texW, height / texH);
-
-      this.backgroundImage = this.add.image(0, 0, 'day2-bg')
-        .setOrigin(0, 0)
-        .setScrollFactor(0)
-        .setDepth(0)
-        .setScale(scale);
-      this._backgroundScrollX = 0;
+      const texW = bgSource?.width || 0;
+      const texH = bgSource?.height || 0;
+      // Skip broken / oversize textures that failed on mobile WebGL
+      if (texW > 0 && texH > 0) {
+        const scale = Math.max(width / texW, height / texH);
+        this.backgroundImage = this.add.image(0, 0, 'day2-bg')
+          .setOrigin(0, 0)
+          .setScrollFactor(0)
+          .setDepth(0)
+          .setScale(scale);
+        this._backgroundScrollX = 0;
+      }
     }
 
     this.cameras.main.setBackgroundColor(0x74b9ff);

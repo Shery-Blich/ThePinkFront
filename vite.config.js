@@ -32,7 +32,9 @@ export default defineConfig({
     },
   },
   server: {
+    // Fixed port prevents Vite randomly changing the local port
     port: 3000,
+    strictPort: true,
     open: true,
     // Pre-warm the Phaser pre-bundle so it's in memory on first browser load.
     warmup: {
@@ -44,6 +46,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    port: 3000,
+    strictPort: true,
   },
 });
 

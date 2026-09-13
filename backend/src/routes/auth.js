@@ -5,6 +5,7 @@ import { body } from 'express-validator';
 import Admin from '../models/Admin.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { handleValidationErrors } from '../middleware/validate.js';
+import { verifyAuth0IdToken } from '../utils/auth0.js';
 
 const router = Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -31,7 +32,43 @@ function issueAdminCookie(res, payload) {
   return token;
 }
 
-// POST /api/auth/google
+// POST /api/auth/auth0 — Admin SPA exchanges Auth0 ID token for API cookie
+router.post(
+  '/auth0',
+  body('idToken').isString().notEmpty(),
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const claims = await verifyAuth0IdToken(req.body.idToken);
+      const email = (claims.email || '').toLowerCase();
+      const name = claims.name || claims.nickname || email || 'Admin';
+      const auth0Id = claims.sub;
+
+      if (!email) {
+        return res.status(401).json({ error: 'Auth0 token missing email claim' });
+      }
+
+      if (ADMIN_WHITELIST.length && !ADMIN_WHITELIST.includes(email)) {
+        return res.status(403).json({ error: 'Email not authorized as admin' });
+      }
+
+      // Reuse googleId field as stable external id (auth0|…) for minimal schema change
+      const admin = await Admin.findOneAndUpdate(
+        { email },
+        { googleId: auth0Id, email, name },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      issueAdminCookie(res, { adminId: admin._id, email: admin.email });
+      res.json({ email: admin.email, name: admin.name });
+    } catch (err) {
+      console.error('Auth0 token verification failed:', err.message);
+      res.status(401).json({ error: 'Auth0 token verification failed' });
+    }
+  }
+);
+
+// POST /api/auth/google — legacy Google Sign-In (optional)
 router.post(
   '/google',
   body('credential').isString().notEmpty(),
@@ -44,7 +81,7 @@ router.post(
       });
       const { sub: googleId, email, name } = ticket.getPayload();
 
-      if (!ADMIN_WHITELIST.includes(email.toLowerCase())) {
+      if (ADMIN_WHITELIST.length && !ADMIN_WHITELIST.includes(email.toLowerCase())) {
         return res.status(403).json({ error: 'Email not authorized as admin' });
       }
 
