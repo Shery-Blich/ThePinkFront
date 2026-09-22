@@ -29,7 +29,7 @@ const config = {
   pixelArt: true,
   scale: {
     mode: Phaser.Scale.EXPAND,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    autoCenter: Phaser.Scale.NO_CENTER,
     width: 640,
     height: 360,
   },
