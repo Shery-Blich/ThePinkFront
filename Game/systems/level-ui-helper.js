@@ -11,7 +11,13 @@ import { restoreStageStartScore } from './score-manager.js';
  * @param {string} [buttonText='המשך'] - Optional button text for victory overlay.
  */
 export function showVictoryHelper(scene, sceneKey, title, message, buttonText = 'המשך') {
-  scene.sound.play('sfx-levelup', { volume: 0.6 });
+  try {
+    if (scene && scene.sound && scene.cache && scene.cache.audio && scene.cache.audio.exists('sfx-levelup')) {
+      scene.sound.play('sfx-levelup', { volume: 0.6 });
+    }
+  } catch (err) {
+    console.warn('[Audio Warning] Could not play levelup sound:', err);
+  }
   
   const hasTrivia = hasLevelTrivia(sceneKey);
 

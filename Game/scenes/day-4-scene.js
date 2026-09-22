@@ -352,7 +352,10 @@ export class Day4Scene extends Phaser.Scene {
 
     // Update falling characters
     for (let i = this.fallingCharacters.length - 1; i >= 0; i--) {
+      if (this.sceneEnded) break;
+
       const char = this.fallingCharacters[i];
+      if (!char || !char.active || typeof char.y !== 'number') continue;
 
       if (char.y > this.roadBottom + 40 * this.s) {
         // Character fell off screen — player missed catch
@@ -361,17 +364,19 @@ export class Day4Scene extends Phaser.Scene {
         this.fallingCharacters.splice(i, 1);
 
         // Sound feedback on miss / failure (Kahoot Gong from ColorUp)
-        if (this.sound.get('sfx-fail-gong')) {
+        if (this.sound && this.sound.get('sfx-fail-gong')) {
           this.sound.play('sfx-fail-gong', { volume: 0.7 });
-        } else if (this.sound.get('sfx-wrong')) {
+        } else if (this.sound && this.sound.get('sfx-wrong')) {
           this.sound.play('sfx-wrong', { volume: 0.6 });
-        } else {
+        } else if (this.sound) {
           this.sound.play('sfx-explosion', { volume: 0.5 });
         }
 
         // Red camera flash & subtle camera shake
-        this.cameras.main.flash(200, 239, 68, 68, 0.35);
-        this.cameras.main.shake(120, 0.004);
+        if (this.cameras && this.cameras.main) {
+          this.cameras.main.flash(200, 239, 68, 68, 0.35);
+          this.cameras.main.shake(120, 0.004);
+        }
 
         // Floating red "-1 💔" pop text at bottom screen
         const missPopText = this.add.text(missX, this.roadBottom - 10 * this.s, "-1 💔", {
@@ -395,10 +400,12 @@ export class Day4Scene extends Phaser.Scene {
         const remaining = LivesManager.deductLife();
         if (remaining <= 0) {
           this._endGame(false);
+          break;
         }
-      } else if (this.bus && Phaser.Geom.Rectangle.Overlaps(this.bus.getBounds(), char.getBounds())) {
+      } else if (this.bus && this.bus.active && Phaser.Geom.Rectangle.Overlaps(this.bus.getBounds(), char.getBounds())) {
         // Caught in bus!
         this._catchCharacter(char, i);
+        if (this.sceneEnded) break;
       }
     }
 
@@ -932,6 +939,10 @@ export class Day4Scene extends Phaser.Scene {
     if (this.tutorialContainer) {
       this.tutorialContainer.destroy();
       this.tutorialContainer = null;
+    }
+    if (this.tutorialCard) {
+      this.tutorialCard.remove();
+      this.tutorialCard = null;
     }
 
     if (victory) {

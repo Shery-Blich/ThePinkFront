@@ -163,7 +163,9 @@ export class Mine {
     });
 
     // Camera shake
-    this.scene.cameras.main.shake(120, 0.005);
+    if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+      this.scene.cameras.main.shake(120, 0.005);
+    }
 
     // Collision check
     const player = this.config.player;

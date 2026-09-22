@@ -158,7 +158,9 @@ export class Drone {
     }
 
     // 3. Camera rumble
-    this.scene.cameras.main.shake(150, 0.006);
+    if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+      this.scene.cameras.main.shake(150, 0.006);
+    }
 
     // 4. Collision check (distance to center-body)
     let wasHit = false;
