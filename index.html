@@ -219,7 +219,7 @@
       height: 100%;
       max-width: 960px;
       max-height: 480px;
-      padding: 1.5rem;
+      padding: calc(1.5rem + env(safe-area-inset-top)) calc(1.5rem + env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom)) calc(1.5rem + env(safe-area-inset-left));
       gap: 1.5rem;
       align-items: center;
       z-index: 1;
@@ -346,6 +346,7 @@
     @media (max-width: 600px) or (orientation: portrait) {
       #html-menu {
         overflow-y: auto;
+        touch-action: pan-y;
       }
       #html-menu .page-container {
         grid-template-columns: 1fr;
@@ -365,7 +366,7 @@
     /* Adjustments for low-height/landscape viewports (e.g. mobile landscape) */
     @media (max-height: 480px) and (orientation: landscape) {
       #html-menu .page-container {
-        padding: 0.55rem;
+        padding: calc(0.55rem + env(safe-area-inset-top)) calc(0.55rem + env(safe-area-inset-right)) calc(0.55rem + env(safe-area-inset-bottom)) calc(0.55rem + env(safe-area-inset-left));
         gap: 0.75rem;
         max-height: 100%;
         max-width: 900px;
@@ -388,6 +389,7 @@
         margin-bottom: 0.4rem;
         max-height: 130px;
         overflow-y: auto;
+        touch-action: pan-y;
         padding-left: 6px;
       }
       #html-menu .cta-button {
@@ -432,8 +434,9 @@
       transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
       direction: ltr; /* Force Left-to-Right layout grid flow */
       overflow-y: auto;
+      touch-action: pan-y;
       box-sizing: border-box;
-      padding: 1.5rem 0.5rem;
+      padding: calc(1.5rem + env(safe-area-inset-top)) calc(0.5rem + env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom)) calc(0.5rem + env(safe-area-inset-left));
       -webkit-overflow-scrolling: touch;
     }
 
@@ -717,6 +720,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       display: none;
       align-items: center;
       justify-content: center;
@@ -725,6 +729,8 @@
       backdrop-filter: blur(4px);
       user-select: none;
       direction: rtl;
+      box-sizing: border-box;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     #html-gameover-box {
@@ -796,6 +802,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       display: none;
       align-items: center;
       justify-content: center;
@@ -804,6 +811,8 @@
       backdrop-filter: blur(4px);
       user-select: none;
       direction: rtl;
+      box-sizing: border-box;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     #html-victory-box {
@@ -1036,8 +1045,8 @@
 
     #credits-close-btn {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      top: calc(15px + env(safe-area-inset-top));
+      right: calc(15px + env(safe-area-inset-right));
       background: none;
       border: none;
       color: #ff007f;
@@ -1297,6 +1306,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       background-color: #0b192c;
       font-family: 'Outfit', 'Rubik', sans-serif;
       color: #ffffff;
@@ -1312,7 +1322,8 @@
       direction: rtl;
       text-align: center;
       gap: 1.5rem;
-      padding: 2rem;
+      box-sizing: border-box;
+      padding: calc(2rem + env(safe-area-inset-top)) calc(2rem + env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) calc(2rem + env(safe-area-inset-left));
     }
 
     #html-loading-screen.visible {
@@ -1670,10 +1681,9 @@
   <script type="module">
     import { trackEndLinkClicked } from './Game/analytics.js';
     document.getElementById('popup-share-btn').addEventListener('click', () => trackEndLinkClicked('share'));
-    document.getElementById('popup-replay-btn').addEventListener('click', () => trackEndLinkClicked('replay'));
     document.getElementById('popup-itch-btn')?.addEventListener('click', () => trackEndLinkClicked('itch_games'));
     document.querySelector('a[href*="instagram"]').addEventListener('click', () => trackEndLinkClicked('instagram'));
-    document.querySelector('a[href*="ourknesset.org"]').addEventListener('click', () => trackEndLinkClicked('official_voting_info'));
+    document.querySelector('a[href*="heyzine"]')?.addEventListener('click', () => trackEndLinkClicked('official_voting_info'));
   </script>
   <script>
     document.getElementById('cta-btn').addEventListener('click', () => {

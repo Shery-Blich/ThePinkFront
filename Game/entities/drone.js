@@ -132,7 +132,9 @@ export class Drone {
    */
   explode() {
     // 0. Explosion sound
-    this.scene.sound.play('sfx-explosion', { volume: 0.5 });
+    if (this.scene && this.scene.sound) {
+      this.scene.sound.play('sfx-explosion', { volume: 0.5 });
+    }
 
     // 1. Shockwave graphics
     const blast = this.scene.add.graphics({ x: this.tx, y: this.ty });

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import VirtualJoyStick from 'phaser4-rex-plugins/plugins/virtualjoystick.js';
+import { getSafeAreaInsets } from './safe-area.js';
 
 /**
  * JoystickMove — Virtual joystick movement system for Phaser.js using phaser4-rex-plugins.
@@ -67,10 +68,15 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
     /** @type {number} Current scale factor */
     this.scaleFactor = scaleFactor;
 
+    // Keep the joystick clear of notches/camera cutouts and the home-indicator bar.
+    // getSafeAreaInsets() returns CSS pixels; scale.EXPAND mode means game units
+    // don't map 1:1 to CSS pixels on most aspect ratios, so convert via displayScale.
+    const insets = this._toGameUnitInsets(getSafeAreaInsets());
+
     /** @type {number} Center X of the stationary joystick */
-    this.baseX = this.config.leftOffset;
+    this.baseX = this.config.leftOffset + insets.left;
     /** @type {number} Center Y of the stationary joystick */
-    this.baseY = this.scene.scale.height - this.config.bottomOffset;
+    this.baseY = this.scene.scale.height - this.config.bottomOffset - insets.bottom;
 
     /** @type {boolean} Whether movement input is currently accepted */
     this._enabled = false;
@@ -304,10 +310,31 @@ export class JoystickMove extends Phaser.Events.EventEmitter {
    * @private
    */
   _onResize(gameSize) {
-    this.baseY = gameSize.height - this.config.bottomOffset;
+    // Re-read insets too: rotating the device can move the notch to the other side.
+    const insets = this._toGameUnitInsets(getSafeAreaInsets());
+    this.baseX = this.config.leftOffset + insets.left;
+    this.baseY = gameSize.height - this.config.bottomOffset - insets.bottom;
     if (this.joystick) {
       this.joystick.setPosition(this.baseX, this.baseY);
     }
+  }
+
+  /**
+   * Converts CSS-pixel safe-area insets into game-coordinate units.
+   * In Scale.EXPAND mode the canvas's internal coordinate system only matches
+   * CSS pixels 1:1 when the viewport's aspect ratio equals the base 640x360 —
+   * on every other aspect ratio (i.e. almost every phone) they diverge, so
+   * raw CSS-pixel insets must be scaled by displayScale before use as offsets.
+   * @private
+   */
+  _toGameUnitInsets(cssInsets) {
+    const scale = this.scene.scale.displayScale;
+    return {
+      top: cssInsets.top * scale.y,
+      right: cssInsets.right * scale.x,
+      bottom: cssInsets.bottom * scale.y,
+      left: cssInsets.left * scale.x,
+    };
   }
 
   // ---------------------------------------------------------------------------
