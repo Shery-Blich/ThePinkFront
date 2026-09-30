@@ -3,6 +3,7 @@ import { Character } from '../entities/character.js';
 import { Player } from '../entities/player.js';
 import { Product } from '../entities/product.js';
 import { JoystickMove } from '../systems/joystick-move.js';
+import { JumpSystem } from '../systems/jump-system.js';
 import { startSceneMusic } from '../systems/bg-music.js';
 import { showVictoryHelper, showGameOverHelper } from '../systems/level-ui-helper.js';
 import { LivesManager } from '../systems/lives-manager.js';
@@ -39,8 +40,6 @@ export class Day2Scene extends Phaser.Scene {
     this._autoScrollSpeed = 80; // px/sec
 
     this._collectedCount = 0;
-    this._canDoubleJump = false;
-    this._hasDoubleJumped = false;
     this._sounds = {
       collect: null,
       cashier: null,
@@ -108,8 +107,6 @@ export class Day2Scene extends Phaser.Scene {
 
     this._moveDirection = 0;
     this._collectedCount = 0;
-    this._canDoubleJump = false;
-    this._hasDoubleJumped = false;
     if (this.cameras && this.cameras.main) {
       this.cameras.main.scrollX = 0;
     }
@@ -183,7 +180,7 @@ export class Day2Scene extends Phaser.Scene {
 
     this._setupSounds();
     startSceneMusic(this, 'bg-middle');
-    this._setupInput(width);
+    this.jumpSystem = new JumpSystem(this, this.player, { jumpVelocity: this._jumpVelocity });
     this._createHUD();
 
     // Show intro dialog, then start gameplay
@@ -201,6 +198,7 @@ export class Day2Scene extends Phaser.Scene {
 
     this.events.once('shutdown', () => {
       if (this.joystick) this.joystick.destroy();
+      if (this.jumpSystem) this.jumpSystem.destroy();
       if (typeof window.hideHUD === 'function') {
         window.hideHUD('html-stats-hud');
       }
@@ -251,19 +249,7 @@ export class Day2Scene extends Phaser.Scene {
       }
     }
 
-    // Reset double-jump on landing
-    if (this.player && this.player.body) {
-      const body = this.player.body;
-      const onGround = !!(
-        body.blocked && body.blocked.down ||
-        body.touching && body.touching.down ||
-        (typeof body.onFloor === 'function' && body.onFloor())
-      );
-      if (onGround) {
-        this._canDoubleJump = false;
-        this._hasDoubleJumped = false;
-      }
-    }
+    if (this.jumpSystem) this.jumpSystem.update();
 
     // --- MOVEMENT DISPATCHER ---
     let joystickActive = false;
@@ -364,77 +350,9 @@ export class Day2Scene extends Phaser.Scene {
     }
   }
 
-  _setupInput(width) {
-    this.input.on('pointerdown', (pointer) => {
-      if (this.isGameOver || this.isSceneOver) {
-        return;
-      }
-      if (this._dialogActive) {
-        return;
-      }
-
-      // If they are tapping the screen to jump, make sure it's not on top of the joystick
-      if (this._isPointerOnJoystick(pointer)) {
-        return;
-      }
-
-      this._doJump();
-    });
-
-  }
-
-  _isPointerOnJoystick(pointer) {
-    if (!this.joystick || !this.joystick.config) {
-      return false;
-    }
-    const baseX = this.joystick.baseX || 60;
-    const baseY = this.joystick.baseY || (this.scale.height - 60);
-    const radius = this.joystick.config.maxRadius || 50;
-
-    const dx = pointer.x - baseX;
-    const dy = pointer.y - baseY;
-    return Math.hypot(dx, dy) <= radius;
-  }
-
   _stopMovement() {
     if (this.player && this.player.body) {
       this.player.body.setVelocityX(0);
-    }
-  }
-
-  _doJump() {
-    if (this._dialogActive) return;
-    if (!this.player || !this.player.body) return;
-    this.events.emit('player-jump');
-    const body = this.player.body;
-    const onGround = !!(
-      body.blocked && body.blocked.down ||
-      body.touching && body.touching.down ||
-      (typeof body.onFloor === 'function' && body.onFloor())
-    );
-
-    if (onGround) {
-      if (typeof body.setVelocityY === 'function') {
-        body.setVelocityY(this._jumpVelocity);
-      } else {
-        body.velocity && (body.velocity.y = this._jumpVelocity);
-      }
-      if (typeof this.player.playJump === 'function') this.player.playJump();
-      this._canDoubleJump = true;
-      this._hasDoubleJumped = false;
-      return;
-    }
-
-    if (this._canDoubleJump && !this._hasDoubleJumped) {
-      if (typeof body.setVelocityY === 'function') {
-        body.setVelocityY(this._jumpVelocity);
-      } else {
-        body.velocity && (body.velocity.y = this._jumpVelocity);
-      }
-      if (typeof this.player.playJump === 'function') this.player.playJump();
-      this._hasDoubleJumped = true;
-      this._canDoubleJump = false;
-      return;
     }
   }
 

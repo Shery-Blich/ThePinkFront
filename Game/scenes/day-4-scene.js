@@ -4,6 +4,7 @@ import { showVictoryHelper, showGameOverHelper } from "../systems/level-ui-helpe
 import { LivesManager } from "../systems/lives-manager.js";
 import { addGlobalScore } from "../systems/score-manager.js";
 import { playDialogOnce } from "../systems/dialog-system.js";
+import { getSafeAreaInsets } from "../systems/safe-area.js";
 
 /**
  * Day4Scene — Catching Game: Catching people falling out of the sky on the desert road to Jerusalem
@@ -498,12 +499,31 @@ export class Day4Scene extends Phaser.Scene {
     shoulderGfx.setScrollFactor(0).setDepth(6);
   }
 
+  /**
+   * Converts CSS-pixel safe-area insets into game-coordinate units.
+   * In Scale.EXPAND mode the canvas's internal coordinate system only matches
+   * CSS pixels 1:1 when the viewport's aspect ratio equals the base 640x360 —
+   * on every other aspect ratio (i.e. almost every phone) they diverge, so
+   * raw CSS-pixel insets must be scaled by displayScale before use as offsets.
+   */
+  _toGameUnitInsets(cssInsets) {
+    const scale = this.scale.displayScale;
+    return {
+      top: cssInsets.top * scale.y,
+      right: cssInsets.right * scale.x,
+      bottom: cssInsets.bottom * scale.y,
+      left: cssInsets.left * scale.x,
+    };
+  }
+
   _createPedalButtons(width, height) {
     const s = this.s;
-    const btnY = height - 32 * s;
+    // Keep pedals clear of notches/camera cutouts and the home-indicator bar
+    this._safeInsets = this._toGameUnitInsets(getSafeAreaInsets());
+    const btnY = height - 32 * s - this._safeInsets.bottom;
 
     // --- Right Button: Gas Pedal Pixel Art ---
-    const gasX = width - 42 * s;
+    const gasX = width - 42 * s - this._safeInsets.right;
     const gasTexKey = this.textures.exists("pedal_gas") ? "pedal_gas" : null;
     if (gasTexKey) {
       this.gasPedalSprite = this.add.image(gasX, btnY, gasTexKey)
@@ -520,7 +540,7 @@ export class Day4Scene extends Phaser.Scene {
     }
 
     // --- Left Button: Brake Pedal Pixel Art ---
-    const brakeX = 42 * s;
+    const brakeX = 42 * s + this._safeInsets.left;
     const brakeTexKey = this.textures.exists("pedal_brake") ? "pedal_brake" : null;
     if (brakeTexKey) {
       this.brakePedalSprite = this.add.image(brakeX, btnY, brakeTexKey)
@@ -540,13 +560,37 @@ export class Day4Scene extends Phaser.Scene {
   /** Re-anchor the pedals to the current screen edges after a resize/fullscreen. */
   _repositionPedals() {
     const s = this.s;
-    const btnY = this.scale.height - 32 * s;
-    const gasX = this.scale.width - 42 * s;
-    const brakeX = 42 * s;
+    // Re-read insets too: rotating the device can move the notch to the other side.
+    this._safeInsets = this._toGameUnitInsets(getSafeAreaInsets());
+    const btnY = this.scale.height - 32 * s - this._safeInsets.bottom;
+    const gasX = this.scale.width - 42 * s - this._safeInsets.right;
+    const brakeX = 42 * s + this._safeInsets.left;
     if (this.gasPedalSprite) this.gasPedalSprite.setPosition(gasX, btnY);
     if (this.gasHit) this.gasHit.setPosition(gasX, btnY);
     if (this.brakePedalSprite) this.brakePedalSprite.setPosition(brakeX, btnY);
     if (this.brakeHit) this.brakeHit.setPosition(brakeX, btnY);
+
+    // Keep the tutorial arrow pinned to whichever pedal it's currently pointing at
+    if (this.tutorialArrow) {
+      const targetX = this.tutorialStep === "brake" ? brakeX : gasX;
+      const targetY = btnY - 32 * s;
+      this.tutorialArrow.setPosition(targetX, targetY);
+      if (this.tutorialArrowBounce) {
+        this.tutorialArrowBounce.stop();
+        this.tutorialArrowBounce = this.tweens.add({
+          targets: this.tutorialArrow,
+          y: targetY - 12 * s,
+          duration: 500,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+      }
+    }
+  }
+
+  _pedalBaseY() {
+    return this.scale.height - 32 * this.s - (this._safeInsets?.bottom || 0);
   }
 
   _pressGasPedal() {
@@ -559,7 +603,7 @@ export class Day4Scene extends Phaser.Scene {
       this.tweens.killTweensOf(this.gasPedalSprite);
       this.tweens.add({
         targets: this.gasPedalSprite,
-        y: (this.scale.height - 32 * this.s) + 3 * this.s,
+        y: this._pedalBaseY() + 3 * this.s,
         scaleY: this.s * 1.15,
         angle: 5,
         duration: 70,
@@ -577,7 +621,7 @@ export class Day4Scene extends Phaser.Scene {
       this.tweens.killTweensOf(this.gasPedalSprite);
       this.tweens.add({
         targets: this.gasPedalSprite,
-        y: this.scale.height - 32 * this.s,
+        y: this._pedalBaseY(),
         scaleY: this.s * 1.3,
         angle: 0,
         duration: 160,
@@ -596,7 +640,7 @@ export class Day4Scene extends Phaser.Scene {
       this.tweens.killTweensOf(this.brakePedalSprite);
       this.tweens.add({
         targets: this.brakePedalSprite,
-        y: (this.scale.height - 32 * this.s) + 3 * this.s,
+        y: this._pedalBaseY() + 3 * this.s,
         scaleY: this.s * 1.15,
         angle: -5,
         duration: 70,
@@ -614,7 +658,7 @@ export class Day4Scene extends Phaser.Scene {
       this.tweens.killTweensOf(this.brakePedalSprite);
       this.tweens.add({
         targets: this.brakePedalSprite,
-        y: this.scale.height - 32 * this.s,
+        y: this._pedalBaseY(),
         scaleY: this.s * 1.3,
         angle: 0,
         duration: 160,
@@ -689,8 +733,8 @@ export class Day4Scene extends Phaser.Scene {
     };
     drawArrow();
 
-    const gasX = width - 42 * s;
-    const btnY = height - 32 * s;
+    const gasX = width - 42 * s - (this._safeInsets?.right || 0);
+    const btnY = height - 32 * s - (this._safeInsets?.bottom || 0);
     const targetY = btnY - 32 * s;
     arrow.setPosition(gasX, targetY);
 
@@ -723,8 +767,8 @@ export class Day4Scene extends Phaser.Scene {
     }
 
     if (this.tutorialArrow) {
-      const brakeX = 42 * s;
-      const btnY = height - 32 * s;
+      const brakeX = 42 * s + (this._safeInsets?.left || 0);
+      const btnY = height - 32 * s - (this._safeInsets?.bottom || 0);
       const targetY = btnY - 32 * s;
 
       if (this.tutorialArrowBounce) {
