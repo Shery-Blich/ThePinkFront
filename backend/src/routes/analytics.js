@@ -60,6 +60,8 @@ router.get('/questions', requireAdmin, async (_req, res) => {
       $project: {
         questionId: '$_id',
         questionText: '$question.text',
+        answerTexts: '$question.answers.text',
+        correctAnswerIndex: '$question.correctAnswerIndex',
         totalAnswers: 1,
         correctCount: 1,
         correctRate: 1,
