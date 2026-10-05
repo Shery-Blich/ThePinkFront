@@ -29,7 +29,10 @@
     {
       "role": "Lead Full-Stack & Game Developer",
       "names": [
-        "Shiran Steinberg"
+        {
+          "name": "Shiran Steinberg",
+          "link": "https://www.linkedin.com/in/shiran-steinberg-48801686"
+        }
       ]
     },
     {
