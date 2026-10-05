@@ -4,7 +4,8 @@ import {
 } from 'recharts';
 import { getQuestionAnalytics, getSessionAnalytics } from '../../api/analytics.js';
 
-const ANSWER_COLORS = ['#1976d2', '#388e3c', '#f57c00', '#7b1fa2'];
+const CORRECT_COLOR = '#388e3c';
+const WRONG_COLOR = '#c2185b';
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'];
 
 export default function AnalyticsPage() {
@@ -64,20 +65,34 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
                   data={(q.distribution || []).map((count, idx) => ({
-                    name: ANSWER_LABELS[idx],
+                    name: idx === q.correctAnswerIndex ? `${ANSWER_LABELS[idx]} ✓` : ANSWER_LABELS[idx],
                     count,
+                    answerText: q.answerTexts?.[idx],
                   }))}
                 >
                   <XAxis dataKey="name" />
                   <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                  <Tooltip labelFormatter={(_, p) => p[0]?.payload?.answerText || ''} />
+                  <Bar dataKey="count" name="Players" radius={[4, 4, 0, 0]}>
                     {(q.distribution || []).map((_, idx) => (
-                      <Cell key={idx} fill={ANSWER_COLORS[idx]} />
+                      <Cell key={idx} fill={idx === q.correctAnswerIndex ? CORRECT_COLOR : WRONG_COLOR} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              {q.answerTexts?.length > 0 && (
+                <ol style={styles.answerList}>
+                  {q.answerTexts.map((text, idx) => (
+                    <li
+                      key={idx}
+                      style={idx === q.correctAnswerIndex ? styles.correctAnswer : undefined}
+                    >
+                      <strong>{ANSWER_LABELS[idx]}.</strong> {text}
+                      {idx === q.correctAnswerIndex && ' ✓'}
+                    </li>
+                  ))}
+                </ol>
+              )}
             </Section>
           ))}
         </>
@@ -111,4 +126,9 @@ const styles = {
   statLabel: { color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' },
   section: { background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' },
   sectionTitle: { marginTop: 0, fontSize: '0.95rem', color: '#333' },
+  answerList: {
+    listStyle: 'none', padding: 0, margin: '0.5rem 0 0', direction: 'rtl',
+    fontSize: '0.85rem', color: '#555', lineHeight: 1.6,
+  },
+  correctAnswer: { color: CORRECT_COLOR, fontWeight: 600 },
 };
