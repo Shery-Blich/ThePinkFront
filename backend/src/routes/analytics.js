@@ -55,7 +55,7 @@ router.get('/questions', requireAdmin, async (_req, res) => {
         as: 'question',
       },
     },
-    { $unwind: { path: '$question', preserveNullAndEmpty: true } },
+    { $unwind: { path: '$question', preserveNullAndEmptyArrays: true } },
     {
       $project: {
         questionId: '$_id',
