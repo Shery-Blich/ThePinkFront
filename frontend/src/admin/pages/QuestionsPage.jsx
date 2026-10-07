@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  getQuestions, createQuestion, updateQuestion, deleteQuestion, reorderQuestions,
+  getQuestions, createQuestion, updateQuestion, reorderQuestions,
 } from '../../api/questions.js';
 import QuestionForm from '../components/QuestionForm.jsx';
 
@@ -64,12 +64,6 @@ export default function QuestionsPage() {
       setQuestions(previous);
       alert('Failed to save the new order');
     }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Deactivate this question?')) return;
-    await deleteQuestion(id);
-    load();
   };
 
   if (loading) return <p>Loading...</p>;
@@ -144,9 +138,6 @@ export default function QuestionsPage() {
               </ol>
               <div style={styles.rowActions}>
                 <button style={styles.btnEdit} onClick={() => setEditingId(q._id)}>Edit</button>
-                <button style={styles.btnDelete} onClick={() => handleDelete(q._id)}>
-                  {q.isActive ? 'Deactivate' : 'Deactivated'}
-                </button>
               </div>
             </>
           )}
@@ -181,5 +172,4 @@ const styles = {
   rowActions: { display: 'flex', gap: '0.5rem' },
   btnPrimary: { padding: '0.5rem 1rem', background: '#c2185b', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
   btnEdit: { padding: '0.3rem 0.8rem', background: '#e91e8c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-  btnDelete: { padding: '0.3rem 0.8rem', background: '#f8bbd0', color: '#880e4f', border: 'none', borderRadius: '4px', cursor: 'pointer' },
 };

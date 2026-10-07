@@ -54,31 +54,14 @@ router.put(
   questionValidators,
   handleValidationErrors,
   async (req, res) => {
-    const { text, answers, correctAnswerIndex, isActive } = req.body;
+    const { text, answers, correctAnswerIndex } = req.body;
     const question = await Question.findByIdAndUpdate(
       req.params.id,
-      { text, answers, correctAnswerIndex, ...(isActive !== undefined && { isActive }) },
+      { text, answers, correctAnswerIndex },
       { new: true, runValidators: true }
     );
     if (!question) return res.status(404).json({ error: 'Question not found' });
     res.json(question);
-  }
-);
-
-// DELETE /api/questions/:id  — soft delete
-router.delete(
-  '/:id',
-  requireAdmin,
-  param('id').isMongoId(),
-  handleValidationErrors,
-  async (req, res) => {
-    const question = await Question.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
-    if (!question) return res.status(404).json({ error: 'Question not found' });
-    res.json({ message: 'Question deactivated', id: question._id });
   }
 );
 
