@@ -41,6 +41,8 @@ const gameSessionSchema = new mongoose.Schema(
     lastStageIndex: { type: Number },
     lastActivityAt: { type: Date, default: Date.now },
     completed: { type: Boolean, default: false },
+    // Set when the player closed the tab. Later activity (bfcache restore) overrides it.
+    leftAt: { type: Date },
     stageFailures: [stageFailureSchema],
     linkClicks: [linkClickSchema],
   },
