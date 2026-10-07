@@ -3,6 +3,7 @@ import { body, param } from 'express-validator';
 import Question from '../models/Question.js';
 import GameSession from '../models/GameSession.js';
 import { handleValidationErrors } from '../middleware/validate.js';
+import { buildSessionSource } from '../lib/sessionSource.js';
 
 const router = Router();
 
@@ -25,12 +26,20 @@ router.get('/questions', async (_req, res) => {
 router.post(
   '/sessions',
   body('sessionId').isUUID(),
+  body('referrer').optional().isString().isLength({ max: 2000 }),
+  body(['utmSource', 'utmMedium', 'utmCampaign']).optional().isString().isLength({ max: 200 }),
+  body('orientation').optional().isIn(['portrait', 'landscape']),
+  body(['screenWidth', 'screenHeight']).optional().isInt({ min: 0, max: 20000 }).toInt(),
+  body('isTouch').optional().isBoolean().toBoolean(),
   handleValidationErrors,
   async (req, res) => {
     const existing = await GameSession.findOne({ sessionId: req.body.sessionId });
     if (existing) return res.status(409).json({ error: 'Session already exists' });
 
-    const session = await GameSession.create({ sessionId: req.body.sessionId });
+    const session = await GameSession.create({
+      sessionId: req.body.sessionId,
+      source: buildSessionSource(req),
+    });
     res.status(201).json({ id: session._id, sessionId: session.sessionId });
   }
 );
