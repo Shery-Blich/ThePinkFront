@@ -6,6 +6,12 @@ import { handleValidationErrors } from '../middleware/validate.js';
 
 const router = Router();
 
+// Caps on per-session arrays so a misbehaving client can't grow a document unbounded
+const MAX_FAILURES = 200;
+const MAX_LINK_CLICKS = 100;
+const STAGE_KEY = /^[A-Za-z0-9_-]{1,40}$/;
+const LINK_TYPES = ['share', 'share_completed', 'instagram', 'official_voting_info', 'itch_games'];
+
 // GET /api/game/questions — public, correctAnswerIndex is intentionally omitted
 router.get('/questions', async (_req, res) => {
   const questions = await Question.find({ isActive: true })
@@ -55,21 +61,85 @@ router.post(
     });
     session.totalQuestions += 1;
     if (isCorrect) session.correctCount += 1;
+    session.lastActivityAt = new Date();
     await session.save();
 
     res.json({ isCorrect, correctAnswerIndex: question.correctAnswerIndex });
   }
 );
 
-// POST /api/game/sessions/:id/end
+// POST /api/game/sessions/:id/progress — player started a stage
+router.post(
+  '/sessions/:id/progress',
+  param('id').isMongoId(),
+  body('stage').matches(STAGE_KEY),
+  body('stageIndex').isInt({ min: 0, max: 50 }),
+  handleValidationErrors,
+  async (req, res) => {
+    const result = await GameSession.updateOne(
+      { _id: req.params.id },
+      {
+        $set: {
+          lastStage: req.body.stage,
+          lastStageIndex: req.body.stageIndex,
+          lastActivityAt: new Date(),
+        },
+      }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Session not found' });
+    res.status(204).end();
+  }
+);
+
+// POST /api/game/sessions/:id/failure — player lost a stage (they may retry it)
+router.post(
+  '/sessions/:id/failure',
+  param('id').isMongoId(),
+  body('stage').matches(STAGE_KEY),
+  handleValidationErrors,
+  async (req, res) => {
+    const result = await GameSession.updateOne(
+      { _id: req.params.id },
+      {
+        $push: { stageFailures: { $each: [{ stage: req.body.stage }], $slice: -MAX_FAILURES } },
+        $set: { lastActivityAt: new Date() },
+      }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Session not found' });
+    res.status(204).end();
+  }
+);
+
+// POST /api/game/sessions/:id/link — player clicked an end-screen link.
+// Allowed after the session ended, since the end screen is shown post-game.
+router.post(
+  '/sessions/:id/link',
+  param('id').isMongoId(),
+  body('linkType').isIn(LINK_TYPES),
+  handleValidationErrors,
+  async (req, res) => {
+    const result = await GameSession.updateOne(
+      { _id: req.params.id },
+      {
+        $push: { linkClicks: { $each: [{ linkType: req.body.linkType }], $slice: -MAX_LINK_CLICKS } },
+        $set: { lastActivityAt: new Date() },
+      }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Session not found' });
+    res.status(204).end();
+  }
+);
+
+// POST /api/game/sessions/:id/end — player finished the whole game
 router.post(
   '/sessions/:id/end',
   param('id').isMongoId(),
   handleValidationErrors,
   async (req, res) => {
+    const now = new Date();
     const session = await GameSession.findByIdAndUpdate(
       req.params.id,
-      { endedAt: new Date() },
+      { endedAt: now, lastActivityAt: now, completed: true },
       { new: true }
     );
     if (!session) return res.status(404).json({ error: 'Session not found' });

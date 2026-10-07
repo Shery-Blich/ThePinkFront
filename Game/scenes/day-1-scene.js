@@ -11,7 +11,6 @@ import {
   trackSceneStarted,
   trackFirstMove,
   trackObstacleHit,
-  trackGameFailed,
 } from "../analytics.js";
 
 import { addGlobalScore } from "../systems/score-manager.js";
@@ -371,7 +370,6 @@ export class Day1Scene extends Phaser.Scene {
   triggerGameOver() {
     if (this.isGameOver || this.isSceneOver) return;
     this.isGameOver = true;
-    trackGameFailed({ scene_id: "kiryat_shmona" });
     this.sound.play("sfx-gameover", { volume: 0.6 });
 
     if (this.player) this.player.disable();
