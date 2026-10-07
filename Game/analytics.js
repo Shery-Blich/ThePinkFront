@@ -129,6 +129,14 @@ export function trackEndLinkClicked(linkType) {
   _postSessionEvent('link', { linkType }, { keepalive: true });
 }
 
+// Tab closed or navigated away: mark the run as left right away instead of
+// waiting for the idle cutoff. keepalive lets the request outlive the page.
+window.addEventListener('pagehide', () => {
+  if (_mongoSessionId && _endedSessionId !== getSessionId()) {
+    _post(`/game/sessions/${_mongoSessionId}/leave`, {}, { keepalive: true });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------

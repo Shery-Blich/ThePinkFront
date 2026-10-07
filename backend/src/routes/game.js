@@ -130,6 +130,18 @@ router.post(
   }
 );
 
+// POST /api/game/sessions/:id/leave — player closed the tab mid-game
+router.post(
+  '/sessions/:id/leave',
+  param('id').isMongoId(),
+  handleValidationErrors,
+  async (req, res) => {
+    // No-op for finished sessions, so closing the end screen isn't a drop-off
+    await GameSession.updateOne({ _id: req.params.id, completed: false }, { $set: { leftAt: new Date() } });
+    res.status(204).end();
+  }
+);
+
 // POST /api/game/sessions/:id/end — player finished the whole game
 router.post(
   '/sessions/:id/end',

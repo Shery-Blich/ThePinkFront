@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { getQuestionAnalytics, getSessionAnalytics, getFunnelAnalytics } from '../../api/analytics.js';
 
@@ -129,7 +129,7 @@ function FunnelSection({ funnel }) {
   if (funnel.totalSessions === 0) {
     return (
       <Section title="Where players leave the game">
-        <p style={{ color: '#888' }}>No tracked sessions yet.</p>
+        <p style={styles.empty}>No tracked sessions yet. Play the game once and they&apos;ll show up here.</p>
       </Section>
     );
   }
@@ -142,7 +142,7 @@ function FunnelSection({ funnel }) {
   const rows = [
     {
       key: 'none',
-      label: '0 · Before stage 1 loaded',
+      label: 'Opened the game',
       reached: funnel.totalSessions,
       left: notStarted.reduce((sum, r) => sum + r.abandoned, 0),
       playing: notStarted.reduce((sum, r) => sum + r.inProgress, 0),
@@ -160,58 +160,73 @@ function FunnelSection({ funnel }) {
     })),
   ];
   const abandoned = rows.reduce((sum, r) => sum + r.left, 0);
-  const pct = (n, d) => (d > 0 ? `${Math.round((n / d) * 100)}%` : '—');
+  const total = funnel.totalSessions;
+  // The stage that loses the largest share of the players who reach it
+  const worst = rows.reduce((w, r) => (r.reached && r.left / r.reached > (w ? w.left / w.reached : 0) ? r : w), null);
 
   return (
     <>
       <div style={styles.statsRow}>
-        <Stat label="Tracked sessions" value={funnel.totalSessions} />
-        <Stat label="Finished the game" value={funnel.completedSessions} />
-        <Stat label="Completion rate" value={pct(funnel.completedSessions, funnel.totalSessions)} />
-        <Stat label="Left before the end" value={abandoned} />
+        <Stat label="Tracked sessions" value={total} />
+        <Stat label="Completion rate" value={pct(funnel.completedSessions, total)} sub={`${funnel.completedSessions} finished`} />
+        <Stat label="Left before the end" value={abandoned} sub={pct(abandoned, total) + ' of sessions'} />
+        <Stat label="Biggest drop-off" value={worst ? worst.label.replace(/^\d+ · /, '') : '—'} sub={worst ? `${pct(worst.left, worst.reached)} leave here` : 'No drop-offs yet'} small />
       </div>
 
-      <Section title="Where players leave the game">
-        <p style={styles.note}>
-          A session counts as &quot;left&quot; when it didn&apos;t finish and has had no activity for{' '}
-          {funnel.idleCutoffMinutes} minutes. Newer unfinished sessions are listed as still playing.
-        </p>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={rows}>
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="reached" name="Reached stage" fill="#f48fb1" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="left" name="Left at stage" fill={WRONG_COLOR} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Stage</th>
-                <th style={styles.th}>Reached</th>
-                <th style={styles.th}>Left here</th>
-                <th style={styles.th}>% of reached who left</th>
-                <th style={styles.th}>Still playing</th>
-                <th style={styles.th}>Failures (players)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.key}>
-                  <td style={styles.td}>{r.label}</td>
-                  <td style={styles.td}>{r.reached}</td>
-                  <td style={styles.td}>{r.left}</td>
-                  <td style={styles.td}>{pct(r.left, r.reached)}</td>
-                  <td style={styles.td}>{r.playing}</td>
-                  <td style={styles.td}>{r.failures} ({r.failedPlayers})</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <Section
+        title="Where players leave the game"
+        note={`"Left" = closed the game before the end, or idle for ${funnel.idleCutoffMinutes}+ min. Other unfinished sessions count as still playing.`}
+      >
+        <div style={styles.funnel}>
+          {rows.map((r) => (
+            <div
+              key={r.key}
+              style={styles.funnelRow}
+              title={`${r.label}\nReached: ${r.reached}\nLeft here: ${r.left}\nStill playing: ${r.playing}\nLosses: ${r.failures} (${r.failedPlayers} players)`}
+            >
+              <div style={styles.funnelLabel}>{r.label}</div>
+              <div style={styles.track}>
+                <div style={{ ...styles.bar, width: `${(r.reached / total) * 100}%`, opacity: r === worst ? 1 : 0.85 }} />
+              </div>
+              <div style={styles.funnelValue}>
+                <strong>{r.reached}</strong>
+                <span style={styles.muted}> · {pct(r.reached, total)}</span>
+              </div>
+              <div style={styles.chips}>
+                {r.left > 0 && <span style={{ ...styles.chip, ...styles.chipDrop }}>↓ {r.left} left ({pct(r.left, r.reached)})</span>}
+                {r.playing > 0 && <span style={styles.chip}>▶ {r.playing} playing</span>}
+                {r.failures > 0 && <span style={styles.chip}>✕ {r.failures} losses · {r.failedPlayers} players</span>}
+              </div>
+            </div>
+          ))}
         </div>
+
+        <details style={styles.details}>
+          <summary style={styles.summary}>Show as table</summary>
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  {['Stage', 'Reached', 'Left here', '% of reached who left', 'Still playing', 'Losses (players)'].map((h) => (
+                    <th key={h} style={styles.th}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.key}>
+                    <td style={styles.td}>{r.label}</td>
+                    <td style={styles.tdNum}>{r.reached}</td>
+                    <td style={styles.tdNum}>{r.left}</td>
+                    <td style={styles.tdNum}>{pct(r.left, r.reached)}</td>
+                    <td style={styles.tdNum}>{r.playing}</td>
+                    <td style={styles.tdNum}>{r.failures} ({r.failedPlayers})</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </Section>
     </>
   );
@@ -219,86 +234,101 @@ function FunnelSection({ funnel }) {
 
 function LinksSection({ funnel }) {
   const byType = Object.fromEntries(funnel.links.map((l) => [l.linkType, l]));
-  const rows = Object.entries(LINK_LABELS).map(([type, label]) => ({
-    label,
-    players: byType[type]?.sessions ?? 0,
-    clicks: byType[type]?.clicks ?? 0,
-  }));
   const completed = funnel.completedSessions;
+  const rows = Object.entries(LINK_LABELS)
+    .map(([type, label]) => ({
+      type,
+      label,
+      players: byType[type]?.sessions ?? 0,
+      clicks: byType[type]?.clicks ?? 0,
+    }))
+    .sort((a, b) => b.players - a.players);
+  const max = Math.max(1, ...rows.map((r) => r.players));
 
   return (
-    <Section title="End-screen links">
-      <p style={styles.note}>
-        Players = unique sessions that clicked. Rate is out of {completed} player(s) who finished the game.
-        Credits links are not tracked.
-      </p>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={rows} layout="vertical" margin={{ left: 40 }}>
-          <XAxis type="number" allowDecimals={false} />
-          <YAxis type="category" dataKey="label" width={200} tick={{ fontSize: 12 }} />
-          <Tooltip />
-          <Bar dataKey="players" name="Players" fill="#c2185b" radius={[0, 4, 4, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-      <div style={styles.tableWrap}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Link</th>
-              <th style={styles.th}>Players</th>
-              <th style={styles.th}>Total clicks</th>
-              <th style={styles.th}>% of finishers</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.label}>
-                <td style={styles.td}>{r.label}</td>
-                <td style={styles.td}>{r.players}</td>
-                <td style={styles.td}>{r.clicks}</td>
-                <td style={styles.td}>{completed > 0 ? `${Math.round((r.players / completed) * 100)}%` : '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <Section
+      title="End-screen links"
+      note={`Players = unique sessions that clicked. % is out of ${completed} player(s) who finished. Credits links aren't tracked.`}
+    >
+      <div style={styles.funnel}>
+        {rows.map((r) => (
+          <div key={r.type} style={styles.linkRow} title={`${r.label}\nPlayers: ${r.players}\nTotal clicks: ${r.clicks}`}>
+            <div style={styles.funnelLabel}>{r.label}</div>
+            <div style={styles.track}>
+              <div style={{ ...styles.bar, width: `${(r.players / max) * 100}%` }} />
+            </div>
+            <div style={styles.funnelValue}>
+              <strong>{r.players}</strong>
+              <span style={styles.muted}> · {pct(r.players, completed)} · {r.clicks} clicks</span>
+            </div>
+          </div>
+        ))}
       </div>
     </Section>
   );
 }
 
-function Stat({ label, value }) {
+const pct = (n, d) => (d > 0 ? `${Math.round((n / d) * 100)}%` : '—');
+
+function Stat({ label, value, sub, small }) {
   return (
     <div style={styles.statCard}>
-      <div style={styles.statValue}>{value}</div>
       <div style={styles.statLabel}>{label}</div>
+      <div style={{ ...styles.statValue, ...(small && styles.statValueSmall) }}>{value}</div>
+      {sub && <div style={styles.statSub}>{sub}</div>}
     </div>
   );
 }
 
-function Section({ title, children }) {
+function Section({ title, note, children }) {
   return (
     <div style={styles.section}>
       <h3 style={styles.sectionTitle}>{title}</h3>
+      {note && <p style={styles.note}>{note}</p>}
       {children}
     </div>
   );
 }
 
+const INK = '#1f1f24';
+const MUTED = '#6b6b76';
+const BORDER = '#ececf0';
+
 const styles = {
-  statsRow: { display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' },
-  statCard: { background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '1rem 1.5rem', minWidth: '140px' },
-  statValue: { fontSize: '2rem', fontWeight: 700, color: '#c2185b' },
-  statLabel: { color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' },
-  section: { background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' },
-  sectionTitle: { marginTop: 0, fontSize: '0.95rem', color: '#333' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.25rem' },
+  statCard: { background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '14px', padding: '1rem 1.25rem', boxShadow: '0 1px 2px rgba(16,16,24,0.04)' },
+  statLabel: { color: MUTED, fontSize: '0.8rem', fontWeight: 500 },
+  statValue: { fontSize: '2rem', fontWeight: 700, color: INK, lineHeight: 1.2, marginTop: '0.35rem' },
+  statValueSmall: { fontSize: '1.25rem', paddingTop: '0.4rem' },
+  statSub: { color: MUTED, fontSize: '0.8rem', marginTop: '0.2rem' },
+  section: { background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '14px', padding: '1.25rem 1.5rem', marginBottom: '1.25rem', boxShadow: '0 1px 2px rgba(16,16,24,0.04)' },
+  sectionTitle: { margin: 0, fontSize: '1rem', fontWeight: 600, color: INK },
+  note: { color: MUTED, fontSize: '0.8rem', margin: '0.25rem 0 0' },
+  empty: { color: MUTED, fontSize: '0.9rem', margin: '0.75rem 0 0' },
+  funnel: { display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' },
+  funnelRow: {
+    display: 'grid', gridTemplateColumns: 'minmax(120px, 180px) 1fr auto', gridTemplateAreas: '"label bar value" ". chips chips"',
+    alignItems: 'center', columnGap: '0.75rem', rowGap: '0.25rem', padding: '0.4rem 0', borderBottom: `1px solid ${BORDER}`,
+  },
+  linkRow: { display: 'grid', gridTemplateColumns: 'minmax(120px, 180px) 1fr auto', alignItems: 'center', columnGap: '0.75rem', padding: '0.3rem 0' },
+  funnelLabel: { gridArea: 'label', fontSize: '0.85rem', color: INK, fontWeight: 500 },
+  track: { gridArea: 'bar', height: '14px', background: '#fbeef3', borderRadius: '4px', overflow: 'hidden' },
+  bar: { height: '100%', background: '#c2185b', borderRadius: '4px', transition: 'width 0.4s ease' },
+  funnelValue: { gridArea: 'value', fontSize: '0.85rem', color: INK, whiteSpace: 'nowrap', minWidth: '90px', textAlign: 'right' },
+  muted: { color: MUTED, fontWeight: 400 },
+  chips: { gridArea: 'chips', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' },
+  chip: { fontSize: '0.72rem', color: MUTED, background: '#f4f4f6', borderRadius: '999px', padding: '0.1rem 0.55rem' },
+  chipDrop: { color: '#8a1040', background: '#fce4ec', fontWeight: 600 },
+  details: { marginTop: '1rem' },
+  summary: { cursor: 'pointer', color: MUTED, fontSize: '0.8rem' },
   answerList: {
     listStyle: 'none', padding: 0, margin: '0.5rem 0 0', direction: 'rtl',
     fontSize: '0.85rem', color: '#555', lineHeight: 1.6,
   },
   correctAnswer: { color: CORRECT_COLOR, fontWeight: 600 },
-  note: { color: '#777', fontSize: '0.8rem', marginTop: 0 },
   tableWrap: { overflowX: 'auto', marginTop: '0.75rem' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' },
-  th: { textAlign: 'left', borderBottom: '1px solid #e0e0e0', padding: '0.4rem 0.5rem', color: '#555', whiteSpace: 'nowrap' },
-  td: { borderBottom: '1px solid #f0f0f0', padding: '0.4rem 0.5rem' },
+  th: { textAlign: 'left', borderBottom: `1px solid ${BORDER}`, padding: '0.5rem', color: MUTED, fontWeight: 500, whiteSpace: 'nowrap' },
+  td: { borderBottom: `1px solid ${BORDER}`, padding: '0.5rem', color: INK },
+  tdNum: { borderBottom: `1px solid ${BORDER}`, padding: '0.5rem', color: INK, fontVariantNumeric: 'tabular-nums' },
 };

@@ -89,8 +89,8 @@ router.get('/sessions', requireAdmin, async (_req, res) => {
   res.json({ total, avgScore, sessions });
 });
 
-// A session that hasn't completed and has had no activity for this long is
-// considered abandoned; newer ones may still be mid-game.
+// A session that hasn't completed counts as abandoned once the player closed
+// the tab, or after this long with no activity; newer ones may still be mid-game.
 const IDLE_CUTOFF_MINUTES = 30;
 
 // GET /api/analytics/funnel — where players drop off, stage failures, end-link clicks
@@ -108,7 +108,23 @@ router.get('/funnel', requireAdmin, async (_req, res) => {
           sessions: { $sum: 1 },
           completed: { $sum: { $cond: ['$completed', 1, 0] } },
           abandoned: {
-            $sum: { $cond: [{ $and: [{ $ne: ['$completed', true] }, { $lt: ['$lastActivityAt', cutoff] }] }, 1, 0] },
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ['$completed', true] },
+                    {
+                      $or: [
+                        { $lt: ['$lastActivityAt', cutoff] },
+                        { $gte: [{ $ifNull: ['$leftAt', null] }, '$lastActivityAt'] },
+                      ],
+                    },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
           },
         },
       },
