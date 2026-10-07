@@ -26,7 +26,9 @@ app.use(cookieParser());
 
 // Rate limiters
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: process.env.NODE_ENV === 'production' ? 20 : 1000, standardHeaders: true, legacyHeaders: false });
-const gameLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
+// Sized for ~200 players at once behind one IP (venue/school Wi-Fi, carrier NAT): a game sends
+// ~5 requests a minute, so ~1000/min, plus headroom for players who lose stages repeatedly
+const gameLimiter = rateLimit({ windowMs: 60 * 1000, max: 1500, standardHeaders: true, legacyHeaders: false });
 
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/questions', questionsRouter);
