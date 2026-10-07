@@ -56,6 +56,8 @@ router.get('/questions', requireAdmin, async (_req, res) => {
       },
     },
     { $unwind: { path: '$question', preserveNullAndEmptyArrays: true } },
+    // $group output order is arbitrary; match the order the game asks them in
+    { $sort: { 'question.order': 1, 'question.createdAt': 1 } },
     {
       $project: {
         questionId: '$_id',

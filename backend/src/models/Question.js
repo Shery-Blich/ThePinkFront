@@ -22,8 +22,13 @@ const questionSchema = new mongoose.Schema(
       max: 3,
     },
     isActive: { type: Boolean, default: true },
+    // Position set from the admin panel; the game asks active questions in this order
+    order: { type: Number },
   },
   { timestamps: true }
 );
+
+// Questions created before ordering existed have no `order` and sort first, by creation date
+export const QUESTION_SORT = { order: 1, createdAt: 1 };
 
 export default mongoose.model('Question', questionSchema);

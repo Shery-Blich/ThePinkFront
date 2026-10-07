@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import Question from '../models/Question.js';
+import Question, { QUESTION_SORT } from '../models/Question.js';
 import GameSession from '../models/GameSession.js';
 import { handleValidationErrors } from '../middleware/validate.js';
 import { buildSessionSource } from '../lib/sessionSource.js';
@@ -16,7 +16,7 @@ const LINK_TYPES = ['share', 'share_completed', 'instagram', 'official_voting_in
 // GET /api/game/questions — public, correctAnswerIndex is intentionally omitted
 router.get('/questions', async (_req, res) => {
   const questions = await Question.find({ isActive: true })
-    .sort({ createdAt: 1 })
+    .sort(QUESTION_SORT)
     .select('_id text answers')
     .lean();
   res.json(questions);
