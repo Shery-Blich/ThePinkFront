@@ -1680,6 +1680,8 @@
 
   <script type="module">
     import { trackEndLinkClicked } from './Game/analytics.js';
+    // Exposed so the (non-module) share handler can report a completed share
+    window.trackEndLinkClicked = trackEndLinkClicked;
     document.getElementById('popup-share-btn').addEventListener('click', () => trackEndLinkClicked('share'));
     document.getElementById('popup-itch-btn')?.addEventListener('click', () => trackEndLinkClicked('itch_games'));
     document.querySelector('a[href*="instagram"]').addEventListener('click', () => trackEndLinkClicked('instagram'));
@@ -2067,10 +2069,13 @@
           title: 'The Pink Front',
           text: shareText,
           url: shareUrl
+        }).then(() => {
+          window.trackEndLinkClicked?.('share_completed');
         }).catch(err => console.log('Share canceled/failed:', err));
       } else {
         const shareStr = `${shareText} ${shareUrl}`;
         navigator.clipboard.writeText(shareStr).then(() => {
+          window.trackEndLinkClicked?.('share_completed');
           showToastNotification('הקישור לשיתוף הועתק ללוח!');
         }).catch(() => {
           alert(shareStr);

@@ -1,6 +1,7 @@
 import { runLevelTrivia, hasLevelTrivia } from './level-trivia.js';
 import { LivesManager } from './lives-manager.js';
 import { restoreStageStartScore } from './score-manager.js';
+import { trackStageFailed } from '../analytics.js';
 
 /**
  * Helper to show victory screen and handle the transition to the level trivia.
@@ -42,6 +43,7 @@ export function showVictoryHelper(scene, sceneKey, title, message, buttonText = 
  * @param {string} message - The detail message text for the game over overlay.
  */
 export function showGameOverHelper(scene, title, message) {
+  trackStageFailed(scene.scene.key);
   if (typeof window.showGameOver === 'function') {
     window.showGameOver(
       title,

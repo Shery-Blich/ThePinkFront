@@ -99,14 +99,34 @@ export function trackGameCompleted(properties = {}) {
   _endSession(sessionId).catch(() => {});
 }
 
-export function trackGameFailed(properties = {}) {
-  const sessionId = getSessionId();
-  trackEvent('game_failed', properties);
-  _endSession(sessionId).catch(() => {});
+/**
+ * Records that the player entered a stage. The backend keeps the latest one,
+ * so an unfinished session shows which stage the player left the game at.
+ * @param {string} stageKey - Phaser scene key (e.g. 'Day2Scene').
+ * @param {number} stageIndex - Position of the stage in the run order.
+ */
+export function trackStageStarted(stageKey, stageIndex) {
+  trackEvent('stage_started', { stage: stageKey, stage_index: stageIndex });
+  _postSessionEvent('progress', { stage: stageKey, stageIndex });
 }
 
+/**
+ * Records a lost stage. The run continues (the player retries the stage), so
+ * this does not end the session.
+ * @param {string} stageKey - Phaser scene key of the failed stage.
+ */
+export function trackStageFailed(stageKey) {
+  trackEvent('stage_failed', { stage: stageKey });
+  _postSessionEvent('failure', { stage: stageKey });
+}
+
+/**
+ * Records a click on one of the end-screen buttons (not the credits links).
+ * @param {string} linkType - One of the link types the backend accepts.
+ */
 export function trackEndLinkClicked(linkType) {
   trackEvent('end_link_clicked', { link_type: linkType });
+  _postSessionEvent('link', { linkType }, { keepalive: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -138,6 +158,14 @@ function _postToParent(event) {
   } catch (_) {}
 }
 
+function _postSessionEvent(path, body, options = {}) {
+  const sessionId = getSessionId();
+  _ensureSessionRegistered(sessionId).then((mongoSessionId) => {
+    if (!mongoSessionId) return;
+    return _post(`/game/sessions/${mongoSessionId}/${path}`, body, options);
+  }).catch(() => {});
+}
+
 async function _fetchWithTimeout(url, options = {}, timeoutMs = 800) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -151,9 +179,10 @@ async function _fetchWithTimeout(url, options = {}, timeoutMs = 800) {
   }
 }
 
-async function _post(path, body) {
+async function _post(path, body, options = {}) {
   try {
     const response = await _fetchWithTimeout(`${API_BASE}${path}`, {
+      ...options,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

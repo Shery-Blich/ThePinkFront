@@ -89,4 +89,87 @@ router.get('/sessions', requireAdmin, async (_req, res) => {
   res.json({ total, avgScore, sessions });
 });
 
+// A session that hasn't completed and has had no activity for this long is
+// considered abandoned; newer ones may still be mid-game.
+const IDLE_CUTOFF_MINUTES = 30;
+
+// GET /api/analytics/funnel — where players drop off, stage failures, end-link clicks
+router.get('/funnel', requireAdmin, async (_req, res) => {
+  const cutoff = new Date(Date.now() - IDLE_CUTOFF_MINUTES * 60 * 1000);
+  // Sessions created before funnel tracking existed have no lastActivityAt
+  const tracked = { lastActivityAt: { $exists: true } };
+
+  const [stages, failures, links, totals] = await Promise.all([
+    GameSession.aggregate([
+      { $match: tracked },
+      {
+        $group: {
+          _id: { stage: '$lastStage', stageIndex: '$lastStageIndex' },
+          sessions: { $sum: 1 },
+          completed: { $sum: { $cond: ['$completed', 1, 0] } },
+          abandoned: {
+            $sum: { $cond: [{ $and: [{ $ne: ['$completed', true] }, { $lt: ['$lastActivityAt', cutoff] }] }, 1, 0] },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          stage: { $ifNull: ['$_id.stage', null] },
+          stageIndex: { $ifNull: ['$_id.stageIndex', -1] },
+          sessions: 1,
+          completed: 1,
+          abandoned: 1,
+          inProgress: { $subtract: ['$sessions', { $add: ['$completed', '$abandoned'] }] },
+        },
+      },
+      { $sort: { stageIndex: 1 } },
+    ]),
+    GameSession.aggregate([
+      { $match: tracked },
+      { $unwind: '$stageFailures' },
+      {
+        $group: {
+          _id: '$stageFailures.stage',
+          failures: { $sum: 1 },
+          sessionIds: { $addToSet: '$_id' },
+        },
+      },
+      { $project: { _id: 0, stage: '$_id', failures: 1, sessions: { $size: '$sessionIds' } } },
+    ]),
+    GameSession.aggregate([
+      { $match: tracked },
+      { $unwind: '$linkClicks' },
+      {
+        $group: {
+          _id: '$linkClicks.linkType',
+          clicks: { $sum: 1 },
+          sessionIds: { $addToSet: '$_id' },
+        },
+      },
+      { $project: { _id: 0, linkType: '$_id', clicks: 1, sessions: { $size: '$sessionIds' } } },
+      { $sort: { sessions: -1 } },
+    ]),
+    GameSession.aggregate([
+      { $match: tracked },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: { $sum: { $cond: ['$completed', 1, 0] } },
+        },
+      },
+    ]),
+  ]);
+
+  res.json({
+    idleCutoffMinutes: IDLE_CUTOFF_MINUTES,
+    totalSessions: totals[0]?.total ?? 0,
+    completedSessions: totals[0]?.completed ?? 0,
+    stages,
+    failures,
+    links,
+  });
+});
+
 export default router;
