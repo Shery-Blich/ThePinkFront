@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import Question from '../models/Question.js';
+import Question, { QUESTION_SORT } from '../models/Question.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { handleValidationErrors } from '../middleware/validate.js';
 
@@ -15,16 +15,36 @@ const questionValidators = [
 
 // GET /api/questions  — admin: full data including correctAnswerIndex
 router.get('/', requireAdmin, async (_req, res) => {
-  const questions = await Question.find().sort({ createdAt: 1 }).lean();
+  const questions = await Question.find().sort(QUESTION_SORT).lean();
   res.json(questions);
 });
 
 // POST /api/questions
 router.post('/', requireAdmin, questionValidators, handleValidationErrors, async (req, res) => {
   const { text, answers, correctAnswerIndex } = req.body;
-  const question = await Question.create({ text, answers, correctAnswerIndex });
+  // New questions go to the end of the list
+  const last = await Question.findOne({ order: { $exists: true } }).sort({ order: -1 }).select('order').lean();
+  const question = await Question.create({ text, answers, correctAnswerIndex, order: (last?.order ?? -1) + 1 });
   res.status(201).json(question);
 });
+
+// PUT /api/questions/order — save the full list order (ids from first to last).
+// Registered before /:id so "order" isn't taken for a question id.
+router.put(
+  '/order',
+  requireAdmin,
+  body('ids').isArray({ min: 1, max: 500 }),
+  body('ids.*').isMongoId(),
+  handleValidationErrors,
+  async (req, res) => {
+    const { ids } = req.body;
+    if (new Set(ids).size !== ids.length) return res.status(422).json({ error: 'Duplicate question ids' });
+    await Question.bulkWrite(
+      ids.map((id, index) => ({ updateOne: { filter: { _id: id }, update: { $set: { order: index } } } }))
+    );
+    res.status(204).end();
+  }
+);
 
 // PUT /api/questions/:id
 router.put(
@@ -34,31 +54,14 @@ router.put(
   questionValidators,
   handleValidationErrors,
   async (req, res) => {
-    const { text, answers, correctAnswerIndex, isActive } = req.body;
+    const { text, answers, correctAnswerIndex } = req.body;
     const question = await Question.findByIdAndUpdate(
       req.params.id,
-      { text, answers, correctAnswerIndex, ...(isActive !== undefined && { isActive }) },
+      { text, answers, correctAnswerIndex },
       { new: true, runValidators: true }
     );
     if (!question) return res.status(404).json({ error: 'Question not found' });
     res.json(question);
-  }
-);
-
-// DELETE /api/questions/:id  — soft delete
-router.delete(
-  '/:id',
-  requireAdmin,
-  param('id').isMongoId(),
-  handleValidationErrors,
-  async (req, res) => {
-    const question = await Question.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
-    if (!question) return res.status(404).json({ error: 'Question not found' });
-    res.json({ message: 'Question deactivated', id: question._id });
   }
 );
 

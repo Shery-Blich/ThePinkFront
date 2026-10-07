@@ -26,6 +26,25 @@ const linkClickSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Where the player came from and what they played on, captured at session start
+const sourceSchema = new mongoose.Schema(
+  {
+    // Marketing channel: utm_source if given, else the in-app browser or referrer host, else 'direct'
+    channel: { type: String },
+    referrerHost: { type: String },
+    utmSource: { type: String },
+    utmMedium: { type: String },
+    utmCampaign: { type: String },
+    deviceType: { type: String, enum: ['mobile', 'tablet', 'desktop'] },
+    os: { type: String },
+    browser: { type: String },
+    orientation: { type: String, enum: ['portrait', 'landscape'] },
+    screenWidth: { type: Number },
+    screenHeight: { type: Number },
+  },
+  { _id: false }
+);
+
 const gameSessionSchema = new mongoose.Schema(
   {
     sessionId: { type: String, required: true, unique: true, index: true },
@@ -45,6 +64,7 @@ const gameSessionSchema = new mongoose.Schema(
     leftAt: { type: Date },
     stageFailures: [stageFailureSchema],
     linkClicks: [linkClickSchema],
+    source: { type: sourceSchema },
   },
   { timestamps: false }
 );

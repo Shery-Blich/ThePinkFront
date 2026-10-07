@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts';
-import { getQuestionAnalytics, getSessionAnalytics, getFunnelAnalytics } from '../../api/analytics.js';
+import {
+  getQuestionAnalytics, getSessionAnalytics, getFunnelAnalytics, getOverviewAnalytics,
+} from '../../api/analytics.js';
 
 const CORRECT_COLOR = '#388e3c';
+const PINK = '#c2185b';
+const PINK_LIGHT = '#f48fb1';
 const WRONG_COLOR = '#c2185b';
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'];
 
@@ -31,14 +35,16 @@ export default function AnalyticsPage() {
   const [qStats, setQStats] = useState([]);
   const [sessions, setSessions] = useState({ total: 0, avgScore: 0 });
   const [funnel, setFunnel] = useState(null);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getQuestionAnalytics(), getSessionAnalytics(), getFunnelAnalytics()])
-      .then(([q, s, f]) => {
+    Promise.all([getQuestionAnalytics(), getSessionAnalytics(), getFunnelAnalytics(), getOverviewAnalytics()])
+      .then(([q, s, f, o]) => {
         setQStats(q);
         setSessions(s);
         setFunnel(f);
+        setOverview(o);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -61,8 +67,12 @@ export default function AnalyticsPage() {
         <Stat label="Questions" value={qStats.length} />
       </div>
 
+      {overview && <TimelineSection overview={overview} />}
       {funnel && <FunnelSection funnel={funnel} />}
+      {overview && <RetriesSection overview={overview} />}
+      {overview && <SourcesSection sources={overview.sources} />}
       {funnel && <LinksSection funnel={funnel} />}
+      {overview && <ScoresSection scores={overview.scores} />}
 
       {qStats.length === 0 ? (
         <p style={{ color: '#888' }}>No game data yet. Analytics will appear once the game is live.</p>
@@ -268,6 +278,162 @@ function LinksSection({ funnel }) {
   );
 }
 
+function TimelineSection({ overview }) {
+  const data = overview.timeline.map((d) => ({
+    ...d,
+    // "2026-10-08" -> "8/10" (day/month, as read in Israel)
+    label: `${Number(d.day.slice(8))}/${Number(d.day.slice(5, 7))}`,
+  }));
+
+  return (
+    <Section title="Players per day" note={`By the day the game was opened (${overview.timezone} time). Finished = reached the end that same run.`}>
+      {data.length === 0 ? (
+        <p style={styles.empty}>No sessions yet.</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={data} margin={{ top: 16 }}>
+            <XAxis dataKey="label" interval="preserveStartEnd" minTickGap={12} />
+            <YAxis allowDecimals={false} />
+            <Tooltip labelFormatter={(_, p) => p[0]?.payload?.day || ''} />
+            <Legend />
+            <Bar dataKey="started" name="Started" fill={PINK_LIGHT} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="completed" name="Finished" fill={PINK} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </Section>
+  );
+}
+
+function ScoresSection({ scores }) {
+  const finished = scores.reduce((sum, s) => sum + s.sessions, 0);
+  if (finished === 0) return null;
+
+  const maxQuestions = Math.max(...scores.map((s) => s.maxQuestions));
+  const byCorrect = Object.fromEntries(scores.map((s) => [s.correct, s.sessions]));
+  const data = Array.from({ length: maxQuestions + 1 }, (_, correct) => ({
+    name: `${correct}/${maxQuestions}`,
+    players: byCorrect[correct] ?? 0,
+  }));
+
+  return (
+    <Section title="Score distribution" note={`Correct answers per player, out of ${finished} player(s) who finished.`}>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data} margin={{ top: 16 }}>
+          <XAxis dataKey="name" />
+          <YAxis allowDecimals={false} />
+          <Tooltip formatter={(v) => [`${v} (${pct(v, finished)})`, 'Players']} />
+          <Bar dataKey="players" name="Players" fill={PINK} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </Section>
+  );
+}
+
+const LOSS_BUCKETS = [
+  { losses: 1, label: 'Lost once' },
+  { losses: 2, label: 'Lost twice' },
+  { losses: 3, label: 'Lost 3+ times' },
+];
+
+function RetriesSection({ overview }) {
+  if (overview.retries.length === 0) return null;
+
+  const stageOrder = STAGES.map((s) => s.key);
+  const labelOf = (key) => STAGES.find((s) => s.key === key)?.label ?? key;
+  const stages = [...new Set(overview.retries.map((r) => r.stage))]
+    .sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
+  const cell = (stage, losses) => overview.retries.find((r) => r.stage === stage && r.losses === losses);
+
+  return (
+    <Section
+      title="Losing a stage vs. quitting"
+      note="Players who lost a stage, by how many times they lost it, and how many of them then quit there. A high quit rate after repeated losses means the stage is too hard."
+    >
+      <div style={styles.tableWrap}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Stage</th>
+              {LOSS_BUCKETS.map((b) => <th key={b.losses} style={styles.th}>{b.label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {stages.map((stage) => (
+              <tr key={stage}>
+                <td style={styles.td}>{labelOf(stage)}</td>
+                {LOSS_BUCKETS.map((b) => {
+                  const c = cell(stage, b.losses);
+                  if (!c) return <td key={b.losses} style={{ ...styles.tdNum, ...styles.muted }}>—</td>;
+                  // Players still on the stage haven't decided yet, so leave them out of the rate
+                  const decided = c.players - c.stillPlaying;
+                  const quitRate = decided > 0 ? c.quit / decided : 0;
+                  return (
+                    <td
+                      key={b.losses}
+                      style={styles.tdNum}
+                      title={`${c.players} player(s)\nGot past it: ${c.passed}\nQuit here: ${c.quit}\nStill playing: ${c.stillPlaying}`}
+                    >
+                      <strong style={quitRate >= 0.5 ? styles.danger : undefined}>{pct(c.quit, decided)} quit</strong>
+                      <span style={styles.muted}> · {c.players} players</span>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Section>
+  );
+}
+
+const SOURCE_GROUPS = [
+  { key: 'channel', title: 'Channel' },
+  { key: 'deviceType', title: 'Device' },
+  { key: 'os', title: 'Operating system' },
+  { key: 'browser', title: 'Browser' },
+  { key: 'campaign', title: 'UTM campaign' },
+];
+
+function SourcesSection({ sources }) {
+  return (
+    <Section
+      title="Where players come from"
+      note={`Out of ${sources.total} session(s) since source tracking started. Channel = utm_source if the link had one, else the app or site the player came from. Add ?utm_source=…&utm_campaign=… to links you post to tell them apart.`}
+    >
+      {sources.total === 0 ? (
+        <p style={styles.empty}>No sessions with source info yet.</p>
+      ) : (
+        <div style={styles.sourceGrid}>
+          {SOURCE_GROUPS.filter((g) => sources[g.key]?.length > 0).map((g) => {
+            const max = Math.max(1, ...sources[g.key].map((r) => r.sessions));
+            return (
+              <div key={g.key}>
+                <h4 style={styles.subTitle}>{g.title}</h4>
+                <div style={styles.funnel}>
+                  {sources[g.key].slice(0, 8).map((r) => (
+                    <div key={r.key} style={{ ...styles.linkRow, ...styles.sourceRow }} title={`${r.key}\nSessions: ${r.sessions}\nFinished: ${r.completed}`}>
+                      <div style={styles.funnelLabel}>{r.key}</div>
+                      <div style={styles.track}>
+                        <div style={{ ...styles.bar, width: `${(r.sessions / max) * 100}%` }} />
+                      </div>
+                      <div style={styles.funnelValue}>
+                        <strong>{r.sessions}</strong>
+                        <span style={styles.muted}> · {pct(r.completed, r.sessions)} finish</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Section>
+  );
+}
+
 const pct = (n, d) => (d > 0 ? `${Math.round((n / d) * 100)}%` : '—');
 
 function Stat({ label, value, sub, small }) {
@@ -310,7 +476,7 @@ const styles = {
     display: 'grid', gridTemplateColumns: 'minmax(120px, 180px) 1fr auto', gridTemplateAreas: '"label bar value" ". chips chips"',
     alignItems: 'center', columnGap: '0.75rem', rowGap: '0.25rem', padding: '0.4rem 0', borderBottom: `1px solid ${BORDER}`,
   },
-  linkRow: { display: 'grid', gridTemplateColumns: 'minmax(120px, 180px) 1fr auto', alignItems: 'center', columnGap: '0.75rem', padding: '0.3rem 0' },
+  linkRow: { display: 'grid', gridTemplateColumns: 'minmax(120px, 180px) 1fr auto', gridTemplateAreas: '"label bar value"', alignItems: 'center', columnGap: '0.75rem', padding: '0.3rem 0' },
   funnelLabel: { gridArea: 'label', fontSize: '0.85rem', color: INK, fontWeight: 500 },
   track: { gridArea: 'bar', height: '14px', background: '#fbeef3', borderRadius: '4px', overflow: 'hidden' },
   bar: { height: '100%', background: '#c2185b', borderRadius: '4px', transition: 'width 0.4s ease' },
@@ -320,6 +486,11 @@ const styles = {
   chip: { fontSize: '0.72rem', color: MUTED, background: '#f4f4f6', borderRadius: '999px', padding: '0.1rem 0.55rem' },
   chipDrop: { color: '#8a1040', background: '#fce4ec', fontWeight: 600 },
   details: { marginTop: '1rem' },
+  sourceGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '1.25rem 2rem', marginTop: '0.5rem' },
+  // Narrow columns: let the label share space with the bar instead of squeezing it out
+  sourceRow: { gridTemplateColumns: 'minmax(70px, 1fr) minmax(40px, 1fr) 7.5rem' },
+  subTitle: { margin: '0.75rem 0 0', fontSize: '0.85rem', fontWeight: 600, color: MUTED },
+  danger: { color: '#8a1040' },
   summary: { cursor: 'pointer', color: MUTED, fontSize: '0.8rem' },
   answerList: {
     listStyle: 'none', padding: 0, margin: '0.5rem 0 0', direction: 'rtl',

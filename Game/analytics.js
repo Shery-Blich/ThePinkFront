@@ -64,7 +64,11 @@ export async function trackQuestionAnswered(questionIndex, questionId, chosenInd
   let correctAnswerIndex;
 
   if (questionId) {
-    _ensureSessionRegistered(sessionId).then(async (mongoSessionId) => {
+    // Must be awaited: for API questions only the server knows the right answer,
+    // and the overlay shows right/wrong from what this returns. Requests time out
+    // after 800ms, so a dead backend can't stall the game for long.
+    try {
+      const mongoSessionId = await _ensureSessionRegistered(sessionId);
       if (sessionId === getSessionId() && mongoSessionId) {
         const result = await _postJson(`/game/sessions/${mongoSessionId}/answer`, {
           questionId,
@@ -76,7 +80,7 @@ export async function trackQuestionAnswered(questionIndex, questionId, chosenInd
           correctAnswerIndex = result.correctAnswerIndex;
         }
       }
-    }).catch(() => {});
+    } catch (_) {}
   }
 
   trackEvent('question_answered', {
@@ -229,12 +233,34 @@ async function _ensureSessionRegistered(sessionId = getSessionId()) {
   return _registrationPromise;
 }
 
+// Acquisition and device details for the dashboard; the backend derives the
+// channel and device type from these plus the user agent.
+function _collectSource() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const source = {
+      referrer: document.referrer || undefined,
+      utmSource: params.get('utm_source') || undefined,
+      utmMedium: params.get('utm_medium') || undefined,
+      utmCampaign: params.get('utm_campaign') || undefined,
+      orientation: window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape',
+      screenWidth: window.screen?.width,
+      screenHeight: window.screen?.height,
+      isTouch: navigator.maxTouchPoints > 0,
+    };
+    if (source.referrer) source.referrer = source.referrer.slice(0, 2000);
+    return source;
+  } catch (_) {
+    return {};
+  }
+}
+
 async function _registerSession(sessionId) {
   try {
     const res = await _fetchWithTimeout(`${API_BASE}/game/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId }),
+      body: JSON.stringify({ sessionId, ..._collectSource() }),
     });
 
     if (!res || !res.ok) {
