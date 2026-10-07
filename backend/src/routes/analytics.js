@@ -93,6 +93,19 @@ router.get('/sessions', requireAdmin, async (_req, res) => {
 // the tab, or after this long with no activity; newer ones may still be mid-game.
 const IDLE_CUTOFF_MINUTES = 30;
 
+// Aggregation expression: true when an unfinished session has been closed or gone idle
+const isAbandoned = (cutoff) => ({
+  $and: [
+    { $ne: ['$completed', true] },
+    {
+      $or: [
+        { $lt: ['$lastActivityAt', cutoff] },
+        { $gte: [{ $ifNull: ['$leftAt', null] }, '$lastActivityAt'] },
+      ],
+    },
+  ],
+});
+
 // GET /api/analytics/funnel — where players drop off, stage failures, end-link clicks
 router.get('/funnel', requireAdmin, async (_req, res) => {
   const cutoff = new Date(Date.now() - IDLE_CUTOFF_MINUTES * 60 * 1000);
@@ -107,25 +120,7 @@ router.get('/funnel', requireAdmin, async (_req, res) => {
           _id: { stage: '$lastStage', stageIndex: '$lastStageIndex' },
           sessions: { $sum: 1 },
           completed: { $sum: { $cond: ['$completed', 1, 0] } },
-          abandoned: {
-            $sum: {
-              $cond: [
-                {
-                  $and: [
-                    { $ne: ['$completed', true] },
-                    {
-                      $or: [
-                        { $lt: ['$lastActivityAt', cutoff] },
-                        { $gte: [{ $ifNull: ['$leftAt', null] }, '$lastActivityAt'] },
-                      ],
-                    },
-                  ],
-                },
-                1,
-                0,
-              ],
-            },
-          },
+          abandoned: { $sum: { $cond: [isAbandoned(cutoff), 1, 0] } },
         },
       },
       {
@@ -185,6 +180,115 @@ router.get('/funnel', requireAdmin, async (_req, res) => {
     stages,
     failures,
     links,
+  });
+});
+
+// Days are bucketed in local time so the chart lines up with when posts went out
+const TIMEZONE = 'Asia/Jerusalem';
+
+// Group sessions by a field and count how many of each finished the game
+const breakdownBy = (field) => [
+  { $group: { _id: { $ifNull: [field, 'unknown'] }, sessions: { $sum: 1 }, completed: { $sum: { $cond: ['$completed', 1, 0] } } } },
+  { $project: { _id: 0, key: '$_id', sessions: 1, completed: 1 } },
+  { $sort: { sessions: -1 } },
+];
+
+// Calendar dates from first to last inclusive, so days with no players show as 0
+function fillDays(rows) {
+  if (rows.length === 0) return [];
+  const byDay = Object.fromEntries(rows.map((r) => [r.day, r]));
+  const days = [];
+  const end = new Date(`${rows[rows.length - 1].day}T00:00:00Z`);
+  for (let d = new Date(`${rows[0].day}T00:00:00Z`); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const day = d.toISOString().slice(0, 10);
+    days.push(byDay[day] ?? { day, started: 0, completed: 0 });
+  }
+  return days;
+}
+
+// GET /api/analytics/overview — players over time, score spread, retries vs quitting, sources
+router.get('/overview', requireAdmin, async (_req, res) => {
+  const cutoff = new Date(Date.now() - IDLE_CUTOFF_MINUTES * 60 * 1000);
+
+  const [timeline, scores, retries, [sources]] = await Promise.all([
+    GameSession.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$startedAt', timezone: TIMEZONE } },
+          started: { $sum: 1 },
+          completed: { $sum: { $cond: ['$completed', 1, 0] } },
+        },
+      },
+      { $project: { _id: 0, day: '$_id', started: 1, completed: 1 } },
+      { $sort: { day: 1 } },
+    ]),
+    GameSession.aggregate([
+      { $match: { completed: true, totalQuestions: { $gt: 0 } } },
+      { $group: { _id: '$correctCount', sessions: { $sum: 1 }, maxQuestions: { $max: '$totalQuestions' } } },
+      { $project: { _id: 0, correct: '$_id', sessions: 1, maxQuestions: 1 } },
+      { $sort: { correct: 1 } },
+    ]),
+    // For each stage: players who lost it N times, and whether they then got past it or quit there
+    GameSession.aggregate([
+      { $match: { 'stageFailures.0': { $exists: true } } },
+      { $addFields: { abandoned: isAbandoned(cutoff) } },
+      { $unwind: '$stageFailures' },
+      {
+        $group: {
+          _id: { session: '$_id', stage: '$stageFailures.stage' },
+          losses: { $sum: 1 },
+          lastStage: { $first: '$lastStage' },
+          completed: { $first: '$completed' },
+          abandoned: { $first: '$abandoned' },
+        },
+      },
+      {
+        $addFields: {
+          stuckHere: { $and: [{ $ne: ['$completed', true] }, { $eq: ['$lastStage', '$_id.stage'] }] },
+        },
+      },
+      {
+        $group: {
+          _id: { stage: '$_id.stage', losses: { $min: ['$losses', 3] } },
+          players: { $sum: 1 },
+          quit: { $sum: { $cond: [{ $and: ['$stuckHere', '$abandoned'] }, 1, 0] } },
+          stillPlaying: { $sum: { $cond: [{ $and: ['$stuckHere', { $not: '$abandoned' }] }, 1, 0] } },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          stage: '$_id.stage',
+          losses: '$_id.losses',
+          players: 1,
+          quit: 1,
+          stillPlaying: 1,
+          passed: { $subtract: ['$players', { $add: ['$quit', '$stillPlaying'] }] },
+        },
+      },
+      { $sort: { stage: 1, losses: 1 } },
+    ]),
+    GameSession.aggregate([
+      { $match: { source: { $exists: true } } },
+      {
+        $facet: {
+          total: [{ $count: 'n' }],
+          channel: breakdownBy('$source.channel'),
+          deviceType: breakdownBy('$source.deviceType'),
+          os: breakdownBy('$source.os'),
+          browser: breakdownBy('$source.browser'),
+          campaign: [{ $match: { 'source.utmCampaign': { $exists: true } } }, ...breakdownBy('$source.utmCampaign')],
+        },
+      },
+    ]),
+  ]);
+
+  res.json({
+    timezone: TIMEZONE,
+    timeline: fillDays(timeline),
+    scores,
+    retries,
+    sources: { ...sources, total: sources.total[0]?.n ?? 0 },
   });
 });
 
