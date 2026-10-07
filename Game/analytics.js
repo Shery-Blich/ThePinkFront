@@ -64,7 +64,11 @@ export async function trackQuestionAnswered(questionIndex, questionId, chosenInd
   let correctAnswerIndex;
 
   if (questionId) {
-    _ensureSessionRegistered(sessionId).then(async (mongoSessionId) => {
+    // Must be awaited: for API questions only the server knows the right answer,
+    // and the overlay shows right/wrong from what this returns. Requests time out
+    // after 800ms, so a dead backend can't stall the game for long.
+    try {
+      const mongoSessionId = await _ensureSessionRegistered(sessionId);
       if (sessionId === getSessionId() && mongoSessionId) {
         const result = await _postJson(`/game/sessions/${mongoSessionId}/answer`, {
           questionId,
@@ -76,7 +80,7 @@ export async function trackQuestionAnswered(questionIndex, questionId, chosenInd
           correctAnswerIndex = result.correctAnswerIndex;
         }
       }
-    }).catch(() => {});
+    } catch (_) {}
   }
 
   trackEvent('question_answered', {
