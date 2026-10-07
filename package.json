@@ -14,7 +14,9 @@
   "author": "",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/sync-questions.mjs",
     "build": "vite build",
+    "sync-questions": "node scripts/sync-questions.mjs",
     "preview": "vite preview",
     "convert-assets": "node scripts/convert-assets.mjs",
     "dev:admin": "npm --prefix frontend run dev",
