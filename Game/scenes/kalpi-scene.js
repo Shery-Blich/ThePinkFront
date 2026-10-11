@@ -203,12 +203,13 @@ export class KalpiScene extends Phaser.Scene {
       this._updateCrumblingRoad(delta);
 
       // Check if player has passed predictive potholes to award avoidance points
-      for (let i = 0; i < this.lastPredictiveTiles.length; i++) {
+      for (let i = this.lastPredictiveTiles.length - 1; i >= 0; i--) {
         const tile = this.lastPredictiveTiles[i];
         if (tile.state === 'CRUMBLED' && !tile.avoidancePointsAwarded && this.player.x > tile.tx + this.tileW && this.potholeAvoidancePointsAwarded < 5) {
           tile.avoidancePointsAwarded = true;
           this.potholeAvoidancePointsAwarded++;
           addGlobalScore(this, 1, tile.tx, tile.ty);
+          this.lastPredictiveTiles.splice(i, 1);
         }
       }
     }
@@ -338,11 +339,8 @@ export class KalpiScene extends Phaser.Scene {
           if (tile.state === 'NORMAL') {
             this._startTileWarning(tile);
             tile.isPredictive = true;
-            // Track last 2 predictive tiles for efficient avoidance checking
+            // Track until the player passes it; awarded tiles are removed in update()
             this.lastPredictiveTiles.push(tile);
-            if (this.lastPredictiveTiles.length > 2) {
-              this.lastPredictiveTiles.shift();
-            }
           }
         }
       }

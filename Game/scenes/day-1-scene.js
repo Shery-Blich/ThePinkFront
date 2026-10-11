@@ -177,7 +177,7 @@ export class Day1Scene extends Phaser.Scene {
       roadBottom: this.roadBottom,
       worldWidth: worldWidth,
       scale: this.s,
-      maxDrones: 10,
+      maxDrones: 5,
     });
 
     // Listen to MVC controller notifications
@@ -188,7 +188,7 @@ export class Day1Scene extends Phaser.Scene {
 
     this.droneManager.on("drone-dodged", () => {
       if (this.player) {
-        addGlobalScore(this, 2, this.player.x, this.player.y);
+        addGlobalScore(this, 4, this.player.x, this.player.y);
       }
     });
 
@@ -348,7 +348,7 @@ export class Day1Scene extends Phaser.Scene {
   _createHUD() {
     LivesManager.showHUD();
     if (typeof window.showHUD === 'function') {
-      window.showHUD('html-stats-hud', "רחפנים שחמקת מהם: 0/10");
+      window.showHUD('html-stats-hud', "רחפנים שחמקת מהם: 0/5");
     }
   }
 
@@ -359,7 +359,7 @@ export class Day1Scene extends Phaser.Scene {
 
   _updateDroneHUD(count) {
     if (typeof window.updateHUDText === 'function') {
-      window.updateHUDText('html-stats-hud', `רחפנים שחמקת מהם: ${count}/10`);
+      window.updateHUDText('html-stats-hud', `רחפנים שחמקת מהם: ${count}/5`);
     }
   }
 
