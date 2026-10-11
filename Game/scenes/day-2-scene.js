@@ -137,7 +137,7 @@ export class Day2Scene extends Phaser.Scene {
       this.backgroundImage = this.add.image(0, 0, 'day2-bg')
         .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setDepth(0)
+        .setDepth(-2)
         .setScale(scale);
       this._backgroundScrollX = 0;
     }
@@ -196,6 +196,7 @@ export class Day2Scene extends Phaser.Scene {
     // Start scrolling the screen only after the player fulfills the tutorial by jumping
     this.events.once('player-jump', () => {
       this._isScrollingStarted = true;
+      MovementTutorial.showDirectionArrow(this, { label: 'לקופה', player: this.player });
     });
 
     this.events.once('shutdown', () => {

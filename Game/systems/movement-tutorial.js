@@ -192,4 +192,112 @@ export class MovementTutorial {
       card.remove();
     });
   }
+
+  /**
+   * Show a glowing arrow pointing right with a label above it, fixed to the
+   * screen behind the gameplay (in front of the background only). Fades out once
+   * the player has moved right for about a second.
+   *
+   * @param {Phaser.Scene} scene
+   * @param {object} options
+   * @param {string} options.label - Text shown above the arrow.
+   * @param {Phaser.GameObjects.Sprite} options.player - Player whose rightward movement dismisses the arrow.
+   * @param {number} [options.depth=-1] - Render depth; must sit between the background and the platforms.
+   * @returns {Phaser.GameObjects.Container}
+   */
+  static showDirectionArrow(scene, { label, player, depth = -1 }) {
+    const container = scene.add.container(0, 0).setScrollFactor(0).setDepth(depth).setAlpha(0);
+    const glow = scene.add.graphics();
+    const arrow = scene.add.graphics();
+    const text = scene.add.text(0, 0, label, {
+      fontFamily: 'Rubik, sans-serif',
+      fontStyle: 'bold',
+      color: '#ffffff',
+    }).setOrigin(0.5, 1);
+    container.add([glow, arrow, text]);
+
+    // Right-pointing arrow polygon, centred on (0,0), sized by its total length
+    const arrowPoints = (len) => {
+      const shaftH = len * 0.22;
+      const headH = len * 0.55;
+      const headStart = len * 0.1;
+      return [
+        { x: -len / 2, y: -shaftH / 2 },
+        { x: headStart, y: -shaftH / 2 },
+        { x: headStart, y: -headH / 2 },
+        { x: len / 2, y: 0 },
+        { x: headStart, y: headH / 2 },
+        { x: headStart, y: shaftH / 2 },
+        { x: -len / 2, y: shaftH / 2 },
+      ];
+    };
+
+    let nudgeDistance = 0;
+    const layout = () => {
+      const { width, height } = scene.scale;
+      // Scale off the smaller screen dimension so it fits portrait and landscape alike
+      const len = Math.min(width * 0.2, height * 0.3);
+
+      glow.clear();
+      // Soft halo: stacked strokes that widen and fade outward
+      for (let i = 4; i >= 1; i -= 1) {
+        glow.lineStyle(i * len * 0.025, 0xffd1ea, 0.12);
+        glow.strokePoints(arrowPoints(len), true, true);
+      }
+
+      arrow.clear();
+      arrow.fillStyle(0xff007f, 0.95);
+      arrow.fillPoints(arrowPoints(len), true, true);
+      arrow.lineStyle(len * 0.015, 0xffffff, 0.9);
+      arrow.strokePoints(arrowPoints(len), true, true);
+
+      text.setFontSize(Math.round(len * 0.22));
+      text.setStroke('#ff007f', len * 0.025);
+      text.setShadow(0, 0, '#ff7fbf', len * 0.08, true, true);
+      text.setPosition(0, -len * 0.32);
+
+      container.setPosition(width / 2, height * 0.38);
+      nudgeDistance = len * 0.06;
+    };
+    layout();
+    scene.scale.on('resize', layout);
+
+    const tweens = [
+      // Shine: halo breathes in and out
+      scene.tweens.add({ targets: glow, alpha: 0.25, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+      // Light flicker on the arrow body
+      scene.tweens.add({ targets: arrow, alpha: 0.7, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+      // Nudge towards the destination
+      scene.tweens.add({ targets: [glow, arrow], x: { getEnd: () => nudgeDistance }, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+    ];
+    scene.tweens.add({ targets: container, alpha: 1, duration: 500 });
+
+    const DISMISS_AFTER_MS = 1000;
+    let movingRightMs = 0;
+    let dismissed = false;
+    const cleanup = () => {
+      scene.events.off('update', onUpdate);
+      scene.scale.off('resize', layout);
+      tweens.forEach((t) => t.destroy());
+    };
+    const onUpdate = (time, delta) => {
+      if (dismissed) return;
+      if (player && player.body && player.body.velocity.x > 0) {
+        movingRightMs += delta;
+      }
+      if (movingRightMs < DISMISS_AFTER_MS) return;
+      dismissed = true;
+      cleanup();
+      scene.tweens.add({
+        targets: container,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => container.destroy(),
+      });
+    };
+    scene.events.on('update', onUpdate);
+    scene.events.once('shutdown', cleanup);
+
+    return container;
+  }
 }
