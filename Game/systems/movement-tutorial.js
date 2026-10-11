@@ -151,8 +151,8 @@ export class MovementTutorial {
       `;
     } else {
       card.innerHTML = `
-        <div class="highlight-text">לחצו על המסך כדי לקפוץ!</div>
-        <div class="sub-text">לחצו בכל מקום מחוץ לג'ויסטיק כדי לאסוף מצרכים</div>
+        <div class="highlight-text">לחצו על כפתור הקפיצה כדי לקפוץ!</div>
+        <div class="sub-text">אספו מצרכים והתקדמו בסופרמרקט</div>
       `;
     }
     document.body.appendChild(card);
@@ -163,8 +163,17 @@ export class MovementTutorial {
       card.classList.add('show');
     });
 
+    // 2. Highlight jump button on mobile
+    const jumpBtn = document.getElementById('html-jump-btn');
+    if (!isDesktop && jumpBtn) {
+      jumpBtn.classList.add('tutorial-highlight');
+    }
+
     // Clean up
     const dismiss = () => {
+      if (jumpBtn) {
+        jumpBtn.classList.remove('tutorial-highlight');
+      }
       // Fade out HTML card
       card.style.transform = 'translate(-50%, 20px)';
       card.classList.remove('show');
@@ -179,6 +188,7 @@ export class MovementTutorial {
     // Safety fallback: if scene shuts down before jump, clean up
     scene.events.once('shutdown', () => {
       scene.events.off('player-jump', dismiss);
+      if (jumpBtn) jumpBtn.classList.remove('tutorial-highlight');
       card.remove();
     });
   }

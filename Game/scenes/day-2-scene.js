@@ -181,6 +181,7 @@ export class Day2Scene extends Phaser.Scene {
     this._setupSounds();
     startSceneMusic(this, 'bg-middle');
     this.jumpSystem = new JumpSystem(this, this.player, { jumpVelocity: this._jumpVelocity });
+    this.jumpSystem.disable();
     this._createHUD();
 
     // Show intro dialog, then start gameplay
@@ -188,6 +189,7 @@ export class Day2Scene extends Phaser.Scene {
     playDialogOnce('Day2Scene-intro', this, DAY_2_INTRO_DIALOG, () => {
       this._dialogActive = false;
       this.joystick.enable();
+      this.jumpSystem.enable();
       MovementTutorial.showJumpTutorial(this);
     });
 
@@ -456,11 +458,6 @@ export class Day2Scene extends Phaser.Scene {
       return;
     }
 
-    if (this.score > 0) {
-      this.triggerGameOver('BUDGET_REMAINING');
-      return;
-    }
-
     this._playSound('cashier');
     this._runCashierDialog();
   }
@@ -473,6 +470,7 @@ export class Day2Scene extends Phaser.Scene {
 
     // Freeze the player in place
     this.joystick?.disable();
+    this.jumpSystem?.disable();
     if (this.player && this.player.body) {
       this.player.body.setVelocity(0, 0);
       this.player.body.moves = false;
@@ -698,6 +696,7 @@ export class Day2Scene extends Phaser.Scene {
     this.isGameOver = true;
     this.sound.play('sfx-gameover', { volume: 0.6 });
     this.joystick?.disable();
+    this.jumpSystem?.disable();
     this.physics.pause();
 
     if (this.player && this.player.body) {
@@ -721,11 +720,6 @@ export class Day2Scene extends Phaser.Scene {
     let titleText = 'נפסלת!';
     let messageText = 'הזמן עבר! מישהו פה זז בקצב של כנסת ישראל... הקופאית כבר יצאה לפנסיה!';
 
-    if (reason === 'BUDGET_REMAINING') {
-      titleText = 'נשאר לך עודף!';
-      messageText = `השארת עודף של ${this._formatPrice(this.score)}! ממתי משאירים עודף בתקציב המדינה? תחזיר הכל למשרד האוצר!`;
-    }
-
     showGameOverHelper(this, titleText, messageText);
   }
 
@@ -737,6 +731,7 @@ export class Day2Scene extends Phaser.Scene {
     this.isSceneOver = true;
     this.sound.play('sfx-levelup', { volume: 0.6 });
     this.joystick?.disable();
+    this.jumpSystem?.disable();
     this.physics.pause();
 
     this.showVictoryScreen();

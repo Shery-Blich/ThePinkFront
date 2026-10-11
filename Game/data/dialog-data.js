@@ -33,7 +33,7 @@ export const DAY_1_VICTORY_DIALOG = [
 export const DAY_2_INTRO_DIALOG = [
   {
     speaker: PLAYER_NAME,
-    text: "יש לי רק 67 ש\"ח, מקווה שיספיק...",
+    text: "אני חייבת לבזבז הכל בשביל שיהיה משהו לנסיעה, מקווה שיספיק..",
   },
 ];
 

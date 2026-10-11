@@ -659,6 +659,48 @@
       left: calc(16px + env(safe-area-inset-left));
     }
 
+    #html-jump-btn {
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      right: calc(68px + env(safe-area-inset-right));
+      width: clamp(58px, 13vw, 68px);
+      height: clamp(58px, 13vw, 68px);
+      border-radius: 50%;
+      padding: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.05s ease;
+      z-index: 1000;
+    }
+
+    #html-jump-btn:active,
+    #html-jump-btn.btn-pressed {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+      background: rgba(225, 210, 185, 1);
+    }
+
+    #html-jump-btn.tutorial-highlight {
+      animation: jump-btn-pulse 1s infinite;
+      border-color: #ff007f;
+    }
+
+    @keyframes jump-btn-pulse {
+      0%, 100% {
+        box-shadow: 4px 4px 0px #000000, 0 0 0 0 rgba(255, 0, 127, 0.7);
+      }
+      50% {
+        box-shadow: 4px 4px 0px #000000, 0 0 0 8px rgba(255, 0, 127, 0);
+      }
+    }
+
     #html-dialog-container {
       position: fixed;
       bottom: calc(24px + env(safe-area-inset-bottom));
@@ -1589,7 +1631,7 @@
     </div>
 
     <div class="popup-container">
-      <div class="star-badge" id="popup-score-badge">★ 0 / 0 ★</div>
+      <div class="star-badge" id="popup-score-badge" dir="ltr">★ 0 / 0 ★</div>
       <h2 class="popup-title" id="popup-score-title">כל הכבוד!</h2>
       <p class="popup-subtitle" id="popup-score-subtitle">0 תשובות נכונות</p>
 
@@ -1629,6 +1671,10 @@
   <div id="html-lives-hud" class="hud-chip">♥ ♥ ♥ ♥ ♥</div>
   <div id="html-stats-hud" class="hud-chip"></div>
   <div id="html-speed-hud" class="hud-chip"></div>
+  <button id="html-jump-btn" class="hud-chip" type="button" aria-label="קפיצה">
+    <span class="jump-arrow" style="font-size: 1.35em; line-height: 1;">⬆</span>
+    <span class="jump-text" style="font-size: 0.72em; line-height: 1; font-weight: 900;">קפיצה</span>
+  </button>
 
   <!-- Fullscreen Toggle Button -->
   <button id="fullscreen-toggle-btn" type="button" aria-label="מסך מלא" title="מסך מלא">
@@ -2089,7 +2135,7 @@
       replayBtn.addEventListener('click', () => {
         window.hideScorePopup();
         // Hide all HUDs
-        const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
+        const huds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-jump-btn', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
         huds.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.style.display = 'none';
@@ -2244,7 +2290,7 @@
     };
 
     // Hide all HUDs initially
-    const initHuds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
+    const initHuds = ['html-score-hud', 'html-lives-hud', 'html-stats-hud', 'html-speed-hud', 'html-jump-btn', 'html-dialog-container', 'html-gameover-container', 'html-victory-container'];
     initHuds.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
