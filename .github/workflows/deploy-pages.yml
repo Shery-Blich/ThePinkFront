@@ -33,8 +33,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The prebuild step (scripts/sync-questions.mjs) uses the backend's MongoDB driver
+      - name: Install backend dependencies
+        run: npm --prefix backend ci --omit=dev
+
+      # Prebuild copies the current questions from MongoDB into the game's fallback set.
+      # If the secret is missing or Mongo is unreachable, the committed copy is used.
       - name: Build game
         run: npm run build
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI_READONLY }}
 
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,75 +1,17 @@
-/**
- * Fallback trivia database, used only when the backend is unreachable.
- * Each entry is an array in the format:
- * [
- *   questionText (string),
- *   optionsArray (string[] - in order of א, ב, ג, ד),
- *   correctIndex (number - 0-3)
- * ]
- */
-const LOCAL_FALLBACK_QUESTIONS = [
-  [
-    "אם המון אנשים הצביעו למפלגות שלא עברו את אחוז החסימה, איך זה משפיע על המפלגות שכן הצליחו להיכנס לכנסת?",
-    [
-      "יהיו פחות מ-120 חברים.",
-      "זה לא משנה להן, הקולות האלה פשוט נעלמים.",
-      "המפלגות שכן נכנסו מקבלות יותר כוח, כי הקולות שלהן שווים עכשיו יותר מנדטים.",
-      "פוסלים את התוצאות ויוצאים לבחירות חוזרות."
-    ],
-    2
-  ],
-  [
-    "לפעמים מפלגות חותמות ביניהן על \"הסכם עודפים\" לפני הבחירות. מה המטרה של ההסכם הזה?",
-    [
-      "להחליט שהן מתאחדות למפלגה אחת גדולה.",
-      "לחבר יחד את הקולות ה\"מיותרים\" שנשארו להן, כדי לנסות להרוויח מהם עוד כיסא בכנסת.",
-      "לחלוק ביניהן את כספי המיסים שהן מקבלות.",
-      "לאפשר לחברי כנסת ממפלגה אחת לעבור למפלגה השנייה באמצע הקדנציה."
-    ],
-    1
-  ],
-  [
-    "למה חשוב שיהיה ייצוג הולם בכנסת?",
-    [
-      "כי ככל שהכנסת מגוונת יותר ומייצגת את כלל הציבור, ככה היא יכולה לחוקק חוקים שטובים לכולם.",
-      "כדי שיהיה יותר אקשן בוועדות.",
-      "תנאי של האו\"ם, ומדינה שלא מקפידה על זה עלולה לחטוף סנקציות.",
-      "כדי שכל חברי הכנסת ילבשו חליפות יפות ויתנהגו בצורה הולמת."
-    ],
-    0
-  ],
-  [
-    "למה אחרי פרסום התוצאות כולם הולכים לשיחות עם הנשיא?",
-    [
-      "כי הם עושים על האש ביחד ושמחים שהבחירות נגמרו.",
-      "לחתום על תעודת חבר הכנסת הרשמית שלהם ולקבל את המפתחות למשרד החדש.",
-      "לעבור מבחן חוק ומשפט לפני שמותר להם להיכנס למשכן הכנסת.",
-      "הנשיא בוחר בחבר הכנסת שקיבל את מספר ההמלצות הגבוה ביותר מנציגי המפלגות, ושיש לו את הסיכוי הכי טוב לגבש קואליציה (רוב) של חברי כנסת."
-    ],
-    3
-  ],
-  [
-    "אז למה בכל זאת חשוב שנכיר את מצע המפלגה שאנחנו רוצים להצביע לה?",
-    [
-      "כדי שיהיה לבוחר תירוץ טוב להגיד \"אמרתי לכם!\" כששום דבר ממה שכתוב שם לא יקרה.",
-      "כדי לבדוק איזו מפלגה השקיעה בעיצוב ובצבעים הכי יפים.",
-      "כדי להבין מהם הערכים והשאיפות של המפלגה, ולבדוק אם הדרך שלהם בכלל מתאימה לי.",
-      "כדי שנוכל לתבוע את המפלגה במקרה שתפר את הבטחותיה."
-    ],
-    2
-  ]
-];
+// Fallback trivia, used only when the backend is unreachable. Generated from Mongo
+// before each build by scripts/sync-questions.mjs; edit questions in the admin panel.
+import fallbackQuestions from './fallback-questions.json';
 
 // Normalized shape used by the rest of the game, regardless of source:
 // { id: mongoId|null, text, options: string[], correctIndex: number|null }
 // correctIndex is only known client-side for local-fallback questions —
 // for API-sourced ones it stays null until the backend verifies an answer.
 function normalizeLocal() {
-  return LOCAL_FALLBACK_QUESTIONS.map(([text, options, correctIndex]) => ({
+  return fallbackQuestions.questions.map((q) => ({
     id: null,
-    text,
-    options,
-    correctIndex,
+    text: q.text,
+    options: q.answers,
+    correctIndex: q.correctAnswerIndex,
   }));
 }
 
